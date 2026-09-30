@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FinHub — Finance Hub</title>
+
+<!-- ══ PWA Meta Tags ══ -->
+<meta name="application-name" content="FinHub">
+<meta name="description" content="Your personal household ledger — track income, expenses, budgets and goals.">
+<meta name="theme-color" content="#050810">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinHub">
+
+<!-- Apple touch icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23050810'/%3E%3Ccircle cx='256' cy='256' r='210' fill='none' stroke='%23d4a017' stroke-width='6' opacity='0.5'/%3E%3Ccircle cx='256' cy='256' r='170' fill='none' stroke='%23d4a017' stroke-width='3' opacity='0.3'/%3E%3Cpolygon points='256,130 356,183 356,289 256,342 156,289 156,183' fill='%23d4a01710' stroke='%23d4a017' stroke-width='2' opacity='0.4'/%3E%3Ctext x='220' y='310' font-family='Georgia,serif' font-size='200' font-weight='700' text-anchor='middle' fill='%23d4a017' opacity='0.92'%3ET%3C/text%3E%3Ctext x='355' y='175' font-family='Georgia,serif' font-size='100' font-weight='700' text-anchor='middle' fill='%23d4a017' opacity='0.85'%3E2%3C/text%3E%3C/svg%3E">
+
+<!-- PWA Manifest (inline) -->
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22FinHub%20%E2%80%94%20Household%20Ledger%22%2C%22short_name%22%3A%22FinHub%22%2C%22description%22%3A%22Your%20personal%20household%20ledger%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23050810%22%2C%22theme_color%22%3A%22%23050810%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520512%2520512'%253E%253Crect%2520width%3D'512'%2520height%3D'512'%2520rx%3D'112'%2520fill%3D'%252305 0810'%2F%253E%253Ctext%2520x%3D'256'%2520y%3D'340'%2520font-size%3D'280'%2520text-anchor%3D'middle'%2520fill%3D'%2523d4a017'%253ET%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Source+Sans+3:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<body>
+
+<!-- ═══════════════════════════ SPLASH SCREEN ═══════════════════════════ -->
+<div id="splashScreen">
+  <div class="splash-hatch-tl"></div>
+  <div class="splash-hatch-br"></div>
+  <div class="splash-bar-left"></div>
+  <div class="splash-bar-right"></div>
+
+  <!-- Creative Orbit System -->
+  <canvas id="splashOrbitCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;"></canvas>
+
+  <div class="splash-center">
+    <!-- Art Deco animated logo card -->
+    <div class="ad-card splash-ad-card ad-animate" style="margin-bottom:14px;" role="img" aria-label="FinHub logo">
+      <div class="ad-glow-center"></div>
+      <svg class="ad-card-border-svg" viewBox="0 0 200 154">
+        <rect class="ad-border-rect" x="8" y="8" width="184" height="138" rx="5"/>
+        <rect class="ad-border-rect-inner" x="13" y="13" width="174" height="128" rx="3"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-tl" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-ctl" points="16,2 2,2 2,16"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-tr" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-ctr" points="0,2 14,2 14,16"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-bl" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-cbl" points="16,14 2,14 2,0"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-br" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-cbr" points="0,14 14,14 14,0"/>
+      </svg>
+      <div class="ad-center">
+        <div class="ad-diamond" style="margin-bottom:6px;"></div>
+        <div class="ad-h-rule">
+          <div class="ad-h-rule-line ad-left"></div>
+          <div class="ad-h-rule-dot"></div>
+          <div class="ad-h-rule-line ad-right"></div>
+        </div>
+        <div class="ad-t-mark">FH</div>
+        <div class="ad-h-rule" style="margin-top:1px;">
+          <div class="ad-h-rule-line ad-left2"></div>
+          <div class="ad-h-rule-dot ad-dot2"></div>
+          <div class="ad-h-rule-line ad-right2"></div>
+        </div>
+        <div class="ad-tally-text">Fin Hub</div>
+        <div class="ad-diamond ad-diamond-bottom" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <div class="splash-brand-name">Fin Hub</div>
+    <div class="splash-brand-subtitle">The Household Ledger</div>
+    <div class="splash-tagline">Every Rupee &bull; Every Story &bull; Every Day</div>
+
+    <div class="splash-divider-section">
+      <div class="splash-divider-line"></div>
+      <div class="splash-bar-wrap">
+        <div class="splash-bar-fill" id="splashBarFill"></div>
+      </div>
+      <div class="splash-loading-text" id="splashLoadingText">Opening the Ledger…</div>
+      <div class="splash-intention">Where numbers meet intention.</div>
+      <div class="splash-lb-dot">◆</div>
+      <div class="splash-divider-line"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Home page removed — splash goes straight to login -->
+<div id="homePage" style="display:none;"></div>
+
+<!-- ═══════════════════════════ LOGIN OVERLAY ═══════════════════════════ -->
+<div id="loginOverlay" class="hidden">
+
+  <div class="login-layout">
+    <!-- LEFT: Brand panel -->
+    <div class="login-brand">
+      <div class="login-brand-accentbar" aria-hidden="true"></div>
+
+      <!-- Art Deco animated logo card (login) -->
+      <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:20px 0;">
+        <div class="ad-card login-ad-card ad-animate" role="img" aria-label="FinHub logo">
+          <div class="ad-glow-center"></div>
+          <svg class="ad-card-border-svg" viewBox="0 0 200 154">
+            <rect class="ad-border-rect" x="8" y="8" width="184" height="138" rx="5"/>
+            <rect class="ad-border-rect-inner" x="13" y="13" width="174" height="128" rx="3"/>
+          </svg>
+          <svg class="ad-corner-svg ad-corner-tl" width="16" height="16" viewBox="0 0 16 16">
+            <polyline class="ad-corner-line ad-ctl" points="16,2 2,2 2,16"/>
+          </svg>
+          <svg class="ad-corner-svg ad-corner-tr" width="16" height="16" viewBox="0 0 16 16">
+            <polyline class="ad-corner-line ad-ctr" points="0,2 14,2 14,16"/>
+          </svg>
+          <svg class="ad-corner-svg ad-corner-bl" width="16" height="16" viewBox="0 0 16 16">
+            <polyline class="ad-corner-line ad-cbl" points="16,14 2,14 2,0"/>
+          </svg>
+          <svg class="ad-corner-svg ad-corner-br" width="16" height="16" viewBox="0 0 16 16">
+            <polyline class="ad-corner-line ad-cbr" points="0,14 14,14 14,0"/>
+          </svg>
+          <div class="ad-center">
+            <div class="ad-diamond" style="margin-bottom:6px;"></div>
+            <div class="ad-h-rule">
+              <div class="ad-h-rule-line ad-left"></div>
+              <div class="ad-h-rule-dot"></div>
+              <div class="ad-h-rule-line ad-right"></div>
+            </div>
+            <div class="ad-t-mark">FH</div>
+            <div class="ad-h-rule" style="margin-top:1px;">
+              <div class="ad-h-rule-line ad-left2"></div>
+              <div class="ad-h-rule-dot ad-dot2"></div>
+              <div class="ad-h-rule-line ad-right2"></div>
+            </div>
+            <div class="ad-tally-text">Fin Hub</div>
+            <div class="ad-diamond ad-diamond-bottom" style="margin-top:6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Creative brand footer -->
+      <div class="lb-editorial">
+        <!-- Ruling lines + wordmark row -->
+        <div class="lb-rule-row">
+          <div class="lb-rule-line"></div>
+          <div class="lb-rule-diamond"></div>
+          <div class="lb-rule-line"></div>
+        </div>
+
+        <div class="lb-wordmark-block">
+          <span class="lb-wm-t"><span style="font-size:1em;">F</span><span style="font-size:0.55em;vertical-align:middle;">IN</span> <span style="font-size:1em;">H</span><span style="font-size:0.55em;vertical-align:middle;">UB</span></span>
+          <div class="lb-wm-text">
+            <span class="lb-wm-est">EST. <em>today</em></span>
+          </div>
+          <div class="lb-wm-badge">
+            <svg width="28" height="28" viewBox="0 0 28 28">
+              <polygon points="14,2 16.5,9.5 24.5,9.5 18.2,14.2 20.6,21.8 14,17.2 7.4,21.8 9.8,14.2 3.5,9.5 11.5,9.5" fill="none" stroke="rgba(201,148,31,0.55)" stroke-width="1"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="lb-rule-row" style="margin-top:0;">
+          <div class="lb-rule-line"></div>
+          <div class="lb-rule-dot"></div>
+          <div class="lb-rule-dot"></div>
+          <div class="lb-rule-dot"></div>
+          <div class="lb-rule-line"></div>
+        </div>
+
+        <!-- Stacked stat pills -->
+        <div class="lb-stat-row">
+          <div class="lb-stat">
+            <span class="lb-stat-icon">◈</span>
+            <span class="lb-stat-label">HOUSEHOLD</span>
+            <span class="lb-stat-sep">·</span>
+            <span class="lb-stat-label">LEDGER</span>
+          </div>
+        </div>
+
+        <!-- Quote styled as a newspaper pull-quote -->
+        <div class="lb-pullquote">
+          <div class="lb-pq-bar"></div>
+          <div class="lb-pq-inner">
+            <div class="lb-pq-open">"</div>
+            <p class="lb-pq-text">Keep the books<br><em>before the books keep you.</em></p>
+          </div>
+        </div>
+
+        <!-- Bottom mono tag -->
+        <div class="lb-mono-tag">
+          <span>₹ EVERY RUPEE</span>
+          <span class="lb-mono-sep">✦</span>
+          <span>ACCOUNTED FOR</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Auth panel -->
+    <div class="login-auth">
+      <div class="login-col-rule" aria-hidden="true"></div>
+      <div class="login-corner-fold" aria-hidden="true"></div>
+      <div class="login-auth-inner">
+
+        <div class="login-eyebrow">Open your ledger</div>
+        <h1 class="login-heading" id="loginHeading">Welcome back.</h1>
+
+        <div class="login-tabs" role="tablist">
+          <button class="login-tab login-tab-active" id="tabSignIn" role="tab" aria-selected="true" type="button" onclick="switchAuthTab('signin')">Sign in</button>
+          <button class="login-tab" id="tabSignUp" role="tab" aria-selected="false" type="button" onclick="switchAuthTab('signup')">New ledger</button>
+        </div>
+
+        <!-- Sign In -->
+        <div class="login-panel login-panel-active" id="panelSignin" role="tabpanel">
+          <form id="signInForm" novalidate>
+            <div class="login-field">
+              <label class="login-label" for="siUserId">User ID</label>
+              <input class="login-input" type="text" id="siUserId" placeholder="your-user-id" autocomplete="username">
+            </div>
+            <div class="login-field">
+              <label class="login-label" for="siPass">Password</label>
+              <input class="login-input" type="password" id="siPass" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="login-error" id="siError" role="alert"></div>
+            <button class="login-btn" type="submit">
+              <span class="login-btn-dot" aria-hidden="true"></span>Open Ledger
+            </button>
+            <div class="login-form-footer">
+              <button class="login-text-link" type="button" id="forgotLink">Forgot password?</button>
+            </div>
+            <div class="login-or-divider"><span>or</span></div>
+            <button class="login-guest-btn" type="button" onclick="handleGuestLogin()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Continue as Guest
+            </button>
+          </form>
+        </div>
+
+        <!-- Sign Up -->
+        <div class="login-panel" id="panelSignup" role="tabpanel" hidden>
+          <form id="signUpForm" novalidate>
+            <div class="login-field">
+              <label class="login-label" for="suFullName">Full Name</label>
+              <input class="login-input" type="text" id="suFullName" placeholder="e.g. Arjun Sharma" autocomplete="name">
+            </div>
+            <div class="login-fields-row">
+              <div class="login-field">
+                <label class="login-label" for="suEmail">Email</label>
+                <input class="login-input" type="email" id="suEmail" placeholder="you@example.com" autocomplete="email">
+              </div>
+              <div class="login-field">
+                <label class="login-label" for="suPhone">Phone</label>
+                <input class="login-input" type="tel" id="suPhone" placeholder="+91 98765 43210" autocomplete="tel">
+              </div>
+            </div>
+            <div class="login-field">
+              <label class="login-label" for="suUserId">User ID</label>
+              <input class="login-input" type="text" id="suUserId" placeholder="choose-a-user-id" autocomplete="username">
+            </div>
+            <div class="login-fields-row">
+              <div class="login-field">
+                <label class="login-label" for="suPass">Password</label>
+                <input class="login-input" type="password" id="suPass" placeholder="••••••••" autocomplete="new-password">
+              </div>
+              <div class="login-field">
+                <label class="login-label" for="suPassConfirm">Confirm</label>
+                <input class="login-input" type="password" id="suPassConfirm" placeholder="••••••••" autocomplete="new-password">
+              </div>
+            </div>
+            <div class="login-error" id="suError" role="alert"></div>
+            <button class="login-btn" type="submit">
+              <span class="login-btn-dot" aria-hidden="true"></span>Start Your Ledger
+            </button>
+            <div class="login-or-divider"><span>or</span></div>
+            <button class="login-guest-btn" type="button" onclick="handleGuestLogin()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Continue as Guest
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="login-footer-strip">
+        <div class="login-footer-cell">
+          <span class="login-footer-label">Month</span>
+          <span class="login-footer-val">—</span>
+        </div>
+        <div class="login-footer-cell">
+          <span class="login-footer-label">Income</span>
+          <span class="login-footer-val login-footer-pos">₹0.00</span>
+        </div>
+        <div class="login-footer-cell">
+          <span class="login-footer-label">Expenses</span>
+          <span class="login-footer-val login-footer-neg">₹0.00</span>
+        </div>
+        <div class="login-footer-cell">
+          <span class="login-footer-label">Balance</span>
+          <span class="login-footer-val">₹0.00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile overlay -->
+<div class="sb-mobile-overlay" id="sbMobileOverlay"></div>
+
+<!-- ═══════════════════════════ APP SHELL ═══════════════════════════ -->
+<div id="appShell" class="hidden">
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <div class="sb-top">
+    <div class="sb-logo">FinHub</div>
+    <button class="sb-toggle" id="sbToggleBtn" title="Collapse sidebar">☰</button>
+  </div>
+
+  <button class="sb-new-btn" id="sbNewEntryBtn">
+    <span class="sb-icon">＋</span>
+    <span class="sb-new-label">New Entry</span>
+  </button>
+
+  <div class="sb-scroll">
+    <div class="sb-section-label">Navigate</div>
+    <button class="sb-nav-item active" id="sbNavDashboard">
+      <span class="sb-icon">🏠</span><span class="sb-nav-text" data-i18nkey="nav_dashboard">Dashboard</span>
+    </button>
+    <button class="sb-nav-item" id="sbNavLedger">
+      <span class="sb-icon">📒</span><span class="sb-nav-text">Ledger</span>
+    </button>
+    <button class="sb-nav-item" id="sbNavBudgets">
+      <span class="sb-icon">🎯</span><span class="sb-nav-text">Budgets</span>
+    </button>
+    <button class="sb-nav-item" id="sbNavGoals">
+      <span class="sb-icon">🏦</span><span class="sb-nav-text">Goals & Recurring</span>
+    </button>
+    <button class="sb-nav-item" id="sbNavCharts">
+      <span class="sb-icon">📊</span><span class="sb-nav-text">Charts</span>
+    </button>
+
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Recent Months</div>
+    <div id="sbMonthList"></div>
+
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Account</div>
+    <button class="sb-nav-item" id="sbNavProfile">
+      <span class="sb-icon">👤</span><span class="sb-nav-text">Profile & Account</span>
+    </button>
+    <button class="sb-nav-item" id="sbLogout">
+      <span class="sb-icon">↩</span><span class="sb-nav-text">Log out</span>
+    </button>
+  </div>
+
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sbAvatar">?</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name" id="sbUserName">—</div>
+        <div class="sb-user-plan">Free · FinHub</div>
+      </div>
+    </div>
+  </div>
+
+</nav>
+
+<!-- ── APP BODY ── -->
+<div id="appBody">
+
+<header>
+  <!-- Top nav bar -->
+  <div class="header-top">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="sb-open-btn" id="sbOpenBtn">☰</button>
+      <h1>FinHub</h1>
+    </div>
+    <div class="header-actions">
+      <div class="header-date-chip" aria-hidden="true">
+        <div class="header-date-day" id="headerDateDay">13</div>
+        <div class="header-date-label" id="headerDateLabel">Sunday</div>
+        <div class="header-date-month" id="headerDateMonth">September 2026</div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button">🌙 Dark</button>
+      <div class="menu-wrap">
+        <button class="theme-toggle menu-btn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false">⋮</button>
+        <div class="menu-dropdown" id="menuDropdown">
+          <button class="menu-item" id="shareBtn" type="button">📤 Share this month</button>
+          <button class="menu-item" id="exportCsvBtn" type="button">📥 Export CSV</button>
+          <button class="menu-item" id="copySummaryBtn" type="button">📋 Copy summary</button>
+          <div class="menu-divider"></div>
+          <button class="menu-item" id="exportPdfBtn" type="button">📄 Export PDF</button>
+          <button class="menu-item" id="printBtn" type="button">🖨️ Print view</button>
+          <div class="menu-divider"></div>
+          <button class="menu-item menu-item-danger" id="clearMonthBtn" type="button">🗑️ Clear this month</button>
+          <button class="menu-item menu-item-logout" id="menuLogoutBtn" type="button">↩ Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero greeting -->
+  <div class="header-hero">
+    <div class="header-greeting-left">
+      <div class="header-greeting-line" id="headerGreetingLine">Your household ledger</div>
+      <div class="header-greeting-name" id="headerGreetingName">Good morning.</div>
+      <div class="header-month-strip" id="headerMonthStrip">
+        <div class="hms-bar-wrap" id="hmsBarWrap">
+          <div class="hms-bar-track"></div>
+          <div class="hms-bar-fill" id="hmsBarFill"></div>
+          <div class="hms-bar-glow" id="hmsBarGlow"></div>
+        </div>
+        <div class="hms-meta">
+          <div class="hms-pct" id="hmsPct">0%</div>
+          <div class="hms-label" id="hmsLabel">of month elapsed</div>
+        </div>
+      </div>
+    </div>
+    <!-- Creative insight panel: sparkline + net KPI -->
+    <div class="header-insight-panel" id="headerInsightPanel">
+      <div class="header-sparkline-wrap">
+        <div class="header-sparkline-label">7-day flow</div>
+        <svg class="header-sparkline-svg" id="headerSparkline" width="90" height="36" viewBox="0 0 90 36">
+          <polyline id="headerSparklineLine" points="0,30 15,26 30,20 45,24 60,14 75,10 90,6"
+            fill="none" stroke="#e879f9" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline id="headerSparklineFill" points="0,30 15,26 30,20 45,24 60,14 75,10 90,6 90,36 0,36"
+            fill="url(#sparkGrad)" opacity="0.18"/>
+          <defs>
+            <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#e879f9"/>
+              <stop offset="100%" stop-color="#e879f9" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="header-insight-divider"></div>
+      <div class="header-insight-kpi">
+        <div class="header-insight-kpi-label">Net this month</div>
+        <div class="header-insight-kpi-val" id="headerInsightNet">₹0</div>
+        <div class="header-insight-kpi-sub" id="headerInsightSub">no entries yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="balance-strip">
+
+    <div class="item item-balance">
+      <div class="card-icon-ring">◈</div>
+      <div class="label">Balance</div>
+      <div class="val mono brass" id="totalBalance">₹0.00</div>
+      <div class="card-bar-track"><div class="card-bar-fill" style="width:72%"></div></div>
+    </div>
+
+    <div class="item item-spent">
+      <div class="card-icon-ring">↓</div>
+      <div class="label">Month Spent</div>
+      <div class="val mono neg" id="monthSpent">₹0.00</div>
+      <div class="card-bar-track"><div class="card-bar-fill" style="width:45%"></div></div>
+    </div>
+
+    <div class="item item-income">
+      <div class="card-icon-ring">↑</div>
+      <div class="label">Month Income</div>
+      <div class="val mono pos" id="monthIncome">₹0.00</div>
+      <div class="card-bar-track"><div class="card-bar-fill" style="width:88%"></div></div>
+    </div>
+
+    <div class="item item-savings">
+      <div class="card-icon-ring">◎</div>
+      <div class="label">Net Saved</div>
+      <div class="val mono" id="monthNet">₹0.00</div>
+      <div class="card-bar-track"><div class="card-bar-fill" style="width:60%"></div></div>
+    </div>
+
+  </div>
+</header>
+
+<!-- ══ VIEW: DASHBOARD ══ -->
+<main id="view-dashboard" class="app-view">
+  <!-- Quick Stats row spans full width -->
+  <div style="grid-column:1/-1;">
+    <div class="quick-stats" id="quickStats">
+      <div class="qs-item"><div class="qs-label">Biggest Expense</div><div class="qs-val neg" id="qsBig">—</div></div>
+      <div class="qs-item"><div class="qs-label">Avg Daily Spend</div><div class="qs-val neutral" id="qsAvg">—</div></div>
+      <div class="qs-item"><div class="qs-label">Days to Payday</div><div class="qs-val" id="qsDays">—</div></div>
+    </div>
+  </div>
+
+  <!-- Add Entry card -->
+  <div class="card card-entry" style="margin-bottom:0;align-self:start;">
+    <h2 data-i18n="form_new_entry">New Entry</h2>
+    <div class="toggle-row">
+      <button type="button" id="typeExpense" class="active expense">Expense</button>
+      <button type="button" id="typeIncome" class="income">Income</button>
+    </div>
+    <label>Amount (&#8377;)</label>
+    <input type="number" id="fAmount" placeholder="0.00" min="0" step="0.01">
+    <label>Description</label>
+    <input type="text" id="fDesc" placeholder="e.g. Groceries at DMart">
+    <label id="catLabel">Category</label>
+    <select id="fCategory"></select>
+    <label>Note (optional)</label>
+    <input type="text" id="fNote" placeholder="Any extra detail…">
+    <label>Date</label>
+    <input type="date" id="fDate">
+    <button class="btn" id="addBtn">Add to Ledger</button>
+  </div>
+  <!-- Recent ledger preview -->
+  <div style="margin-bottom:0;">
+    <div class="ledger-wrap" style="margin-bottom:18px;overflow-x:hidden;">
+      <div class="ledger-head">
+        <h2 data-i18n="ledger_recent">Recent Entries</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;box-sizing:border-box;">
+          <div class="search-wrap" style="margin-bottom:0;flex:1;min-width:0;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search entries…" style="width:100%;padding:6px 10px 6px 30px;font-size:14px;box-sizing:border-box;">
+          </div>
+          <select id="monthFilter" style="width:100%;box-sizing:border-box;"></select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="min-width:0;width:100%;">
+        <thead>
+          <tr>
+            <th>Date</th><th>Description</th><th class="ledger-col-cat">Category</th>
+            <th class="num" data-i18n="ledger_col_amt">Amount (₹)</th><th class="num ledger-col-bal" data-i18n="ledger_col_bal">Balance (₹)</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="ledgerBody"></tbody>
+      </table>
+      </div>
+      <div id="emptyState" data-i18n="ledger_empty" class="empty" style="display:none;">No entries yet — add one on the left.</div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ══ VIEW: LEDGER (full ledger, standalone, full-screen like Budgets) ══ -->
+<main id="view-ledger" class="app-view hidden" style="grid-template-columns:1fr; padding:16px 12px 80px !important; box-sizing:border-box; width:100%; max-width:100vw; overflow-x:hidden;">
+  <div style="display:flex;flex-direction:column;width:100%;box-sizing:border-box;">
+    <div class="ledger-wrap" style="display:flex;flex-direction:column;width:100%;box-sizing:border-box;overflow:hidden;">
+      <div class="ledger-head" style="flex-shrink:0;flex-direction:column;align-items:flex-start;gap:8px;">
+        <h2 data-i18n="ledger_title">The Ledger</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;box-sizing:border-box;">
+          <div class="search-wrap" style="margin-bottom:0;flex:1;min-width:0;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInputLedger" placeholder="Search entries…" style="width:100%;padding:6px 10px 6px 30px;font-size:14px;box-sizing:border-box;">
+          </div>
+          <select id="monthFilterLedger" style="width:100%;box-sizing:border-box;"></select>
+        </div>
+      </div>
+      <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;">
+        <table style="min-width:0;width:100%;table-layout:auto;">
+          <thead style="position:sticky;top:0;z-index:1;">
+            <tr>
+              <th>Date</th><th>Description</th><th class="ledger-col-cat">Category</th>
+              <th class="num" data-i18n="ledger_col_amt">Amount (₹)</th><th class="num ledger-col-bal" data-i18n="ledger_col_bal">Balance (₹)</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="ledgerBodyFull"></tbody>
+        </table>
+        <div id="emptyStateFull" data-i18n="ledger_empty_full" class="empty" style="display:none;">No entries this month. Switch to Dashboard to add one.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ══ VIEW: BUDGETS ══ -->
+<main id="view-budgets" class="app-view hidden" style="grid-template-columns:1fr; padding:20px 24px 16px !important; max-width:none !important; margin:0 !important; width:100% !important; box-sizing:border-box;">
+  <div id="budgets-inner-grid" style="display:grid;gap:20px;height:calc(100vh - 130px);align-items:stretch;">
+
+    <!-- Left: Budget Inputs -->
+    <div class="card" style="display:flex;flex-direction:column;overflow:hidden;padding:18px 16px;">
+      <h2 style="font-size:16px;margin:0 0 10px;flex-shrink:0;padding-bottom:10px;border-bottom:1px solid var(--paper-line);" data-i18n="budget_title">Monthly Budgets</h2>
+      <div id="budgetInputs" style="flex:1;overflow-y:auto;"></div>
+      <div class="footnote" data-i18n="budget_footnote" style="font-size:11px;margin-top:8px;flex-shrink:0;">Set a monthly limit per category. Bars turn red when you exceed the budget.</div>
+    </div>
+
+    <!-- Right: Chart -->
+    <div class="card" style="display:flex;flex-direction:column;overflow:hidden;padding:18px 16px;">
+      <h2 style="font-size:16px;margin:0 0 10px;flex-shrink:0;padding-bottom:10px;border-bottom:1px solid var(--paper-line);" data-i18n="budget_chart_title">Spend vs Budget — Chart</h2>
+      <div id="breakdownBudget" style="flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;"></div>
+      <div id="breakdownBudgetLegend" style="font-size:11px;margin-top:14px;padding:10px 4px 4px;border-top:1px solid var(--paper-line);flex-shrink:0;flex-wrap:wrap;display:flex;gap:10px 16px;line-height:1.8;"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ══ VIEW: GOALS + RECURRING (combined) ══ -->
+<main id="view-goals" class="app-view hidden" style="grid-template-columns:1fr;">
+  <div>
+    <div class="card">
+      <h2 data-i18n="goals_savings">Savings Goals</h2>
+      <div id="goalsList"></div>
+      <div id="goalAddRow"></div>
+      <div class="footnote" data-i18n="goals_deposit_footnote">Deposit amounts from your balance toward any goal.</div>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h2 data-i18n="recurring_title">Recurring Transactions</h2>
+      <div id="recurList"></div>
+      <div id="recurAddRow"></div>
+      <div class="footnote" data-i18n="recurring_footnote">Post a recurring entry to today's date anytime.</div>
+    </div>
+  </div>
+</main>
+
+<!-- ══ VIEW: RECURRING (hidden — kept for JS compatibility) ══ -->
+<main id="view-recurring" class="app-view hidden" style="grid-template-columns:1fr; display:none !important;">
+</main>
+
+<!-- ══ VIEW: CHARTS ══ -->
+<main id="view-charts" class="app-view hidden" style="grid-template-columns:1fr;">
+  <div>
+    <div class="card graph-card">
+      <div class="graph-card-header">
+        <h2 data-i18n="charts_title">Graph Sheet</h2>
+        <div class="graph-tabs" role="tablist">
+          <button class="graph-tab active" id="gtabWeekly"  role="tab" data-i18n="charts_weekly" onclick="switchGraphTab('weekly')">Weekly</button>
+          <button class="graph-tab"        id="gtabMonthly" role="tab" data-i18n="charts_monthly" onclick="switchGraphTab('monthly')">Monthly</button>
+          <button class="graph-tab"        id="gtabYearly"  role="tab" data-i18n="charts_yearly" onclick="switchGraphTab('yearly')">Yearly</button>
+        </div>
+      </div>
+      <!-- Weekly -->
+      <div class="graph-panel" id="gpanelWeekly">
+        <div class="graph-stats" id="graphStatsWeekly"></div>
+        <div class="graph-wrap" id="graphSheetWeekly"></div>
+        <div class="graph-legend">
+          <span><span class="swatch" style="background:var(--sage);"></span><span data-i18n="charts_income_lbl">Income</span></span>
+          <span><span class="swatch" style="background:var(--rust);"></span><span data-i18n="charts_expense_lbl">Expense</span></span>
+          <span><span class="swatch" style="background:var(--brass);"></span><span data-i18n="charts_balance_lbl">Balance</span></span>
+        </div>
+      </div>
+      <!-- Monthly -->
+      <div class="graph-panel hidden" id="gpanelMonthly">
+        <div class="graph-stats" id="graphStatsMonthly"></div>
+        <div class="graph-wrap" id="graphSheetMonthly"></div>
+        <div class="graph-legend">
+          <span><span class="swatch" style="background:var(--sage);"></span><span data-i18n="charts_income_lbl">Income</span></span>
+          <span><span class="swatch" style="background:var(--rust);"></span><span data-i18n="charts_expense_lbl">Expense</span></span>
+          <span><span class="swatch" style="background:var(--brass);"></span><span data-i18n="charts_balance_lbl">Balance</span></span>
+        </div>
+      </div>
+      <!-- Yearly -->
+      <div class="graph-panel hidden" id="gpanelYearly">
+        <div class="graph-stats" id="graphStatsYearly"></div>
+        <div class="graph-wrap" id="graphSheetYearly"></div>
+        <div class="graph-legend">
+          <span><span class="swatch" style="background:var(--sage);"></span><span data-i18n="charts_income_lbl">Income</span></span>
+          <span><span class="swatch" style="background:var(--rust);"></span><span data-i18n="charts_expense_lbl">Expense</span></span>
+          <span><span class="swatch" style="background:var(--brass);"></span><span data-i18n="charts_balance_lbl">Balance</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div><!-- /appBody -->
+</div><!-- /appShell -->
+
+<!-- ═══════════ PROFILE & ACCOUNT PAGE ═══════════ -->
+<!-- ═══════════ PROFILE & ACCOUNT PAGE ═══════════ -->
+<div id="profilePage">
+  <div class="pp-header">
+    <h1 class="pp-title">Profile<span> & </span>Account</h1>
+    <button class="pp-back-btn" id="ppBackBtn">← Back</button>
+  </div>
+  <div class="pp-body">
+
+    <!-- Avatar + name card -->
+    <div class="pp-avatar-card">
+      <div class="pp-big-avatar" id="ppBigAvatar">?</div>
+      <div class="pp-avatar-info">
+        <div class="pp-display-name" id="ppDisplayName">—</div>
+        <span class="pp-username-tag" id="ppUsernameTag">@—</span>
+        <div class="pp-contact-row">
+          <span class="pp-contact-item" id="ppEmailDisplay" style="display:none;">✉️ <span id="ppEmailText">—</span></span>
+          <span class="pp-contact-item" id="ppPhoneDisplay" style="display:none;">📞 <span id="ppPhoneText">—</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick stats bar -->
+    <div class="pp-stats-bar">
+      <div class="pp-stat-item">
+        <div class="pp-stat-val pos" id="ppStatIncome">₹0</div>
+        <div class="pp-stat-label" data-i18n="pp_total_income">Total Income</div>
+      </div>
+      <div class="pp-stat-divider"></div>
+      <div class="pp-stat-item">
+        <div class="pp-stat-val neg" id="ppStatSpent">₹0</div>
+        <div class="pp-stat-label" data-i18n="pp_total_spent">Total Spent</div>
+      </div>
+      <div class="pp-stat-divider"></div>
+      <div class="pp-stat-item">
+        <div class="pp-stat-val" id="ppStatNet">₹0</div>
+        <div class="pp-stat-label" data-i18n="pp_net_saved">Net Saved</div>
+      </div>
+      <div class="pp-stat-divider"></div>
+      <div class="pp-stat-item">
+        <div class="pp-stat-val" id="ppStatTx">0</div>
+        <div class="pp-stat-label" data-i18n="pp_entries">Entries</div>
+      </div>
+    </div>
+
+    <!-- Profile ID info -->
+    <div class="pp-section">
+      <div class="pp-section-head" data-i18n="pp_account_info">🪪 Account Info</div>
+      <div class="pp-row">
+        <div class="pp-row-label" data-i18n="pp_user_id">🆔 User ID</div>
+        <div class="pp-row-value"><span id="ppUserIdText">—</span><button class="pp-copy-btn" id="ppCopyId" title="Copy">📋</button></div>
+      </div>
+      <div class="pp-row">
+        <div class="pp-row-label" data-i18n="pp_email">✉️ Email</div>
+        <div class="pp-row-value" id="ppEmailRow">—</div>
+      </div>
+      <div class="pp-row">
+        <div class="pp-row-label" data-i18n="pp_phone">📞 Phone</div>
+        <div class="pp-row-value" id="ppPhoneRow">—</div>
+      </div>
+      <div class="pp-row">
+        <div class="pp-row-label" data-i18n="pp_member_since">📅 Member Since</div>
+        <div class="pp-row-value" id="ppMemberSince">—</div>
+      </div>
+      <div class="pp-row">
+        <div class="pp-row-label" data-i18n="pp_storage">💾 Storage Used</div>
+        <div class="pp-row-value" id="ppStorageUsed">—</div>
+      </div>
+    </div>
+
+    <!-- Edit profile -->
+    <div class="pp-section">
+      <div class="pp-section-head" data-i18n="pp_edit_profile">✏️ Edit Profile</div>
+      <div class="pp-edit-row"><div class="pp-edit-label" data-i18n="pp_display_name">Display Name</div><input class="pp-input" id="ppEditName" type="text" placeholder="Your name" maxlength="40"/></div>
+      <div class="pp-edit-row"><div class="pp-edit-label">Email</div><input class="pp-input" id="ppEditEmail" type="email" placeholder="your@email.com" maxlength="80"/></div>
+      <div class="pp-edit-row"><div class="pp-edit-label">Phone</div><input class="pp-input" id="ppEditPhone" type="tel" placeholder="+91 00000 00000" maxlength="20"/></div>
+      <button class="pp-save-btn" id="ppSaveBtn" data-i18n="pp_save_btn">💾 Save Changes</button>
+    </div>
+
+    <!-- Language Settings — navigate to separate page -->
+    <div class="pp-section" id="ppLangSection">
+      <div class="pp-section-head" data-i18n="pp_lang_head">🌐 Language / भाषा / மொழி</div>
+      <button class="pp-lang-nav-btn" id="ppOpenLangPage" onclick="if(window._openLangPage)window._openLangPage();">
+        <span class="pp-lang-nav-left">
+          <span class="pp-lang-nav-icon">🌐</span>
+          <span class="pp-lang-nav-text">
+            <span class="pp-lang-nav-title">Language Settings</span>
+            <span class="pp-lang-nav-sub" id="ppCurrentLangLabel">English</span>
+          </span>
+        </span>
+        <span class="pp-lang-nav-arrow">›</span>
+      </button>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="pp-danger-section">
+      <div class="pp-danger-head" data-i18n="pp_danger_head">⚠️ Danger Zone</div>
+      <div class="pp-danger-desc" data-i18n="pp_danger_desc">Deleting your account will <strong>permanently erase</strong> all your transactions, budgets, goals, and settings on this device. This <strong>cannot be undone</strong>.</div>
+      <button class="pp-delete-btn" id="ppDeleteBtn" data-i18n="pp_delete_btn">🗑️ Delete My Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LANGUAGE SETTINGS PAGE ═══════════ -->
+<div id="langSettingsPage">
+  <div class="pp-header">
+    <h1 class="pp-title">Language Settings</h1>
+    <button class="pp-back-btn" id="langPageBackBtn" onclick="if(window._closeLangPage)window._closeLangPage();">← Back</button>
+  </div>
+  <div class="pp-body">
+    <div class="pp-section" style="max-width:520px;margin:0 auto;">
+      <div class="pp-section-head">🌐 Choose Your Language</div>
+      <div class="lang-page-subtitle">Select the language for the entire app. Your choice is saved automatically.</div>
+      <div class="lang-page-grid" id="langPageGrid">
+        <button class="lang-page-btn active" data-lang="en" onclick="_selectLang('en')">
+          <span class="lang-page-flag">🇬🇧</span>
+          <span class="lang-page-name">English</span>
+          <span class="lang-page-native">English</span>
+          <span class="lang-page-check">✓</span>
+        </button>
+        <button class="lang-page-btn" data-lang="ta" onclick="_selectLang('ta')">
+          <span class="lang-page-flag">🇮🇳</span>
+          <span class="lang-page-name">Tamil</span>
+          <span class="lang-page-native">தமிழ்</span>
+          <span class="lang-page-check">✓</span>
+        </button>
+        <button class="lang-page-btn" data-lang="te" onclick="_selectLang('te')">
+          <span class="lang-page-flag">🇮🇳</span>
+          <span class="lang-page-name">Telugu</span>
+          <span class="lang-page-native">తెలుగు</span>
+          <span class="lang-page-check">✓</span>
+        </button>
+        <button class="lang-page-btn" data-lang="ml" onclick="_selectLang('ml')">
+          <span class="lang-page-flag">🇮🇳</span>
+          <span class="lang-page-name">Malayalam</span>
+          <span class="lang-page-native">മലയാളം</span>
+          <span class="lang-page-check">✓</span>
+        </button>
+        <button class="lang-page-btn" data-lang="kn" onclick="_selectLang('kn')">
+          <span class="lang-page-flag">🇮🇳</span>
+          <span class="lang-page-name">Kannada</span>
+          <span class="lang-page-native">ಕನ್ನಡ</span>
+          <span class="lang-page-check">✓</span>
+        </button>
+        <button class="lang-page-btn" data-lang="hi" onclick="_selectLang('hi')">
+          <span class="lang-page-flag">🇮🇳</span>
+          <span class="lang-page-name">Hindi</span>
+          <span class="lang-page-native">हिंदी</span>
+          <span class="lang-page-check">✓</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="pp-modal-overlay hidden" id="ppDeleteModal">
+  <div class="pp-modal">
+    <div class="pp-modal-icon">⚠️</div>
+    <div class="pp-modal-title">Delete Account?</div>
+    <div class="pp-modal-msg">Type your username <strong id="ppModalUsername">—</strong> to confirm.<br>All data will be erased permanently.</div>
+    <input class="pp-modal-input" id="ppModalInput" placeholder="type username here" autocomplete="off"/>
+    <div class="pp-modal-btns">
+      <button class="pp-modal-cancel" id="ppModalCancel">Cancel</button>
+      <button class="pp-modal-confirm" id="ppModalConfirm" disabled>Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GRAPH SHEET PAGE ═══════════ -->
+<div id="graphSheetPage">
+  <div class="gs-header">
+    <div class="gs-title-row">
+      <h1 class="gs-title" data-i18n="charts_title">Graph Sheet<span>.</span></h1>
+      <button class="gs-back-btn" id="gsBackBtn" data-i18n="charts_back">← Back to Ledger</button>
+    </div>
+    <div class="gs-tabs">
+      <button class="gs-tab active" data-gstab="weekly" data-i18n="charts_weekly">Weekly</button>
+      <button class="gs-tab" data-gstab="monthly" data-i18n="charts_monthly">Monthly</button>
+      <button class="gs-tab" data-gstab="yearly" data-i18n="charts_yearly">Yearly</button>
+    </div>
+  </div>
+  <div class="gs-summary">
+    <div class="gs-sum-card"><div class="gs-sum-label" data-i18n="charts_total_income">Total Income</div><div class="gs-sum-val pos" id="gsSumIncome">—</div></div>
+    <div class="gs-sum-card"><div class="gs-sum-label" data-i18n="charts_total_spent">Total Spent</div><div class="gs-sum-val neg" id="gsSumSpent">—</div></div>
+    <div class="gs-sum-card"><div class="gs-sum-label" data-i18n="charts_net_saved">Net Saved</div><div class="gs-sum-val neutral" id="gsSumNet">—</div></div>
+    <div class="gs-sum-card"><div class="gs-sum-label" data-i18n="charts_savings_rate">Savings Rate</div><div class="gs-sum-val" id="gsSumRate">—</div></div>
+  </div>
+  <div class="gs-body">
+    <!-- WEEKLY -->
+    <div class="gs-panel active" id="gsWeeklyPanel">
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_weekly_title"></h3>
+        <div class="gs-chart-label" data-i18n="gs_weekly_label"></div>
+        <div class="gs-graph-wrap" id="gsWeeklyBarWrap"></div>
+        <div class="gs-legend"><span><span class="swatch" style="background:var(--sage)"></span><span data-i18n="charts_income_lbl"></span></span><span><span class="swatch" style="background:var(--rust)"></span><span data-i18n="charts_expense_lbl"></span></span></div>
+      </div>
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_weekly_bal_title"></h3>
+        <div class="gs-graph-wrap" id="gsWeeklyBalWrap"></div>
+        <div class="gs-legend"><span><span class="swatch" style="background:var(--brass)"></span><span data-i18n="charts_balance_lbl"></span></span></div>
+      </div>
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_weekly_cat_title"></h3>
+        <div class="gs-cat-grid" id="gsWeeklyCatGrid"></div>
+      </div>
+    </div>
+    <!-- MONTHLY -->
+    <div class="gs-panel" id="gsMonthlyPanel">
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_monthly_title"></h3>
+        <div class="gs-chart-label" data-i18n="gs_monthly_label"></div>
+        <div class="gs-graph-wrap" id="gsMonthlyBarWrap"></div>
+        <div class="gs-legend"><span><span class="swatch" style="background:var(--sage)"></span><span data-i18n="charts_income_lbl"></span></span><span><span class="swatch" style="background:var(--rust)"></span><span data-i18n="charts_expense_lbl"></span></span><span><span class="swatch" style="background:var(--brass)"></span><span data-i18n="charts_balance_lbl"></span></span></div>
+      </div>
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_monthly_savrate_title"></h3>
+        <div class="gs-chart-label" data-i18n="gs_monthly_savrate_label"></div>
+        <div class="gs-graph-wrap" id="gsMonthlySavingsWrap"></div>
+        <div class="gs-legend"><span><span class="swatch" style="background:var(--brass)"></span><span data-i18n="gs_savrate_lbl"></span></span></div>
+      </div>
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_monthly_cat_title"></h3>
+        <div class="gs-cat-grid" id="gsMonthlyCatGrid"></div>
+      </div>
+    </div>
+    <!-- YEARLY -->
+    <div class="gs-panel" id="gsYearlyPanel">
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_yearly_title"></h3>
+        <div class="gs-chart-label" data-i18n="gs_yearly_label"></div>
+        <div class="gs-graph-wrap" id="gsYearlyBarWrap"></div>
+        <div class="gs-legend"><span><span class="swatch" style="background:var(--sage)"></span><span data-i18n="charts_income_lbl"></span></span><span><span class="swatch" style="background:var(--rust)"></span><span data-i18n="charts_expense_lbl"></span></span><span><span class="swatch" style="background:var(--brass)"></span><span data-i18n="charts_net_lbl"></span></span></div>
+      </div>
+      <div class="gs-chart-card">
+        <h3 class="gs-section-title" data-i18n="gs_yearly_cat_title"></h3>
+        <div class="gs-graph-wrap" id="gsYearlyCatWrap"></div>
+        <div class="gs-legend" id="gsYearlyCatLegend"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Transaction Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <h3>Edit Entry</h3>
+    <input type="hidden" id="editId">
+    <label>Description</label>
+    <input type="text" id="editDesc" placeholder="Description">
+    <label>Amount (₹)</label>
+    <input type="number" id="editAmt" min="0" step="0.01" placeholder="0.00">
+    <label>Category</label>
+    <select id="editCat"></select>
+    <label>Note (optional)</label>
+    <input type="text" id="editNote" placeholder="Any extra detail…">
+    <label>Date</label>
+    <input type="date" id="editDate">
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="editCancelBtn" type="button">Cancel</button>
+      <button class="btn" id="editSaveBtn" type="button">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════ PDF EXPORT OVERLAY ═══════════════════════════ -->
+<div id="pdfOverlay">
+  <div id="pdfBox">
+    <h2>📄 Export PDF</h2>
+    <p>Choose what to include in your PDF report.</p>
+    <div class="pdf-options">
+      <label class="pdf-option">
+        <input type="radio" name="pdfScope" value="month" checked>
+        Current month transactions
+      </label>
+      <label class="pdf-option">
+        <input type="radio" name="pdfScope" value="summary">
+        Monthly summary (income, spent, by category)
+      </label>
+      <label class="pdf-option">
+        <input type="radio" name="pdfScope" value="all">
+        All transactions (full ledger)
+      </label>
+    </div>
+    <div class="pdf-actions">
+      <button class="pdf-cancel" id="pdfCancelBtn">Cancel</button>
+      <button class="pdf-go" id="pdfGenerateBtn">Generate PDF</button>
+    </div>
+  </div>
+</div>
+
+<iframe id="pdfPrintFrame"></iframe>
+
+<!-- ══ PWA: Install Banner (Android/Chrome) ══ -->
+<div id="pwaInstallBanner">
+  <div class="pwa-banner-icon">FT.</div>
+  <div class="pwa-banner-text">
+    <div class="pwa-banner-title">Install FinHub</div>
+    <div class="pwa-banner-sub">Add to home screen — works offline, no app store needed</div>
+  </div>
+  <div class="pwa-banner-actions">
+    <button class="pwa-install-btn" id="pwaInstallBtn">Install</button>
+    <button class="pwa-dismiss-btn" id="pwaDismissBtn">Not now</button>
+  </div>
+</div>
+
+<!-- ══ PWA: iOS Safari tip ══ -->
+<div id="pwaIosTip">
+  <div class="ios-tip-title">Add FinHub to Home Screen</div>
+  <div class="ios-tip-body">
+    Tap the <strong>Share ⎙</strong> button below,<br>
+    then choose <strong>"Add to Home Screen"</strong><br>
+    to install FinHub as an app.
+  </div>
+  <button class="ios-tip-close" id="pwaIosTipClose">Got it</button>
+</div>
+
+<!-- ══ PWA: Offline / Online toasts ══ -->
+<div id="pwaOfflineToast">📵 Offline — all data still saved locally</div>
+<div id="pwaOnlineToast">✓ Back online</div>
+
+<script src="script.js"></script>
+</body>
+</html>
