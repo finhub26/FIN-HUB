@@ -41,8 +41,8 @@
     try {
       const body = JSON.stringify({
         user_id: uid,
-        description: tx.desc,
-        amount: tx.amount,
+        description: tx.desc || tx.description || '',
+        amount: parseFloat(tx.amount) || 0,
         category: tx.category,
         date: tx.date,
         note: tx.note || ''
@@ -88,8 +88,8 @@
       if (!localTransactions.length) return true;
       const rows = localTransactions.map(tx => ({
         user_id: uid,
-        description: tx.desc,
-        amount: tx.amount,
+        description: tx.desc || tx.description || '',
+        amount: parseFloat(tx.amount) || 0,
         category: tx.category,
         date: tx.date,
         note: tx.note || ''
