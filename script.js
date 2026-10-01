@@ -25,10 +25,11 @@
       return rows.map(r => ({
         id: String(r.id),
         date: r.date,
-        description: r.description,
-        category: r.category,
+        desc: r.description || '',
+        description: r.description || '',
+        category: r.category || '',
         note: r.note || '',
-        amount: parseFloat(r.amount)
+        amount: parseFloat(r.amount) || 0
       }));
     } catch(e) {
       console.warn('FinHub Supabase load error:', e);
@@ -99,7 +100,13 @@
         headers: HEADERS,
         body: JSON.stringify(rows)
       });
-      return res.ok || res.status === 201;
+      if (!res.ok) {
+        const err = await res.text();
+        console.error('FinHub Supabase insert error:', res.status, err);
+        return false;
+      }
+      console.log('FinHub: Synced', rows.length, 'rows to Supabase ☁️');
+      return true;
     } catch(e) {
       console.warn('FinHub Supabase full sync error:', e);
       return false;
