@@ -5,7 +5,7 @@
 */
 (function(){
   const SB_URL = 'https://uvfeswirizqaidzlnjcs.supabase.co';
-  const SB_KEY = 'sb_publishable_R9AQV26TWbfnzsNyQ3eZzg_WPeEAKl_';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2ZmVzd2lyaXpxYWlkemxuamNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTc1NjQsImV4cCI6MjEwNjMzMzU2NH0.jG1XMaeinSpfO_Vdt11zZNLX9mIGn6hMQ9bZGnDb9r0';
   const HEADERS = {
     'Content-Type': 'application/json',
     'apikey': SB_KEY,
