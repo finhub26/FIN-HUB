@@ -362,36 +362,14 @@ body {
   z-index: 2;
 }
 
-/* corner decorative hatch strips */
+/* corner decorative hatch strips - hidden */
 .splash-hatch-tl, .splash-hatch-br {
-  position: absolute;
-  width: 120px;
-  height: 120px;
-  pointer-events: none;
-  opacity: 0.06;
-}
-.splash-hatch-tl {
-  top: 0; left: 0;
-  background: repeating-linear-gradient(45deg, rgba(255,255,255,1) 0, rgba(255,255,255,1) 1px, transparent 0, transparent 8px);
-}
-.splash-hatch-br {
-  bottom: 0; right: 0;
-  background: repeating-linear-gradient(45deg, rgba(255,255,255,1) 0, rgba(255,255,255,1) 1px, transparent 0, transparent 8px);
+  display: none !important;
 }
 
-/* accent bars on left / right */
+/* accent bars on left / right - hidden */
 .splash-bar-left, .splash-bar-right {
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 4px;
-}
-.splash-bar-left {
-  left: 0;
-  background: linear-gradient(180deg, transparent, rgba(212,160,23,0.28) 40%, rgba(64,145,108,0.2) 70%, transparent);
-}
-.splash-bar-right {
-  right: 0;
-  background: linear-gradient(180deg, transparent, rgba(64,145,108,0.22) 40%, rgba(212,160,23,0.18) 70%, transparent);
+  display: none !important;
 }
 
 /* version tag at very bottom */
