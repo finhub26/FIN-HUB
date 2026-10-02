@@ -120,12 +120,59 @@
     }
   }
 
+  // ── Save user profile + passhash to Supabase ──
+  async function sbSaveUserProfile(uid, passhash, profile) {
+    try {
+      const body = JSON.stringify({
+        user_id: uid,
+        passhash: passhash,
+        name: profile.name || '',
+        email: profile.email || '',
+        phone: profile.phone || ''
+      });
+      // Upsert: insert or update if user_id already exists
+      const res = await fetch(SB_URL + '/rest/v1/user_profiles', {
+        method: 'POST',
+        headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.warn('FinHub Supabase profile save error:', res.status, errText);
+        return false;
+      }
+      return true;
+    } catch(e) {
+      console.warn('FinHub Supabase profile save error:', e);
+      return false;
+    }
+  }
+
+  // ── Load user profile + passhash from Supabase ──
+  async function sbLoadUserProfile(uid) {
+    try {
+      const res = await fetch(
+        SB_URL + '/rest/v1/user_profiles?user_id=eq.' + encodeURIComponent(uid) + '&limit=1',
+        { method: 'GET', headers: { ...HEADERS, 'Prefer': 'return=representation' } }
+      );
+      if (!res.ok) return null;
+      const rows = await res.json();
+      if (!rows || !rows.length) return null;
+      return rows[0]; // { user_id, passhash, name, email, phone }
+    } catch(e) {
+      console.warn('FinHub Supabase profile load error:', e);
+      return null;
+    }
+  }
+
   // Expose on window so app.js functions can call them
   window._sb = {
     load: sbLoadTransactions,
     save: sbSaveTransaction,
     delete: sbDeleteTransaction,
-    fullSync: sbFullSync
+    fullSync: sbFullSync,
+    saveProfile: sbSaveUserProfile,
+    loadProfile: sbLoadUserProfile
   };
 })();
 /* ===== lang-page.js ===== */
@@ -1562,10 +1609,19 @@ async function handleSignUp(e){
   if(!uid){ err.textContent='Enter a User ID (letters, numbers, . _ -).'; return; }
   if(pass.length<4){ err.textContent='Password must be at least 4 characters.'; return; }
   if(pass!==confirmPass){ err.textContent='Passwords do not match.'; return; }
-  const existingHash=await getStoredHash(uid);
+  // Check localStorage first
+  let existingHash=await getStoredHash(uid);
+  // Also check Supabase — so cross-device duplicate prevention works
+  if(!existingHash && window._sb && window._sb.loadProfile){
+    const sbProfile = await window._sb.loadProfile(uid);
+    if(sbProfile && sbProfile.passhash) existingHash = sbProfile.passhash;
+  }
   if(existingHash){ err.textContent='That User ID is already taken — sign in instead.'; return; }
   const hash=await sha256Hex(pass);
-  await setStoredHash(uid,hash); await setUserProfile(uid,{name,email,phone});
+  const profile={name,email,phone};
+  await setStoredHash(uid,hash); await setUserProfile(uid,profile);
+  // Sync to Supabase so other devices can login
+  if(window._sb && window._sb.saveProfile) window._sb.saveProfile(uid, hash, profile);
   _setUID(uid); await startApp();
 }
 
@@ -1575,10 +1631,32 @@ async function handleSignIn(e){
   const uid=sanitizeUserId($('siUserId').value); const pass=$('siPass').value;
   if(!uid){ err.textContent='Enter your User ID.'; return; }
   if(!pass){ err.textContent='Enter your password.'; return; }
-  const existingHash=await getStoredHash(uid);
+  let existingHash=await getStoredHash(uid);
+  let profileFromCloud=null;
+  // If not found locally, fetch from Supabase (cross-device login)
+  if(!existingHash && window._sb && window._sb.loadProfile){
+    const siBtn=document.getElementById('siBtn');
+    if(siBtn){ siBtn.disabled=true; siBtn.textContent='Checking…'; }
+    profileFromCloud = await window._sb.loadProfile(uid);
+    if(siBtn){ siBtn.disabled=false; siBtn.textContent='Sign In'; }
+    if(profileFromCloud && profileFromCloud.passhash){
+      existingHash = profileFromCloud.passhash;
+    }
+  }
   if(!existingHash){ err.textContent='No account with that User ID — sign up first.'; return; }
   const hash=await sha256Hex(pass);
-  if(hash===existingHash){ _setUID(uid); await startApp(); }
+  if(hash===existingHash){
+    // Cache cloud profile locally so next login on this device is instant
+    if(profileFromCloud){
+      await setStoredHash(uid, existingHash);
+      await setUserProfile(uid, {
+        name: profileFromCloud.name||'',
+        email: profileFromCloud.email||'',
+        phone: profileFromCloud.phone||''
+      });
+    }
+    _setUID(uid); await startApp();
+  }
   else { err.textContent='Incorrect password.'; $('siPass').value=''; }
 }
 
