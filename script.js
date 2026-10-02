@@ -1682,7 +1682,20 @@ function updateHeaderInsight(){
       netEl.className='header-insight-kpi-val'+(net<0?' neg':'');
       if(subEl){
         const txCount=monthTx.length;
-        subEl.textContent=txCount>0?`${txCount} entr${txCount===1?'y':'ies'} this month`:'no entries yet';
+        if(txCount>0){
+          const _lang=window._finhubLang||(function(){try{return localStorage.getItem('finhub_lang');}catch(e){return null;}})();
+          const _entryWord=(function(){
+            const _map={ta:'பதிவு',hi:'प्रविष्टि',te:'ఎంట్రీ',ml:'എൻട്രി',kn:'ನಮೂದು'};
+            return _map[_lang]||'entr'+(txCount===1?'y':'ies');
+          })();
+          const _thisMonth=(function(){
+            const _map={ta:'இம்மாதம்',hi:'इस महीने',te:'ఈ నెల',ml:'ഈ മാസം',kn:'ಈ ತಿಂಗಳು'};
+            return _map[_lang]||'this month';
+          })();
+          subEl.textContent=`${txCount} ${_entryWord} ${_thisMonth}`;
+        } else {
+          subEl.textContent=(window.finhubI18n&&window.finhubI18n.t)?window.finhubI18n.t('no entries yet'):'no entries yet';
+        }
       }
     }
   } catch(e){}
