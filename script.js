@@ -1691,7 +1691,7 @@ function updateHeaderInsight(){
 }
 
 // ── Theme ──
-function getSavedTheme(){ try{ const t=localStorage.getItem('tally:theme'); return t||'dark'; }catch(e){ return 'dark'; } }
+function getSavedTheme(){ try{ const t=localStorage.getItem('tally:theme'); return t||'light'; }catch(e){ return 'light'; } }
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme',theme==='dark'?'dark':'light');
   const label=theme==='dark'?'White':'Dark';
