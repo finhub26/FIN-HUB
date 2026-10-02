@@ -4519,13 +4519,20 @@ html[data-theme="dark"] .sb-new-btn .sb-icon {
   display: inline !important;
   color: #e879f9 !important;
   opacity: 1 !important;
+  visibility: visible !important;
+  font-style: normal !important;
   -webkit-text-fill-color: #e879f9 !important;
+  filter: none !important;
+  text-shadow: 0 0 8px rgba(232,121,249,0.5) !important;
 }
 html[data-theme="dark"] #sbLogout .sb-icon {
   display: inline !important;
-  color: rgba(226,232,240,0.75) !important;
+  color: #e2e8f0 !important;
   opacity: 1 !important;
-  -webkit-text-fill-color: rgba(226,232,240,0.75) !important;
+  visibility: visible !important;
+  font-style: normal !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+  filter: none !important;
 }
 
 /* 5. Dark theme sidebar text visible */
@@ -4537,6 +4544,13 @@ html[data-theme="dark"] #sbLogout { color: rgba(226,232,240,0.75) !important; }
 /* 6. Light theme darker labels */
 html[data-theme="light"] .qs-label { color: rgba(30,27,75,1) !important; font-weight: 700 !important; }
 html[data-theme="light"] .header-sparkline-label { color: rgba(30,27,75,1) !important; font-weight: 700 !important; }
-html[data-theme="light"] .header-insight-kpi-label { color: rgba(30,27,75,1) !important; font-weight: 700 !important; }
-html[data-theme="light"] .header-insight-kpi-sub { color: rgba(30,27,75,0.9) !important; }
+html[data-theme="light"] .header-insight-kpi-label { color: rgba(30,27,75,0.9) !important; font-weight: 700 !important; }
+html[data-theme="light"] .header-insight-kpi-sub { color: rgba(30,27,75,0.85) !important; font-weight: 600 !important; }
 html[data-theme="light"] .card h2 { color: #1e1b4b !important; font-weight: 700 !important; }
+
+/* 7. Light theme sidebar section labels — clearly visible */
+html[data-theme="light"] .sb-section-label {
+  color: rgba(30,27,75,0.65) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+}
