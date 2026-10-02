@@ -1747,9 +1747,38 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
 //  Web Audio API — no external file needed
 // ═══════════════════════════════════════════════════════
 (function playSplashChime(){
-  setTimeout(() => {
+  // ── Fix: Browser blocks autoplay without user gesture ──
+  // We create the context immediately, then resume it on
+  // first touch/click so mobile browsers allow the sound.
+  let _ctx = null;
+  let _played = false;
+
+  function _play() {
+    if (_played) return;
+    _played = true;
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (_ctx && _ctx.state === 'suspended') {
+        _ctx.resume().then(doPlay);
+      } else {
+        doPlay();
+      }
+    } catch(e) {
+      console.warn('FinHub chime play error', e);
+    }
+  }
+
+  // Listen for first interaction anywhere on the page
+  ['touchstart','touchend','mousedown','click','keydown'].forEach(ev => {
+    document.addEventListener(ev, _play, { once: true, passive: true });
+  });
+
+  // Also try after 300ms (works if page loads after prior interaction)
+  setTimeout(_play, 300);
+
+  function doPlay() {
+    try {
+      const ctx = _ctx || new (window.AudioContext || window.webkitAudioContext)();
+      _ctx = ctx;
 
       // Core note helper
       function N(freq, start, dur, peak, type = 'sine', detune = 0) {
@@ -1830,7 +1859,13 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
     } catch(e) {
       console.warn('FinHub Tender Waltz chime unavailable', e);
     }
-  }, 300);
+  } // end doPlay
+
+  // Pre-create context so it's ready (Chrome needs this before gesture)
+  try {
+    _ctx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e) {}
+
 })();
 
 // ═══════════════════════════════════════════════════════
