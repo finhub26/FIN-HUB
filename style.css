@@ -70,7 +70,7 @@ html[data-theme="light"] {
   --brass-dark: #4f46e5;
   --sage:       #059669;
   --rust:       #dc2626;
-  --muted:      rgba(30,27,75,0.72);
+  --muted:      rgba(30,27,75,0.90);
   --surface:    #ffffff;
   --hover:      #f1f0f8;
   --on-dark:    #1e1b4b;
@@ -2755,9 +2755,9 @@ html[data-theme="light"] .pp-section {
 }
 html[data-theme="light"] .pp-section-head { color: #1e1b4b; border-bottom-color: rgba(99,102,241,0.1); }
 html[data-theme="light"] .pp-row { border-bottom-color: rgba(99,102,241,0.07); }
-html[data-theme="light"] .pp-row-label { color: rgba(30,27,75,0.5); }
+html[data-theme="light"] .pp-row-label { color: rgba(30,27,75,0.88); }
 html[data-theme="light"] .pp-row-value { color: #1e1b4b; }
-html[data-theme="light"] .pp-edit-label { color: rgba(30,27,75,0.5); }
+html[data-theme="light"] .pp-edit-label { color: rgba(30,27,75,0.88); }
 html[data-theme="light"] .pp-save-btn {
   background: linear-gradient(135deg, #7c3aed, #4f46e5);
   color: #fff;
