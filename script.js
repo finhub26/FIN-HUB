@@ -711,7 +711,19 @@ function renderQuickStats(){
   }
   const biggest = Math.max(...monthTx.map(t=>Math.abs(t.amount)));
   const bigEntry = monthTx.find(t=>Math.abs(t.amount)===biggest);
-  $('qsBig').textContent = bigEntry ? `${fmt(-biggest)} (${bigEntry.desc.slice(0,14)})` : '—';
+  if (bigEntry) {
+    // Translate the description if it's the default English fallback word
+    const _T_qs = window._finhubT || {};
+    const rawDesc = bigEntry.desc;
+    const translatedDesc = (rawDesc === 'Expense' && _T_qs.form_expense)
+      ? _T_qs.form_expense
+      : (rawDesc === 'Income' && _T_qs.form_income)
+        ? _T_qs.form_income
+        : rawDesc;
+    $('qsBig').textContent = `${fmt(-biggest)} (${translatedDesc.slice(0,14)})`;
+  } else {
+    $('qsBig').textContent = '—';
+  }
   const daysInMonth = new Date(selectedMonth.slice(0,4), parseInt(selectedMonth.slice(5))+1, 0).getDate();
   const today = new Date();
   const passedDays = (monthKey(today.toISOString().slice(0,10))===selectedMonth) ? today.getDate() : daysInMonth;
@@ -1174,13 +1186,14 @@ function renderGoals(){
   const wrap=$('goalsList'); wrap.innerHTML='';
   const tableWrap=document.createElement('div'); tableWrap.className='goals-table-wrap';
   const tbl=document.createElement('table'); tbl.className='goals-table';
+  const _T_g = window._finhubT || {};
   tbl.innerHTML=`<thead><tr>
-    <th>Goal Name</th>
-    <th>Marychide</th>
-    <th class="num">Saved (₹)</th>
-    <th class="num">Target (₹)</th>
-    <th class="col-progress">Progress</th>
-    <th>Deposit</th>
+    <th>${_T_g.goals_col_name||'Goal Name'}</th>
+    <th>${_T_g.col_note||'Note'}</th>
+    <th class="num">${_T_g.col_saved||'Saved (₹)'}</th>
+    <th class="num">${_T_g.col_target||'Target (₹)'}</th>
+    <th class="col-progress">${_T_g.col_progress||'Progress'}</th>
+    <th>${_T_g.col_deposit||'Deposit'}</th>
     <th></th>
   </tr></thead>`;
   const tbody=document.createElement('tbody');
@@ -1213,7 +1226,7 @@ function renderGoals(){
   const tfoot=document.createElement('tfoot');
   tfoot.innerHTML=`<tr>
     <td><input type="text" id="goalName" placeholder="Goal name…"></td>
-    <td><input type="text" id="goalMarychide" placeholder="Marychide…"></td>
+    <td><input type="text" id="goalMarychide" placeholder="${_T_g.form_note_ph||'Any extra detail…'}"></td>
     <td class="num" colspan="2"><input type="number" id="goalTarget" placeholder="Target ₹" min="0" step="1" style="text-align:right;"></td>
     <td></td>
     <td></td>
@@ -1255,13 +1268,14 @@ function renderRecurring(){
   const tbl=document.createElement('table'); tbl.className='recur-table';
   // Build category options
   const catOptions=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const _T_r = window._finhubT || {};
   tbl.innerHTML=`<thead><tr>
-    <th>Name</th>
-    <th>Category</th>
-    <th>Frequency</th>
-    <th>Type</th>
-    <th>Marychide</th>
-    <th class="num">Amount (₹)</th>
+    <th>${_T_r.col_name||'Name'}</th>
+    <th>${_T_r.ledger_col_cat||'Category'}</th>
+    <th>${_T_r.col_frequency||'Frequency'}</th>
+    <th>${_T_r.col_type||'Type'}</th>
+    <th>${_T_r.col_note||'Note'}</th>
+    <th class="num">${_T_r.col_amount||'Amount (₹)'}</th>
     <th></th>
   </tr></thead>`;
   const tbody=document.createElement('tbody');
@@ -1275,7 +1289,7 @@ function renderRecurring(){
         <td class="rt-name">${r.name}</td>
         <td><span class="cat-pill">${r.category}</span></td>
         <td style="font-size:12px;font-family:var(--font-mono);color:var(--muted);">${freqLabel}</td>
-        <td><span style="font-size:11px;font-weight:600;color:${r.type==='income'?'var(--sage)':'var(--rust)'};">${r.type==='income'?'Income':'Expense'}</span></td>
+        <td><span style="font-size:11px;font-weight:600;color:${r.type==='income'?'var(--sage)':'var(--rust)'};">${r.type==='income'?((_T_r.form_income)||'Income'):((_T_r.form_expense)||'Expense')}</span></td>
         <td class="col-marychide">${r.marychide||'—'}</td>
         <td class="num rt-amt ${r.type}">${r.type==='expense'?'− ':'+ '}${fmt(r.amount)}</td>
         <td><div class="rt-actions">
@@ -1297,10 +1311,10 @@ function renderRecurring(){
       <option value="yearly">Yearly</option>
     </select></td>
     <td><select id="recurType">
-      <option value="expense">Expense</option>
-      <option value="income">Income</option>
+      <option value="expense">${_T_r.form_expense||'Expense'}</option>
+      <option value="income">${_T_r.form_income||'Income'}</option>
     </select></td>
-    <td><input type="text" id="recurMarychide" placeholder="Marychide…"></td>
+    <td><input type="text" id="recurMarychide" placeholder="${_T_r.form_note_ph||'Any extra detail…'}"></td>
     <td class="num"><input type="number" id="recurAmt" placeholder="₹" min="0" step="0.01" style="text-align:right;"></td>
     <td><button class="tfoot-add-btn" id="addRecurBtn">+ Add</button></td>
   </tr>`;
@@ -2326,6 +2340,16 @@ async function handleGuestLogin() {
       goals_deposit_footnote: 'Deposit amounts from your balance toward any goal.',
       recurring_title:   'Recurring Transactions',
       recurring_footnote:'Post a recurring entry to today\'s date anytime.',
+      goals_col_name:    'Goal Name',
+      col_note:          'Note',
+      col_saved:         'Saved (₹)',
+      col_target:        'Target (₹)',
+      col_progress:      'Progress',
+      col_deposit:       'Deposit',
+      col_name:          'Name',
+      col_type:          'Type',
+      col_frequency:     'Frequency',
+      col_amount:        'Amount (₹)',
       // Charts
       charts_title:       'Graph Sheet',
       charts_back:        '← Back to Ledger',
@@ -2465,6 +2489,16 @@ async function handleGuestLogin() {
       goals_savings:     'बचत लक्ष्य',
       goals_deposit_footnote: 'किसी भी लक्ष्य की ओर राशि जमा करें।',
       recurring_title:   'आवर्ती लेनदेन',
+      goals_col_name:    'लक्ष्य का नाम',
+      col_note:          'नोट',
+      col_saved:         'बचाए (₹)',
+      col_target:        'लक्ष्य (₹)',
+      col_progress:      'प्रगति',
+      col_deposit:       'जमा करें',
+      col_name:          'नाम',
+      col_type:          'प्रकार',
+      col_frequency:     'आवृत्ति',
+      col_amount:        'राशि (₹)',
       recurring_footnote:'कभी भी आवर्ती प्रविष्टि पोस्ट करें।',
       charts_title:       'ग्राफ शीट',
       charts_back:        '← वापस खाता बही',
@@ -2592,6 +2626,16 @@ async function handleGuestLogin() {
       goals_savings:     'சேமிப்பு இலக்குகள்',
       goals_deposit_footnote: 'உங்கள் இருப்பிலிருந்து இலக்கை நோக்கி தொகையை வைப்பிடுங்கள்.',
       recurring_title:   'தொடர் பரிவர்த்தனைகள்',
+      goals_col_name:    'இலக்கின் பெயர்',
+      col_note:          'குறிப்பு',
+      col_saved:         'சேமித்தது (₹)',
+      col_target:        'இலக்கு (₹)',
+      col_progress:      'முன்னேற்றம்',
+      col_deposit:       'டெபாசிட்',
+      col_name:          'பெயர்',
+      col_type:          'வகை',
+      col_frequency:     'அதிர்வெண்',
+      col_amount:        'தொகை (₹)',
       recurring_footnote:'எந்த நேரத்திலும் தொடர் பதிவை இடுங்கள்.',
       charts_title:       'வரைபட தாள்',
       charts_back:        '← கணக்கேட்டுக்கு திரும்பு',
@@ -2719,6 +2763,16 @@ async function handleGuestLogin() {
       goals_savings:     'పొదుపు లక్ష్యాలు',
       goals_deposit_footnote: 'మీ నిల్వ నుండి లక్ష్యానికి జమ చేయండి.',
       recurring_title:   'పునరావృత లావాదేవీలు',
+      goals_col_name:    'లక్ష్యం పేరు',
+      col_note:          'గమనిక',
+      col_saved:         'పొదుపు (₹)',
+      col_target:        'లక్ష్యం (₹)',
+      col_progress:      'పురోగతి',
+      col_deposit:       'డిపాజిట్',
+      col_name:          'పేరు',
+      col_type:          'రకం',
+      col_frequency:     'ఫ్రీక్వెన్సీ',
+      col_amount:        'మొత్తం (₹)',
       recurring_footnote:'ఎప్పుడైనా పునరావృత నమోదు పోస్ట్ చేయండి.',
       charts_title:       'గ్రాఫ్ షీట్',
       charts_back:        '← లెడ్జర్‌కు తిరిగి',
@@ -2846,6 +2900,16 @@ async function handleGuestLogin() {
       goals_savings:     'സേവിംഗ്സ് ലക്ഷ്യങ്ങൾ',
       goals_deposit_footnote: 'നിങ്ങളുടെ ബാലൻസിൽ നിന്ന് ലക്ഷ്യത്തിലേക്ക് തുക നിക്ഷേപിക്കുക.',
       recurring_title:   'ആവർത്തിക്കുന്ന ഇടപാടുകൾ',
+      goals_col_name:    'ലക്ഷ്യത്തിന്റെ പേര്',
+      col_note:          'കുറിപ്പ്',
+      col_saved:         'സമ്പാദിച്ചത് (₹)',
+      col_target:        'ലക്ഷ്യം (₹)',
+      col_progress:      'പുരോഗതി',
+      col_deposit:       'നിക്ഷേപിക്കുക',
+      col_name:          'പേര്',
+      col_type:          'തരം',
+      col_frequency:     'ആവൃത്തി',
+      col_amount:        'തുക (₹)',
       recurring_footnote:'ഏത് സമയത്തും ആവർത്തിക്കുന്ന എൻട്രി പോസ്റ്റ് ചെയ്യുക.',
       charts_title:       'ഗ്രാഫ് ഷീറ്റ്',
       charts_back:        '← ലെഡ്ജറിലേക്ക് മടങ്ങുക',
@@ -2973,6 +3037,16 @@ async function handleGuestLogin() {
       goals_savings:     'ಉಳಿತಾಯ ಗುರಿಗಳು',
       goals_deposit_footnote: 'ನಿಮ್ಮ ಬ್ಯಾಲೆನ್ಸ್‌ನಿಂದ ಗುರಿಯೆಡೆ ಠೇವಣಿ ಮಾಡಿ.',
       recurring_title:   'ಪುನರಾವರ್ತಿತ ವಹಿವಾಟುಗಳು',
+      goals_col_name:    'ಗುರಿಯ ಹೆಸರು',
+      col_note:          'ಟಿಪ್ಪಣಿ',
+      col_saved:         'ಉಳಿಸಿದ್ದು (₹)',
+      col_target:        'ಗುರಿ (₹)',
+      col_progress:      'ಪ್ರಗತಿ',
+      col_deposit:       'ಜಮಾ ಮಾಡಿ',
+      col_name:          'ಹೆಸರು',
+      col_type:          'ಪ್ರಕಾರ',
+      col_frequency:     'ಆವರ್ತನ',
+      col_amount:        'ಮೊತ್ತ (₹)',
       recurring_footnote:'ಯಾವಾಗ ಬೇಕಾದರೂ ಪುನರಾವರ್ತಿತ ನಮೂದು ಪೋಸ್ಟ್ ಮಾಡಿ.',
       charts_title:       'ಗ್ರಾಫ್ ಶೀಟ್',
       charts_back:        '← ಲೆಡ್ಜರ್‌ಗೆ ಹಿಂತಿರುಗಿ',
@@ -3219,6 +3293,11 @@ async function handleGuestLogin() {
     // Expose for dynamic JS (greetings etc)
     window._finhubT = T;
     window._finhubLang = lang;
+
+    // Re-render dynamically-built tables so column headers update immediately
+    if (typeof renderGoals === 'function') try { renderGoals(); } catch(e) {}
+    if (typeof renderRecurring === 'function') try { renderRecurring(); } catch(e) {}
+    if (typeof renderQuickStats === 'function') try { renderQuickStats(); } catch(e) {}
   }
 
   // ── Wire up language buttons ────────────────────────────
