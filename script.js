@@ -394,12 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const now=new Date(); const weeks=[];
     for(let i=11;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i*7); const [y,w]=getISOWeek(d); const key=y+'-W'+(w<10?'0':'')+w; if(!weeks.find(x=>x.key===key)) weeks.push({key,label:weekLabel(key)}); }
     const wd=weeks.map(({key,label})=>{ const tx=window.transactions.filter(t=>weekKey(t.date)===key); return {key,label,income:tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0),expense:tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0),tx}; });
-    const all=[...window.transactions].sort((a,b)=>a.date.localeCompare(b.date));
-    // Opening balance = sum of all transactions BEFORE the first week in the window
-    const firstKey = wd.length ? wd[0].key : '';
-    let run = all.filter(t => weekKey(t.date) < firstKey).reduce((s,t)=>s+t.amount, 0);
-    let idx = all.findIndex(t => weekKey(t.date) >= firstKey);
-    if (idx === -1) idx = all.length;
+    const all=[...window.transactions].sort((a,b)=>a.date.localeCompare(b.date)); let run=0,idx=0;
     const bals=wd.map(w=>{ while(idx<all.length&&weekKey(all[idx].date)<=w.key){run+=all[idx].amount;idx++;} return run; });
     barPairChart('gsWeeklyBarWrap',wd.map(d=>d.label),wd.map(d=>d.income),wd.map(d=>d.expense),false,null);
     lineChart('gsWeeklyBalWrap',wd.map(d=>d.label),bals,'var(--brass)',false);
@@ -412,12 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const now=new Date(); const months=[];
     for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.toISOString().slice(0,7)); }
     const md=months.map(m=>{ const tx=window.transactions.filter(t=>t.date.slice(0,7)===m); const d=new Date(m+'-01T00:00:00'); return {m,label:d.toLocaleString('default',{month:'short'}),income:tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0),expense:tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0),tx}; });
-    const all=[...window.transactions].sort((a,b)=>a.date.localeCompare(b.date));
-    // Opening balance = sum of all transactions BEFORE the first month in the window
-    const firstMonth = months.length ? months[0] : '';
-    let run = all.filter(t => t.date.slice(0,7) < firstMonth).reduce((s,t)=>s+t.amount, 0);
-    let idx = all.findIndex(t => t.date.slice(0,7) >= firstMonth);
-    if (idx === -1) idx = all.length;
+    const all=[...window.transactions].sort((a,b)=>a.date.localeCompare(b.date)); let run=0,idx=0;
     const bals=md.map(m=>{ while(idx<all.length&&all[idx].date.slice(0,7)<=m.m){run+=all[idx].amount;idx++;} return run; });
     barPairChart('gsMonthlyBarWrap',md.map(d=>d.label),md.map(d=>d.income),md.map(d=>d.expense),true,bals);
     lineChart('gsMonthlySavingsWrap',md.map(d=>d.label),md.map(d=>d.income>0?((d.income-d.expense)/d.income*100):0),'var(--brass)',true);
@@ -619,8 +609,7 @@ $('typeIncome').addEventListener('click', ()=>{
 $('addBtn').addEventListener('click', async ()=>{
   const amt = parseFloat($('fAmount').value);
   if(!amt||amt<=0){ $('fAmount').focus(); return; }
-  const _T_add = window._finhubT || {};
-  const desc = $('fDesc').value.trim() || (entryType==='income' ? (_T_add.form_income||'Income') : (_T_add.form_expense||'Expense'));
+  const desc = $('fDesc').value.trim() || (entryType==='income'?'Income':'Expense');
   const note = $('fNote').value.trim();
   const date = $('fDate').value || new Date().toISOString().slice(0,10);
   const category = entryType==='income' ? 'Income' : $('fCategory').value;
