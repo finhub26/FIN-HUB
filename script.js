@@ -1842,17 +1842,41 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
     }
   }
 
-  // ── Trigger on FIRST user interaction (mobile-safe) ──
-  var events = ['touchstart', 'touchend', 'mousedown', 'click', 'keydown', 'pointerdown'];
-  function onFirstInteraction() {
+  // ── Auto-play as soon as DOM is ready (logo visible) ──
+  // Edge/Chrome with site sound permission = works immediately.
+  // Fallback: also listen for first touch/click on mobile.
+  function tryAutoPlay() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      var testCtx = new AC();
+      if (testCtx.state === 'running') {
+        // Browser allows autoplay — play now!
+        testCtx.close();
+        doPlay();
+        return;
+      }
+      testCtx.close();
+    } catch(e) {}
+    // Fallback: wait for first interaction
+    var events = ['touchstart','mousedown','click','pointerdown','keydown'];
+    function onGesture() {
+      events.forEach(function(ev) {
+        document.removeEventListener(ev, onGesture, true);
+      });
+      doPlay();
+    }
     events.forEach(function(ev) {
-      document.removeEventListener(ev, onFirstInteraction, true);
+      document.addEventListener(ev, onGesture, { once: true, capture: true, passive: true });
     });
-    doPlay();
   }
-  events.forEach(function(ev) {
-    document.addEventListener(ev, onFirstInteraction, { once: true, capture: true, passive: true });
-  });
+
+  // Run when splash logo appears (DOMContentLoaded or immediately)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryAutoPlay);
+  } else {
+    tryAutoPlay();
+  }
 
 })();
 
