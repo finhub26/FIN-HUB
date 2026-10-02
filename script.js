@@ -1694,7 +1694,7 @@ function updateHeaderInsight(){
 function getSavedTheme(){ try{ const t=localStorage.getItem('tally:theme'); return t||'light'; }catch(e){ return 'light'; } }
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme',theme==='dark'?'dark':'light');
-  const label=theme==='dark'?'White':'Dark'; 
+  const label=theme==='dark'?'White':'Dark';
   const tb=$('themeToggle'); if(tb) tb.textContent=label;
   // Update sparkline colors after theme change
   setTimeout(updateHeaderInsight, 50);
@@ -2479,8 +2479,8 @@ async function handleGuestLogin() {
       greeting_afternoon: 'Good afternoon',
       greeting_evening: 'Good evening',
       greeting_night: 'Good night',
-      header_theme_dark:  'Dark',
-      header_theme_light: 'White',
+      header_theme_dark:  '🌙 Dark',
+      header_theme_light: '☀️ White',
       header_7day_flow:  '7-day flow',
       header_net_month:  'Net this month',
       header_no_entries: 'no entries yet',
@@ -2625,8 +2625,8 @@ async function handleGuestLogin() {
       nav_account:    'खाता',
       nav_recent_months: 'हाल के महीने',
       header_greeting: 'आपकी घरेलू खाता बही',
-      header_theme_dark:  'Dark',
-      header_theme_light: 'White',
+      header_theme_dark:  '🌙 डार्क',
+      header_theme_light: '☀️ White',
       header_7day_flow:  '7-दिन का प्रवाह',
       header_net_month:  'इस माह का शुद्ध',
       header_no_entries: 'अभी कोई प्रविष्टि नहीं',
@@ -2752,8 +2752,8 @@ async function handleGuestLogin() {
       nav_account:    'கணக்கு',
       nav_recent_months: 'சமீபத்திய மாதங்கள்',
       header_greeting: 'உங்கள் குடும்ப கணக்கேடு',
-      header_theme_dark:  'Dark',
-      header_theme_light: 'White',
+      header_theme_dark:  '🌙 இருட்டு',
+      header_theme_light: '☀️ White',
       header_7day_flow:  '7-நாள் ஓட்டம்',
       header_net_month:  'இம்மாத நிகர',
       header_no_entries: 'இன்னும் பதிவுகள் இல்லை',
@@ -2879,8 +2879,8 @@ async function handleGuestLogin() {
       nav_account:    'ఖాతా',
       nav_recent_months: 'ఇటీవలి నెలలు',
       header_greeting: 'మీ గృహ లెడ్జర్',
-      header_theme_dark:  'Dark',
-      header_theme_light: 'White',
+      header_theme_dark:  '🌙 డార్క్',
+      header_theme_light: '☀️ White',
       header_7day_flow:  '7-రోజుల ప్రవాహం',
       header_net_month:  'ఈ నెల నికర',
       header_no_entries: 'ఇంకా నమోదులు లేవు',
@@ -3006,8 +3006,8 @@ async function handleGuestLogin() {
       nav_account:    'അക്കൗണ്ട്',
       nav_recent_months: 'സമീപ മാസങ്ങൾ',
       header_greeting: 'നിങ്ങളുടെ ഗൃഹ ലെഡ്ജർ',
-      header_theme_dark:  'Dark',
-      header_theme_light: 'White',
+      header_theme_dark:  '🌙 ഇരുണ്ടത്',
+      header_theme_light: '☀️ White',
       header_7day_flow:  '7-ദിവസ പ്രവാഹം',
       header_net_month:  'ഈ മാസം നെറ്റ്',
       header_no_entries: 'ഇതുവരെ എൻട്രികൾ ഇല്ല',
@@ -3133,8 +3133,8 @@ async function handleGuestLogin() {
       nav_account:    'ಖಾತೆ',
       nav_recent_months: 'ಇತ್ತೀಚಿನ ತಿಂಗಳುಗಳು',
       header_greeting: 'ನಿಮ್ಮ ಮನೆಯ ಲೆಡ್ಜರ್',
-      header_theme_dark:  'Dark',
-      header_theme_light: 'White',
+      header_theme_dark:  '🌙 ಡಾರ್ಕ್',
+      header_theme_light: '☀️ White',
       header_7day_flow:  '7-ದಿನ ಹರಿವು',
       header_net_month:  'ಈ ತಿಂಗಳ ನಿವ್ವಳ',
       header_no_entries: 'ಇನ್ನೂ ನಮೂದುಗಳಿಲ್ಲ',
@@ -3395,7 +3395,7 @@ async function handleGuestLogin() {
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      themeBtn.textContent = isDark ? T.header_theme_dark : T.header_theme_light;
+      themeBtn.textContent = isDark ? T.header_theme_light : T.header_theme_dark;
     }
 
     // Update lang buttons active state
