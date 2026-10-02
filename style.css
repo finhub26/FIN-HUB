@@ -2589,12 +2589,12 @@ html[data-theme="light"] .toggle-row button.active.income  { background: #059669
 
 /* ── Add to Ledger button ── */
 html[data-theme="dark"] .btn {
-  background: linear-gradient(135deg, #a21caf 0%, #6d28d9 100%);
-  box-shadow: 0 3px 12px rgba(162,28,175,0.28), 0 0 18px rgba(162,28,175,0.12), 0 0 0 1px rgba(162,28,175,0.1);
+  background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%);
+  box-shadow: 0 3px 12px rgba(192,38,211,0.35), 0 0 18px rgba(124,58,237,0.2);
 }
 html[data-theme="dark"] .btn:hover {
-  background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%);
-  box-shadow: 0 4px 18px rgba(192,38,211,0.35), 0 0 26px rgba(192,38,211,0.18), 0 0 0 1px rgba(192,38,211,0.15);
+  background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 18px rgba(192,38,211,0.45), 0 0 26px rgba(139,92,246,0.25);
 }
 html[data-theme="light"] .btn {
   background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%);
@@ -3655,6 +3655,8 @@ tbody tr:hover .del-btn { color: var(--muted); }
   color: var(--on-dark); border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; width: 100%;
 }
 .goals-table tfoot .tfoot-add-btn:hover { opacity: .88; }
+html[data-theme="dark"] .goals-table tfoot .tfoot-add-btn { background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%); color: #ffffff; border: none; }
+html[data-theme="dark"] .goals-table tfoot .tfoot-add-btn:hover { background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%); }
 
 /* ── Recurring Table ── */
 .recur-table-wrap { overflow-x: auto; margin-bottom: 10px; }
@@ -3692,6 +3694,8 @@ tbody tr:hover .del-btn { color: var(--muted); }
   color: var(--on-dark); border: none; border-radius: 3px; cursor: pointer; white-space: nowrap; width: 100%;
 }
 .recur-table tfoot .tfoot-add-btn:hover { opacity: .88; }
+html[data-theme="dark"] .recur-table tfoot .tfoot-add-btn { background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%); color: #ffffff; border: none; }
+html[data-theme="dark"] .recur-table tfoot .tfoot-add-btn:hover { background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%); }
 
 /* ═══════════════════════════════════════════════════════
    MENU (3-dot dropdown)
