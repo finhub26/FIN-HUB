@@ -1614,8 +1614,6 @@ $('menuLogoutBtn').addEventListener('click', ()=>{
   $('appShell').classList.add('hidden');
   window._greetingUser = undefined;
   resetAuthForms();
-  const hp = $('homePage');
-  if(hp) hp.style.display = 'none';
   if(typeof initAuth === 'function') initAuth();
   const lo = $('loginOverlay');
   if(lo){
@@ -1725,348 +1723,16 @@ function updateHeaderPills(){
   } catch(e){}
 }
 
-// ── Navigate from home page to login ──
+// ── Navigate to login ──
 function homeToLogin(){
-  const hp = $('homePage');
-  hp.style.opacity='1';
-  hp.style.transition='opacity 0.4s ease';
-  hp.style.opacity='0';
-  setTimeout(()=>{
-    hp.style.display='none';
-    initAuth();
-    $('loginOverlay').classList.remove('hidden');
-  }, 400);
+  if(typeof initAuth === 'function') initAuth();
+  const lo = $('loginOverlay');
+  if(lo) lo.classList.remove('hidden');
 }
 
 // ── Logout goes back to home ──
 $('menuLogoutBtn').removeEventListener && null; // already bound above
 
-// ═══════════════════════════════════════════════════════
-//  SPLASH CHIME — 🌸 Tender Waltz (Love & Feel-Good)
-//  Slow 3/4 waltz · G major · vibrato · teary shimmer
-//  Web Audio API — no external file needed
-// ═══════════════════════════════════════════════════════
-(function playSplashChime(){
-  // ══════════════════════════════════════════════════════
-  // 🌸 Tender Waltz — Mobile-safe Web Audio
-  // Rule: AudioContext MUST be created inside a user gesture
-  // on iOS Safari. So we create it fresh on first touch/click.
-  // ══════════════════════════════════════════════════════
-  var played = false;
-
-  function doPlay() {
-    if (played) return;
-    played = true;
-    try {
-      // Always create FRESH inside the gesture handler
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      var ctx = new AC();
-
-      function N(freq, start, dur, peak, type, detune) {
-        type   = type   || 'sine';
-        detune = detune || 0;
-        var o = ctx.createOscillator();
-        var g = ctx.createGain();
-        o.connect(g);
-        g.connect(ctx.destination);
-        o.type = type;
-        o.frequency.setValueAtTime(freq, ctx.currentTime + start);
-        if (detune) o.detune.setValueAtTime(detune, ctx.currentTime + start);
-        g.gain.setValueAtTime(0, ctx.currentTime + start);
-        g.gain.linearRampToValueAtTime(peak, ctx.currentTime + start + 0.04);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-        o.start(ctx.currentTime + start);
-        o.stop(ctx.currentTime + start + dur + 0.05);
-      }
-
-      function V(freq, start, dur, peak) {
-        N(freq,     start, dur,       peak);
-        N(freq,     start, dur,       peak * 0.4, 'sine', 6);
-        N(freq,     start, dur,       peak * 0.4, 'sine', -6);
-        N(freq * 2, start, dur * 0.4, peak * 0.2);
-        var o = ctx.createOscillator();
-        var g = ctx.createGain();
-        o.connect(g);
-        g.connect(ctx.destination);
-        o.type = 'sine';
-        var t0 = ctx.currentTime + start;
-        o.frequency.setValueAtTime(freq,           t0);
-        o.frequency.linearRampToValueAtTime(freq * 1.008, t0 + dur * 0.3);
-        o.frequency.linearRampToValueAtTime(freq * 0.994, t0 + dur * 0.65);
-        o.frequency.linearRampToValueAtTime(freq,         t0 + dur);
-        g.gain.setValueAtTime(0,          t0);
-        g.gain.linearRampToValueAtTime(peak * 0.3, t0 + 0.08);
-        g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
-        o.start(t0);
-        o.stop(t0 + dur + 0.05);
-      }
-
-      var bpm = 72;
-      var s   = 60 / bpm / 3; // waltz triplet step
-
-      // ── Waltz bass ──
-      for (var bar = 0; bar < 4; bar++) {
-        var b = bar * s * 3;
-        N(55,     b,        0.5,  0.17);
-        N(73.42,  b,        0.3,  0.08);
-        N(196,    b + s,    0.3,  0.07, 'triangle');
-        N(246.94, b + s,    0.3,  0.06, 'triangle');
-        N(174.61, b + s*2,  0.3,  0.06, 'triangle');
-        N(220,    b + s*2,  0.3,  0.05, 'triangle');
-      }
-
-      // ── Tender Waltz melody: G major ──
-      V(392.00,  0,        2.0, 0.13); // G4
-      V(440.00,  s*3,      1.9, 0.12); // A4
-      V(493.88,  s*6,      1.8, 0.12); // B4
-      V(440.00,  s*9,      1.6, 0.11); // A4
-      V(392.00,  s*11,     1.5, 0.11); // G4
-      V(493.88,  s*13,     1.4, 0.12); // B4
-      V(587.33,  s*15,     1.3, 0.12); // D5
-      V(783.99,  s*17,     3.0, 0.17); // G5 — final
-
-      // ── Teary shimmer ──
-      N(1567.98, s*17,        2.5, 0.04);
-      N(1975.53, s*17 + 0.06, 2.0, 0.025);
-      N(2637.02, s*17 + 0.12, 1.5, 0.015);
-
-      // ── Warm pad ──
-      N(49,  0,   6.5, 0.06);
-      N(98,  0.2, 6.2, 0.05);
-      N(196, 0.4, 6.0, 0.03);
-
-      console.log('🌸 FinHub: Tender Waltz playing!');
-    } catch(e) {
-      console.warn('FinHub Tender Waltz error:', e);
-    }
-  }
-
-  // ── Auto-play as soon as DOM is ready (logo visible) ──
-  // Edge/Chrome with site sound permission = works immediately.
-  // Fallback: also listen for first touch/click on mobile.
-  function tryAutoPlay() {
-    try {
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      var testCtx = new AC();
-      if (testCtx.state === 'running') {
-        // Browser allows autoplay — play now!
-        testCtx.close();
-        doPlay();
-        return;
-      }
-      testCtx.close();
-    } catch(e) {}
-    // Fallback: wait for first interaction
-    var events = ['touchstart','mousedown','click','pointerdown','keydown'];
-    function onGesture() {
-      events.forEach(function(ev) {
-        document.removeEventListener(ev, onGesture, true);
-      });
-      doPlay();
-    }
-    events.forEach(function(ev) {
-      document.addEventListener(ev, onGesture, { once: true, capture: true, passive: true });
-    });
-  }
-
-  // Run when splash logo appears (DOMContentLoaded or immediately)
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', tryAutoPlay);
-  } else {
-    tryAutoPlay();
-  }
-
-})();
-
-// ═══════════════════════════════════════════════════════
-//  SPLASH SCREEN ANIMATION + INIT
-// ═══════════════════════════════════════════════════════
-(function runSplash(){
-  const bar = $('splashBarFill');
-  const txt = $('splashLoadingText');
-  const messages = [
-    'Preparing your ledger…',
-    'Loading fonts…',
-    'Checking your data…',
-    'Almost ready…'
-  ];
-  let progress = 0;
-  let msgIdx = 0;
-
-  const interval = setInterval(()=>{
-    progress += Math.random()*8 + 4;
-    if(progress >= 100) progress = 100;
-    bar.style.width = progress + '%';
-    if(progress > 25 && msgIdx < 1){ msgIdx=1; txt.textContent=messages[1]; }
-    if(progress > 55 && msgIdx < 2){ msgIdx=2; txt.textContent=messages[2]; }
-    if(progress > 80 && msgIdx < 3){ msgIdx=3; txt.textContent=messages[3]; }
-    if(progress >= 100){
-      clearInterval(interval);
-      setTimeout(()=>{
-        const splash = $('splashScreen');
-        splash.classList.add('fade-out');
-        setTimeout(()=>{
-          splash.classList.add('hidden');
-          // Show home page
-          const hp = $('homePage');
-          hp.style.display = 'block';
-          hp.style.opacity = '0';
-          hp.style.transition = 'opacity 0.6s ease';
-          requestAnimationFrame(()=>{
-            requestAnimationFrame(()=>{ hp.style.opacity = '1'; });
-          });
-        }, 900);
-      }, 400);
-    }
-  }, 150);
-})();
-
-// ── Creative Orbit Canvas ──
-(function initOrbitCanvas(){
-  const canvas = document.getElementById('splashOrbitCanvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let W, H, cx, cy, raf;
-  let t = 0;
-
-  function resize(){
-    W = canvas.width  = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
-    cx = W/2; cy = H/2;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  // Ring configs
-  const rings = [
-    { r:210, speed:0.004,  tilt:12,  color:'rgba(212,160,23,',  dash:[18,10], width:1.2, glowColor:'rgba(212,160,23,0.35)' },
-    { r:175, speed:-0.007, tilt:-20, color:'rgba(64,145,108,',  dash:[6,14],  width:0.8, glowColor:'rgba(64,145,108,0.25)' },
-    { r:245, speed:0.0025, tilt:30,  color:'rgba(212,160,23,',  dash:[2,20],  width:0.6, glowColor:'rgba(212,160,23,0.15)' },
-    { r:145, speed:-0.012, tilt:-8,  color:'rgba(167,139,250,', dash:[10,8],  width:0.7, glowColor:'rgba(167,139,250,0.2)' },
-  ];
-
-  // Particles orbiting each ring
-  const particles = [
-    { ringIdx:0, angle:0,    size:5, trail:12 },
-    { ringIdx:0, angle:Math.PI, size:3, trail:8 },
-    { ringIdx:1, angle:1.2,  size:4, trail:10 },
-    { ringIdx:2, angle:2.5,  size:3, trail:7  },
-    { ringIdx:3, angle:0.8,  size:5, trail:14 },
-    { ringIdx:3, angle:3.5,  size:2.5, trail:6 },
-  ];
-
-  // Floating stardust
-  const stars = Array.from({length:40}, ()=>({
-    x: Math.random()*800-400,
-    y: Math.random()*600-300,
-    r: Math.random()*1.2+0.3,
-    twinkle: Math.random()*Math.PI*2,
-    speed: Math.random()*0.02+0.008
-  }));
-
-  function drawEllipseRing(ring, time){
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(ring.tilt * Math.PI/180);
-    const scaleY = 0.32;
-
-    // Glow shadow
-    ctx.shadowColor = ring.glowColor;
-    ctx.shadowBlur  = 18;
-
-    ctx.beginPath();
-    ctx.ellipse(0, 0, ring.r, ring.r * scaleY, 0, 0, Math.PI*2);
-    ctx.setLineDash(ring.dash);
-    ctx.lineDashOffset = -time * ring.r * Math.abs(ring.speed) * 80;
-    ctx.strokeStyle = ring.color + '0.22)';
-    ctx.lineWidth = ring.width;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  }
-
-  function getParticleXY(ring, angle){
-    const scaleY = 0.32;
-    const rad = ring.tilt * Math.PI/180;
-    const ex = ring.r * Math.cos(angle);
-    const ey = ring.r * scaleY * Math.sin(angle);
-    return {
-      x: cx + ex*Math.cos(rad) - ey*Math.sin(rad),
-      y: cy + ex*Math.sin(rad) + ey*Math.cos(rad)
-    };
-  }
-
-  function drawParticle(p, time){
-    const ring = rings[p.ringIdx];
-    const angle = p.angle + time * ring.speed * 60;
-
-    // Draw trail
-    for(let i=p.trail; i>=0; i--){
-      const a = angle - i * 0.07 * Math.sign(ring.speed);
-      const pos = getParticleXY(ring, a);
-      const alpha = (1 - i/p.trail) * 0.6;
-      const sz = p.size * (1 - i/p.trail * 0.7);
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, Math.max(0.2, sz), 0, Math.PI*2);
-      ctx.fillStyle = ring.color + alpha + ')';
-      ctx.fill();
-    }
-
-    // Draw core dot with glow
-    const pos = getParticleXY(ring, angle);
-    ctx.save();
-    ctx.shadowColor = ring.glowColor;
-    ctx.shadowBlur  = 12;
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, p.size, 0, Math.PI*2);
-    ctx.fillStyle = ring.color + '0.95)';
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawStars(time){
-    stars.forEach(s=>{
-      const pulse = 0.4 + 0.6*Math.sin(s.twinkle + time * s.speed * 60);
-      ctx.beginPath();
-      ctx.arc(cx + s.x, cy + s.y, Math.max(0.1, s.r * pulse), 0, Math.PI*2);
-      ctx.fillStyle = `rgba(212,160,23,${0.08 + 0.12*pulse})`;
-      ctx.fill();
-    });
-  }
-
-  // Central radial glow pulse
-  function drawCenterGlow(time){
-    const pulse = 0.6 + 0.4*Math.sin(time*1.8);
-    const grad = ctx.createRadialGradient(cx,cy,0, cx,cy,130);
-    grad.addColorStop(0,   `rgba(212,160,23,${0.06*pulse})`);
-    grad.addColorStop(0.5, `rgba(64,145,108,${0.03*pulse})`);
-    grad.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.beginPath();
-    ctx.arc(cx, cy, 130, 0, Math.PI*2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-  }
-
-  function frame(){
-    ctx.clearRect(0,0,W,H);
-    drawStars(t);
-    drawCenterGlow(t);
-    // rings removed
-    // particles removed
-    t += 0.016;
-
-    // Stop if splash is hidden
-    const splash = document.getElementById('splashScreen');
-    if(splash && (splash.classList.contains('hidden') || splash.style.display==='none')){
-      cancelAnimationFrame(raf);
-      return;
-    }
-    raf = requestAnimationFrame(frame);
-  }
-  raf = requestAnimationFrame(frame);
-})();
 
 // ── PDF Export ──
 function buildPdfHtml(scope){
@@ -2559,38 +2225,19 @@ async function handleGuestLogin() {
   await startApp();
 }
 
-// Skip home page — go straight to login after splash
+// No splash — go straight to login on DOM ready
 (function() {
-  const splashEl = document.getElementById('splashScreen');
-  if (splashEl) {
-    const observer = new MutationObserver(() => {
-      if (splashEl.classList.contains('hidden') || splashEl.style.display === 'none') {
-        observer.disconnect();
-        const hp = document.getElementById('homePage');
-        if (hp) hp.style.display = 'none';
-        if (typeof initAuth === 'function') initAuth();
-        const lo = document.getElementById('loginOverlay');
-        if (lo) {
-          lo.classList.remove('hidden');
-          // Re-trigger art deco card animation for login panel
-          const loginCard = lo.querySelector('.ad-card');
-          if (loginCard) {
-            loginCard.classList.remove('ad-animate');
-            void loginCard.offsetWidth; // reflow
-            loginCard.classList.add('ad-animate');
-          }
-        }
-      }
-    });
-    observer.observe(splashEl, { attributes: true, attributeFilter: ['class', 'style'] });
-  }
-  window.homeToLogin = function() {
-    const hp = document.getElementById('homePage');
-    if (hp) hp.style.display = 'none';
+  function showLogin() {
     if (typeof initAuth === 'function') initAuth();
     const lo = document.getElementById('loginOverlay');
     if (lo) lo.classList.remove('hidden');
-  };
+  }
+  window.homeToLogin = showLogin;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showLogin);
+  } else {
+    showLogin();
+  }
 })();
 
 /* ===== i18n.js ===== */
