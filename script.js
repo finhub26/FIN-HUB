@@ -1747,124 +1747,112 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
 //  Web Audio API — no external file needed
 // ═══════════════════════════════════════════════════════
 (function playSplashChime(){
-  // ── Fix: Browser blocks autoplay without user gesture ──
-  // We create the context immediately, then resume it on
-  // first touch/click so mobile browsers allow the sound.
-  let _ctx = null;
-  let _played = false;
+  // ══════════════════════════════════════════════════════
+  // 🌸 Tender Waltz — Mobile-safe Web Audio
+  // Rule: AudioContext MUST be created inside a user gesture
+  // on iOS Safari. So we create it fresh on first touch/click.
+  // ══════════════════════════════════════════════════════
+  var played = false;
 
-  function _play() {
-    if (_played) return;
-    _played = true;
+  function doPlay() {
+    if (played) return;
+    played = true;
     try {
-      if (_ctx && _ctx.state === 'suspended') {
-        _ctx.resume().then(doPlay);
-      } else {
-        doPlay();
+      // Always create FRESH inside the gesture handler
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      var ctx = new AC();
+
+      function N(freq, start, dur, peak, type, detune) {
+        type   = type   || 'sine';
+        detune = detune || 0;
+        var o = ctx.createOscillator();
+        var g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.type = type;
+        o.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        if (detune) o.detune.setValueAtTime(detune, ctx.currentTime + start);
+        g.gain.setValueAtTime(0, ctx.currentTime + start);
+        g.gain.linearRampToValueAtTime(peak, ctx.currentTime + start + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+        o.start(ctx.currentTime + start);
+        o.stop(ctx.currentTime + start + dur + 0.05);
       }
+
+      function V(freq, start, dur, peak) {
+        N(freq,     start, dur,       peak);
+        N(freq,     start, dur,       peak * 0.4, 'sine', 6);
+        N(freq,     start, dur,       peak * 0.4, 'sine', -6);
+        N(freq * 2, start, dur * 0.4, peak * 0.2);
+        var o = ctx.createOscillator();
+        var g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.type = 'sine';
+        var t0 = ctx.currentTime + start;
+        o.frequency.setValueAtTime(freq,           t0);
+        o.frequency.linearRampToValueAtTime(freq * 1.008, t0 + dur * 0.3);
+        o.frequency.linearRampToValueAtTime(freq * 0.994, t0 + dur * 0.65);
+        o.frequency.linearRampToValueAtTime(freq,         t0 + dur);
+        g.gain.setValueAtTime(0,          t0);
+        g.gain.linearRampToValueAtTime(peak * 0.3, t0 + 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+        o.start(t0);
+        o.stop(t0 + dur + 0.05);
+      }
+
+      var bpm = 72;
+      var s   = 60 / bpm / 3; // waltz triplet step
+
+      // ── Waltz bass ──
+      for (var bar = 0; bar < 4; bar++) {
+        var b = bar * s * 3;
+        N(55,     b,        0.5,  0.17);
+        N(73.42,  b,        0.3,  0.08);
+        N(196,    b + s,    0.3,  0.07, 'triangle');
+        N(246.94, b + s,    0.3,  0.06, 'triangle');
+        N(174.61, b + s*2,  0.3,  0.06, 'triangle');
+        N(220,    b + s*2,  0.3,  0.05, 'triangle');
+      }
+
+      // ── Tender Waltz melody: G major ──
+      V(392.00,  0,        2.0, 0.13); // G4
+      V(440.00,  s*3,      1.9, 0.12); // A4
+      V(493.88,  s*6,      1.8, 0.12); // B4
+      V(440.00,  s*9,      1.6, 0.11); // A4
+      V(392.00,  s*11,     1.5, 0.11); // G4
+      V(493.88,  s*13,     1.4, 0.12); // B4
+      V(587.33,  s*15,     1.3, 0.12); // D5
+      V(783.99,  s*17,     3.0, 0.17); // G5 — final
+
+      // ── Teary shimmer ──
+      N(1567.98, s*17,        2.5, 0.04);
+      N(1975.53, s*17 + 0.06, 2.0, 0.025);
+      N(2637.02, s*17 + 0.12, 1.5, 0.015);
+
+      // ── Warm pad ──
+      N(49,  0,   6.5, 0.06);
+      N(98,  0.2, 6.2, 0.05);
+      N(196, 0.4, 6.0, 0.03);
+
+      console.log('🌸 FinHub: Tender Waltz playing!');
     } catch(e) {
-      console.warn('FinHub chime play error', e);
+      console.warn('FinHub Tender Waltz error:', e);
     }
   }
 
-  // Listen for first interaction anywhere on the page
-  ['touchstart','touchend','mousedown','click','keydown'].forEach(ev => {
-    document.addEventListener(ev, _play, { once: true, passive: true });
+  // ── Trigger on FIRST user interaction (mobile-safe) ──
+  var events = ['touchstart', 'touchend', 'mousedown', 'click', 'keydown', 'pointerdown'];
+  function onFirstInteraction() {
+    events.forEach(function(ev) {
+      document.removeEventListener(ev, onFirstInteraction, true);
+    });
+    doPlay();
+  }
+  events.forEach(function(ev) {
+    document.addEventListener(ev, onFirstInteraction, { once: true, capture: true, passive: true });
   });
-
-  // Also try after 300ms (works if page loads after prior interaction)
-  setTimeout(_play, 300);
-
-  function doPlay() {
-    try {
-      const ctx = _ctx || new (window.AudioContext || window.webkitAudioContext)();
-      _ctx = ctx;
-
-      // Core note helper
-      function N(freq, start, dur, peak, type = 'sine', detune = 0) {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.type = type;
-        o.frequency.setValueAtTime(freq, start);
-        if (detune) o.detune.setValueAtTime(detune, start);
-        g.gain.setValueAtTime(0, start);
-        g.gain.linearRampToValueAtTime(peak, start + 0.04);
-        g.gain.exponentialRampToValueAtTime(0.001, start + dur);
-        o.start(start); o.stop(start + dur + 0.05);
-      }
-
-      // Vibrato note — tender waltz feel
-      function V(freq, start, dur, peak) {
-        N(freq, start, dur, peak);
-        N(freq, start, dur, peak * 0.4, 'sine', +6);
-        N(freq, start, dur, peak * 0.4, 'sine', -6);
-        N(freq * 2, start, dur * 0.4, peak * 0.2);
-        // vibrato oscillation
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.type = 'sine';
-        o.frequency.setValueAtTime(freq, start);
-        o.frequency.linearRampToValueAtTime(freq * 1.008, start + dur * 0.3);
-        o.frequency.linearRampToValueAtTime(freq * 0.994, start + dur * 0.65);
-        o.frequency.linearRampToValueAtTime(freq, start + dur);
-        g.gain.setValueAtTime(0, start);
-        g.gain.linearRampToValueAtTime(peak * 0.3, start + 0.08);
-        g.gain.exponentialRampToValueAtTime(0.001, start + dur);
-        o.start(start); o.stop(start + dur + 0.05);
-      }
-
-      const now = ctx.currentTime;
-      const bpm  = 72;
-      const s    = 60 / bpm / 3; // waltz triplet step
-
-      // ── Waltz bass: beat 1 strong, beat 2&3 soft chord ──
-      for (let bar = 0; bar < 4; bar++) {
-        const b = now + bar * s * 3;
-        N(55,     b,        0.5,  0.17);           // G1 strong bass
-        N(73.42,  b,        0.3,  0.08);           // D2 fifth
-        N(196,    b + s,    0.3,  0.07, 'triangle'); // G3 chord beat 2
-        N(246.94, b + s,    0.3,  0.06, 'triangle'); // B3
-        N(174.61, b + s*2,  0.3,  0.06, 'triangle'); // F3 chord beat 3
-        N(220,    b + s*2,  0.3,  0.05, 'triangle'); // A3
-      }
-
-      // ── Tender Waltz melody: G major love arc ──
-      // G4 — opening warmth
-      V(392.00,  now,          2.0, 0.13);
-      // A4 — gentle step
-      V(440.00,  now + s*3,    1.9, 0.12);
-      // B4 — rise with hope
-      V(493.88,  now + s*6,    1.8, 0.12);
-      // A4 — tender return
-      V(440.00,  now + s*9,    1.6, 0.11);
-      // G4 — come back home
-      V(392.00,  now + s*11,   1.5, 0.11);
-      // B4 — lift again
-      V(493.88,  now + s*13,   1.4, 0.12);
-      // D5 — peak soar (goosebumps)
-      V(587.33,  now + s*15,   1.3, 0.12);
-      // G5 — final resolve (tears & smile)
-      V(783.99,  now + s*17,   3.0, 0.17);
-
-      // ── Teary shimmer on final G5 ──
-      N(1567.98, now + s*17,        2.5, 0.04);
-      N(1975.53, now + s*17 + 0.06, 2.0, 0.025);
-      N(2637.02, now + s*17 + 0.12, 1.5, 0.015);
-
-      // ── Warm pad swell underneath ──
-      N(49,    now,       6.5, 0.06); // G1
-      N(98,    now + 0.2, 6.2, 0.05); // G2
-      N(196,   now + 0.4, 6.0, 0.03); // G3
-
-    } catch(e) {
-      console.warn('FinHub Tender Waltz chime unavailable', e);
-    }
-  } // end doPlay
-
-  // Pre-create context so it's ready (Chrome needs this before gesture)
-  try {
-    _ctx = new (window.AudioContext || window.webkitAudioContext)();
-  } catch(e) {}
 
 })();
 
