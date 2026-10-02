@@ -1694,7 +1694,7 @@ function updateHeaderInsight(){
 function getSavedTheme(){ try{ const t=localStorage.getItem('tally:theme'); return t||'light'; }catch(e){ return 'light'; } }
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme',theme==='dark'?'dark':'light');
-  const label=theme==='dark'?'White':'Dark';
+  const label=theme==='dark'?'☀️ White':'🌙 Dark';
   const tb=$('themeToggle'); if(tb) tb.textContent=label;
   // Update sparkline colors after theme change
   setTimeout(updateHeaderInsight, 50);
