@@ -1163,7 +1163,7 @@ body {
   align-items: center;
   gap: 11px;
   padding: 8px 14px;
-  color: rgba(255,255,255,0.90);
+  color: rgba(226,232,240,0.55);
   font-size: 13.5px;
   cursor: pointer;
   border-radius: 8px;
@@ -2304,7 +2304,7 @@ html[data-theme="light"] .header-insight-kpi-val.neg { color: #dc2626; text-shad
   color: rgba(255,255,255,0.45);
   transition: color 0.3s;
 }
-html[data-theme="light"] .header-insight-kpi-sub { color: rgba(30,27,75,0.35); }
+html[data-theme="light"] .header-insight-kpi-sub { color: rgba(30,27,75,0.85); }
 
 /* ── Animated username highlight in greeting ── */
 @keyframes usernameGradientShift {
@@ -2521,8 +2521,8 @@ html[data-theme="light"] .sb-new-btn {
 html[data-theme="light"] .sb-new-btn:hover {
   box-shadow: 0 6px 20px rgba(192,38,211,0.5), 0 0 28px rgba(232,121,249,0.2);
 }
-html[data-theme="light"] .sb-section-label { color: rgba(30,27,75,0.75) !important; font-weight: 700; }
-html[data-theme="light"] .sb-nav-item { color: rgba(30,27,75,0.85) !important; font-weight: 600; }
+html[data-theme="light"] .sb-section-label { color: #0a0a1a !important; font-weight: 700; }
+html[data-theme="light"] .sb-nav-item { color: #0a0a1a !important; font-weight: 600; }
 html[data-theme="light"] .sb-nav-item:hover { background: rgba(99,102,241,0.07); color: #4f46e5; }
 html[data-theme="light"] .sb-nav-item.active {
   background: linear-gradient(90deg, rgba(192,38,211,0.18) 0%, rgba(124,58,237,0.12) 100%);
