@@ -1742,6 +1742,98 @@ function homeToLogin(){
 $('menuLogoutBtn').removeEventListener && null; // already bound above
 
 // ═══════════════════════════════════════════════════════
+//  SPLASH CHIME — 🌸 Tender Waltz (Love & Feel-Good)
+//  Slow 3/4 waltz · G major · vibrato · teary shimmer
+//  Web Audio API — no external file needed
+// ═══════════════════════════════════════════════════════
+(function playSplashChime(){
+  setTimeout(() => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Core note helper
+      function N(freq, start, dur, peak, type = 'sine', detune = 0) {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = type;
+        o.frequency.setValueAtTime(freq, start);
+        if (detune) o.detune.setValueAtTime(detune, start);
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(peak, start + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+        o.start(start); o.stop(start + dur + 0.05);
+      }
+
+      // Vibrato note — tender waltz feel
+      function V(freq, start, dur, peak) {
+        N(freq, start, dur, peak);
+        N(freq, start, dur, peak * 0.4, 'sine', +6);
+        N(freq, start, dur, peak * 0.4, 'sine', -6);
+        N(freq * 2, start, dur * 0.4, peak * 0.2);
+        // vibrato oscillation
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, start);
+        o.frequency.linearRampToValueAtTime(freq * 1.008, start + dur * 0.3);
+        o.frequency.linearRampToValueAtTime(freq * 0.994, start + dur * 0.65);
+        o.frequency.linearRampToValueAtTime(freq, start + dur);
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(peak * 0.3, start + 0.08);
+        g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+        o.start(start); o.stop(start + dur + 0.05);
+      }
+
+      const now = ctx.currentTime;
+      const bpm  = 72;
+      const s    = 60 / bpm / 3; // waltz triplet step
+
+      // ── Waltz bass: beat 1 strong, beat 2&3 soft chord ──
+      for (let bar = 0; bar < 4; bar++) {
+        const b = now + bar * s * 3;
+        N(55,     b,        0.5,  0.17);           // G1 strong bass
+        N(73.42,  b,        0.3,  0.08);           // D2 fifth
+        N(196,    b + s,    0.3,  0.07, 'triangle'); // G3 chord beat 2
+        N(246.94, b + s,    0.3,  0.06, 'triangle'); // B3
+        N(174.61, b + s*2,  0.3,  0.06, 'triangle'); // F3 chord beat 3
+        N(220,    b + s*2,  0.3,  0.05, 'triangle'); // A3
+      }
+
+      // ── Tender Waltz melody: G major love arc ──
+      // G4 — opening warmth
+      V(392.00,  now,          2.0, 0.13);
+      // A4 — gentle step
+      V(440.00,  now + s*3,    1.9, 0.12);
+      // B4 — rise with hope
+      V(493.88,  now + s*6,    1.8, 0.12);
+      // A4 — tender return
+      V(440.00,  now + s*9,    1.6, 0.11);
+      // G4 — come back home
+      V(392.00,  now + s*11,   1.5, 0.11);
+      // B4 — lift again
+      V(493.88,  now + s*13,   1.4, 0.12);
+      // D5 — peak soar (goosebumps)
+      V(587.33,  now + s*15,   1.3, 0.12);
+      // G5 — final resolve (tears & smile)
+      V(783.99,  now + s*17,   3.0, 0.17);
+
+      // ── Teary shimmer on final G5 ──
+      N(1567.98, now + s*17,        2.5, 0.04);
+      N(1975.53, now + s*17 + 0.06, 2.0, 0.025);
+      N(2637.02, now + s*17 + 0.12, 1.5, 0.015);
+
+      // ── Warm pad swell underneath ──
+      N(49,    now,       6.5, 0.06); // G1
+      N(98,    now + 0.2, 6.2, 0.05); // G2
+      N(196,   now + 0.4, 6.0, 0.03); // G3
+
+    } catch(e) {
+      console.warn('FinHub Tender Waltz chime unavailable', e);
+    }
+  }, 300);
+})();
+
+// ═══════════════════════════════════════════════════════
 //  SPLASH SCREEN ANIMATION + INIT
 // ═══════════════════════════════════════════════════════
 (function runSplash(){
