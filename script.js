@@ -44,22 +44,16 @@
         user_id: uid,
         description: tx.desc || tx.description || '',
         amount: parseFloat(tx.amount) || 0,
-        category: tx.category || '',
+        category: tx.category,
         date: tx.date,
-        note: tx.note || '',
-        type: tx.amount > 0 ? 'income' : 'expense'
+        note: tx.note || ''
       });
       const res = await fetch(SB_URL + '/rest/v1/transactions', {
         method: 'POST',
         headers: HEADERS,
         body
       });
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error('FinHub Supabase save error:', res.status, errText);
-        return false;
-      }
-      return true;
+      return res.ok || res.status === 201;
     } catch(e) {
       console.warn('FinHub Supabase save error:', e);
       return false;
@@ -97,10 +91,9 @@
         user_id: uid,
         description: tx.desc || tx.description || '',
         amount: parseFloat(tx.amount) || 0,
-        category: tx.category || '',
+        category: tx.category,
         date: tx.date,
-        note: tx.note || '',
-        type: tx.amount > 0 ? 'income' : 'expense'
+        note: tx.note || ''
       }));
       const res = await fetch(SB_URL + '/rest/v1/transactions', {
         method: 'POST',
@@ -524,41 +517,12 @@ function showToast(msg, type=''){
 function userKey(name){ return `tally:user:${window.currentUserId}:${name}`; }
 
 async function loadData(){
-  // Load budgets, goals, recurring from localStorage (device only)
+  try{ const t = localStorage.getItem(userKey('transactions')); transactions = t ? JSON.parse(t) : []; }catch(e){ transactions = []; }
   try{ const b = localStorage.getItem(userKey('budgets')); budgets = b ? JSON.parse(b) : {}; }catch(e){ budgets = {}; }
   await loadGoals();
   await loadRecurring();
-
-  // Load transactions: try Supabase cloud first, fallback to localStorage
-  const uid = window.currentUserId || currentUserId;
-  if (uid && window._sb && navigator.onLine) {
-    try {
-      const cloudTx = await window._sb.load(uid);
-      if (cloudTx !== null) {
-        transactions = cloudTx;
-        try { localStorage.setItem(userKey('transactions'), JSON.stringify(transactions)); } catch(e) {}
-        console.log('FinHub: Loaded', transactions.length, 'transactions from Supabase ☁️');
-        return;
-      }
-    } catch(e) { console.warn('Cloud load failed, using local:', e); }
-  }
-  // Fallback: localStorage
-  try{ const t = localStorage.getItem(userKey('transactions')); transactions = t ? JSON.parse(t) : []; }catch(e){ transactions = []; }
-  console.log('FinHub: Loaded', transactions.length, 'transactions from localStorage 📱');
 }
-async function saveTransactions(){
-  // Always save to localStorage first (instant, works offline)
-  try{ localStorage.setItem(userKey('transactions'), JSON.stringify(transactions)); }catch(e){}
-  // Also sync to Supabase cloud (async, non-blocking)
-  try {
-    const uid = window.currentUserId;
-    if (uid && window._sb && navigator.onLine) {
-      window._sb.fullSync(uid, transactions).then(ok => {
-        if (!ok) console.warn('FinHub: Supabase sync failed silently');
-      });
-    }
-  } catch(e) { console.warn('FinHub: Supabase save error:', e); }
-}
+async function saveTransactions(){ try{ localStorage.setItem(userKey('transactions'), JSON.stringify(transactions)); }catch(e){} }
 async function saveBudgets(){ try{ localStorage.setItem(userKey('budgets'), JSON.stringify(budgets)); }catch(e){} }
 
 // ── SHA-256 ──
@@ -1457,7 +1421,6 @@ function renderProfileStrip(profile){
   const strip=$('profileStrip'), avatarEl=$('profileAvatar'), nameEl=$('profileName'),
         idEl=$('headerUserTag'), emailEl=$('profileEmail'), phoneEl=$('profilePhone'),
         sepEmailEl=$('profileSepEmail'), sepPhoneEl=$('profileSepPhone');
-  if(!strip || !avatarEl || !nameEl) return;
   const name=(profile&&profile.name)||''; const email=(profile&&profile.email)||''; const phone=(profile&&profile.phone)||'';
   strip.classList.remove('hidden-strip');
   if(name){ const parts=name.trim().split(/\s+/); avatarEl.textContent=parts.length>=2?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():parts[0].slice(0,2).toUpperCase(); }
@@ -1891,7 +1854,7 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
     stars.forEach(s=>{
       const pulse = 0.4 + 0.6*Math.sin(s.twinkle + time * s.speed * 60);
       ctx.beginPath();
-      ctx.arc(cx + s.x, cy + s.y, Math.max(0.1, s.r * pulse), 0, Math.PI*2);
+      ctx.arc(cx + s.x, cy + s.y, s.r * pulse, 0, Math.PI*2);
       ctx.fillStyle = `rgba(212,160,23,${0.08 + 0.12*pulse})`;
       ctx.fill();
     });
@@ -1915,7 +1878,7 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
     drawStars(t);
     drawCenterGlow(t);
     rings.forEach(r => drawEllipseRing(r, t));
-    // particles removed
+    particles.forEach(p => drawParticle(p, t));
     t += 0.016;
 
     // Stop if splash is hidden
