@@ -37,19 +37,23 @@
 }
 
 html[data-theme="dark"] {
-  --ink:        #010308;
-  --ink-soft:   #06090F;
-  --paper:      #030508;
-  --paper-line: #0F1824;
-  --cream:      #080C12;
-  --charcoal:   #E5E7EB;
-  --brass:      #A78BFA;
-  --brass-dark: #7C3AED;
-  --sage:       #34D399;
-  --rust:       #F87171;
-  --muted:      #9CA3AF;
-  --surface:    #0D1018;
-  --hover:      #0A1020;
+  --ink:        #050505;
+  --ink-soft:   #0a0a0a;
+  --paper:      #080808;
+  --paper-line: #141428;
+  --cream:      #0c0c14;
+  --charcoal:   #e2e8f0;
+  --brass:      #e879f9;
+  --brass-dark: #c026d3;
+  --sage:       #4ade80;
+  --rust:       #f87171;
+  --muted:      #6b7a8d;
+  --surface:    #0c0c14;
+  --hover:      #141420;
+  --on-dark:    #e2e8f0;
+  --accent-1:   #e879f9;
+  --accent-2:   #22d3ee;
+  --accent-3:   #4ade80;
   --l-parchment:  #0e1109;
   --l-parchment2: #090c06;
   --l-rule:       #1a2216;
