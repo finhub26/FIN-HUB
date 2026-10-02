@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -25,9 +25,80 @@
 <link rel="stylesheet" href="style.css">
 <style>
   .hidden { display: none !important; }
+  .fade-out { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.9s ease !important; }
+  #splashScreen { position: fixed; inset: 0; z-index: 9999; background: #000; }
 </style>
 
 <body>
+
+<!-- ═══════════════════════════ SPLASH SCREEN ═══════════════════════════ -->
+<div id="splashScreen">
+  <div class="splash-hatch-tl"></div>
+  <div class="splash-hatch-br"></div>
+  <div class="splash-bar-left"></div>
+  <div class="splash-bar-right"></div>
+
+  <!-- Creative Orbit System -->
+  <canvas id="splashOrbitCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;"></canvas>
+
+  <div class="splash-center">
+    <!-- Art Deco animated logo card -->
+    <div class="ad-card splash-ad-card ad-animate" style="margin-bottom:14px;" role="img" aria-label="FinHub logo">
+      <div class="ad-glow-center"></div>
+      <svg class="ad-card-border-svg" viewBox="0 0 200 154">
+        <rect class="ad-border-rect" x="8" y="8" width="184" height="138" rx="5"/>
+        <rect class="ad-border-rect-inner" x="13" y="13" width="174" height="128" rx="3"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-tl" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-ctl" points="16,2 2,2 2,16"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-tr" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-ctr" points="0,2 14,2 14,16"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-bl" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-cbl" points="16,14 2,14 2,0"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-br" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-cbr" points="0,14 14,14 14,0"/>
+      </svg>
+      <div class="ad-center">
+        <div class="ad-diamond" style="margin-bottom:6px;"></div>
+        <div class="ad-h-rule">
+          <div class="ad-h-rule-line ad-left"></div>
+          <div class="ad-h-rule-dot"></div>
+          <div class="ad-h-rule-line ad-right"></div>
+        </div>
+        <div class="ad-t-mark">FH</div>
+        <div class="ad-h-rule" style="margin-top:1px;">
+          <div class="ad-h-rule-line ad-left2"></div>
+          <div class="ad-h-rule-dot ad-dot2"></div>
+          <div class="ad-h-rule-line ad-right2"></div>
+        </div>
+        <div class="ad-tally-text">Fin Hub</div>
+        <div class="ad-diamond ad-diamond-bottom" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <div class="splash-brand-name">Fin Hub</div>
+    <div class="splash-brand-subtitle">The Household Ledger</div>
+    <div class="splash-tagline">Every Rupee &bull; Every Story &bull; Every Day</div>
+
+    <div class="splash-divider-section">
+      <div class="splash-divider-line"></div>
+      <div class="splash-bar-wrap">
+        <div class="splash-bar-fill" id="splashBarFill"></div>
+      </div>
+      <div class="splash-loading-text" id="splashLoadingText">Opening the Ledger…</div>
+      <div class="splash-intention">Where numbers meet intention.</div>
+      <div class="splash-lb-dot">◆</div>
+      <div class="splash-divider-line"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Home page removed — splash goes straight to login -->
+<div id="homePage" style="display:none;"></div>
 
 <!-- ═══════════════════════════ LOGIN OVERLAY ═══════════════════════════ -->
 <div id="loginOverlay" class="hidden">

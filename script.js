@@ -1775,6 +1775,13 @@ function buildPdfHtml(scope){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>FinHub — ${title}</title>
   <style>@page { margin: 0; size: A4; } html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }</style>
+<style>
+/* Dark mode login — labels and inputs match white theme purple */
+html[data-theme="dark"] .login-label { color: rgba(167,139,250,0.75) !important; }
+html[data-theme="dark"] .login-input { border-color: rgba(167,139,250,0.75) !important; }
+html[data-theme="dark"] .login-input:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
+html[data-theme="dark"] .login-input::placeholder { color: rgba(167,139,250,0.35) !important; }
+</style>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Source+Sans+3:wght@300;400;600&family=Space+Mono&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1795,7 +1802,13 @@ function buildPdfHtml(scope){
     tr:last-child td { border-bottom: none; }
     @media print { body { padding: 20px 28px; } @page { margin: 0; size: A4; } }
   </style>
-</head><body>
+<style>
+/* Dark mode login — labels and inputs match white theme purple */
+html[data-theme="dark"] .login-label { color: rgba(167,139,250,0.75) !important; }
+html[data-theme="dark"] .login-input { border-color: rgba(167,139,250,0.75) !important; }
+html[data-theme="dark"] .login-input:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
+html[data-theme="dark"] .login-input::placeholder { color: rgba(167,139,250,0.35) !important; }
+</style></head><body>
   <div class="header">
     <div class="brand">FinHub</div>
     <div class="meta">
