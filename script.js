@@ -1694,7 +1694,7 @@ function updateHeaderInsight(){
 function getSavedTheme(){ try{ const t=localStorage.getItem('tally:theme'); return t||'dark'; }catch(e){ return 'dark'; } }
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme',theme==='dark'?'dark':'light');
-  const label=theme==='dark'?'☀️ White':'🌙 Dark';
+  const label=theme==='dark'?'White':'Dark';
   const tb=$('themeToggle'); if(tb) tb.textContent=label;
   // Update sparkline colors after theme change
   setTimeout(updateHeaderInsight, 50);
@@ -1770,13 +1770,13 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
         splash.classList.add('fade-out');
         setTimeout(()=>{
           splash.classList.add('hidden');
-          // Show login overlay
-          const lo = $('loginOverlay');
-          lo.classList.remove('hidden');
-          lo.style.opacity = '0';
-          lo.style.transition = 'opacity 0.6s ease';
+          // Show home page
+          const hp = $('homePage');
+          hp.style.display = 'block';
+          hp.style.opacity = '0';
+          hp.style.transition = 'opacity 0.6s ease';
           requestAnimationFrame(()=>{
-            requestAnimationFrame(()=>{ lo.style.opacity = '1'; });
+            requestAnimationFrame(()=>{ hp.style.opacity = '1'; });
           });
         }, 900);
       }, 400);
