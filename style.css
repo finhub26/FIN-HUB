@@ -696,8 +696,7 @@ html[data-theme="dark"] #graphSheetPage { background:#080808; }
   .lb-pullquote { display: none; }
 }
 
-/* ===== login-dark.css ===== */
-/* Dark mode login — labels and inputs match white theme purple */
+/* Dark mode login */
 html[data-theme="dark"] .login-label { color: rgba(167,139,250,0.75) !important; }
 html[data-theme="dark"] .login-input { border-color: rgba(167,139,250,0.75) !important; }
 html[data-theme="dark"] .login-input:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
@@ -771,7 +770,7 @@ html[data-theme="light"] .lang-page-btn.active { background: rgba(124,58,237,0.0
 
 
 
-/* ===== Dark mode profile page fixes ===== */
+/* Dark mode profile page */
 html[data-theme="dark"] .pp-save-btn {
   background: #5b21b6 !important;
   color: #ede9fe !important;
@@ -821,13 +820,13 @@ html[data-theme="dark"] .pp-delete-btn:hover {
   background: #991b1b !important;
 }
 
-/* ===== Light theme sidebar dark text fixes ===== */
+/* Light theme sidebar text fixes */
 html[data-theme="light"] .sb-nav-text { color: rgba(30,27,75,0.85) !important; }
 html[data-theme="light"] .section-title { color: #1e1b4b !important; font-weight: 700; }
 html[data-theme="light"] .panel-title { color: #1e1b4b !important; }
 html[data-theme="light"] .new-entry-title { color: #1e1b4b !important; }
 
-/* ===== FINAL ALL-IN-ONE PATCH ===== */
+/* Sidebar & UI patch */
 
 /* 1. Section labels — no box/border */
 .sb-section-label {
@@ -903,4 +902,53 @@ html[data-theme="light"] .sb-section-label {
   color: rgba(30,27,75,0.65) !important;
   font-weight: 700 !important;
   letter-spacing: 0.1em !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR LAYOUT
+═══════════════════════════════════════════════════════ */
+#appShell { display: flex; height: 100vh; overflow: hidden; }
+
+#sidebar {
+  width: 260px; flex-shrink: 0; height: 100vh;
+  overflow-y: auto; overflow-x: hidden;
+  background: var(--surface); border-right: 1px solid var(--paper-line);
+  display: flex; flex-direction: column;
+  transition: width 0.25s ease, transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  z-index: 200; position: relative;
+}
+#sidebar.collapsed { width: 60px; }
+#sidebar.collapsed .sb-nav-text,
+#sidebar.collapsed .sb-new-label,
+#sidebar.collapsed .sb-section-label,
+#sidebar.collapsed .sb-user-name,
+#sidebar.collapsed .sb-user-id { display: none; }
+
+#appBody {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  height: 100vh; -webkit-overflow-scrolling: touch;
+}
+
+.sb-mobile-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55); z-index: 300;
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+}
+.sb-mobile-overlay.active { display: block; }
+
+@media (max-width: 768px) {
+  #appShell { display: block; height: 100vh; overflow: hidden; }
+
+  #sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 280px;
+    transform: translateX(-100%);
+    z-index: 400; box-shadow: 4px 0 24px rgba(0,0,0,0.35);
+  }
+  #sidebar.mobile-open { transform: translateX(0); }
+
+  #appBody {
+    width: 100%; height: 100vh;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
 }
