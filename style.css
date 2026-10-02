@@ -104,7 +104,7 @@ body {
 #splashScreen {
   position: fixed;
   inset: 0;
-  background: #030508;
+  background: #000000 !important;
   z-index: 2000;
   display: flex;
   flex-direction: column;
@@ -128,8 +128,7 @@ body {
     radial-gradient(1px 1px at 33% 90%, rgba(64,145,108,0.3) 0%, transparent 100%),
     radial-gradient(1px 1px at 62% 36%, rgba(64,145,108,0.2) 0%, transparent 100%),
     radial-gradient(2px 2px at 91% 88%, rgba(212,160,23,0.15) 0%, transparent 100%),
-    repeating-linear-gradient(180deg, transparent 0px, transparent 80px, rgba(201,148,31,0.025) 80px, rgba(201,148,31,0.025) 81px),
-    repeating-linear-gradient(90deg,  transparent 0px, transparent 80px, rgba(201,148,31,0.02)  80px, rgba(201,148,31,0.02)  81px);
+    radial-gradient(ellipse 80% 80% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%);
   pointer-events: none;
 }
 
@@ -362,14 +361,36 @@ body {
   z-index: 2;
 }
 
-/* corner decorative hatch strips - hidden */
+/* corner decorative hatch strips */
 .splash-hatch-tl, .splash-hatch-br {
-  display: none !important;
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+  opacity: 0.06;
+}
+.splash-hatch-tl {
+  top: 0; left: 0;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,1) 0, rgba(255,255,255,1) 1px, transparent 0, transparent 8px);
+}
+.splash-hatch-br {
+  bottom: 0; right: 0;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,1) 0, rgba(255,255,255,1) 1px, transparent 0, transparent 8px);
 }
 
-/* accent bars on left / right - hidden */
+/* accent bars on left / right */
 .splash-bar-left, .splash-bar-right {
-  display: none !important;
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 4px;
+}
+.splash-bar-left {
+  left: 0;
+  background: linear-gradient(180deg, transparent, rgba(212,160,23,0.28) 40%, rgba(64,145,108,0.2) 70%, transparent);
+}
+.splash-bar-right {
+  right: 0;
+  background: linear-gradient(180deg, transparent, rgba(64,145,108,0.22) 40%, rgba(212,160,23,0.18) 70%, transparent);
 }
 
 /* version tag at very bottom */
