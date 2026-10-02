@@ -1770,13 +1770,13 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
         splash.classList.add('fade-out');
         setTimeout(()=>{
           splash.classList.add('hidden');
-          // Show home page
-          const hp = $('homePage');
-          hp.style.display = 'block';
-          hp.style.opacity = '0';
-          hp.style.transition = 'opacity 0.6s ease';
+          // Show login overlay
+          const lo = $('loginOverlay');
+          lo.classList.remove('hidden');
+          lo.style.opacity = '0';
+          lo.style.transition = 'opacity 0.6s ease';
           requestAnimationFrame(()=>{
-            requestAnimationFrame(()=>{ hp.style.opacity = '1'; });
+            requestAnimationFrame(()=>{ lo.style.opacity = '1'; });
           });
         }, 900);
       }, 400);
@@ -1915,7 +1915,7 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
     drawStars(t);
     drawCenterGlow(t);
     rings.forEach(r => drawEllipseRing(r, t));
-    // particles removed
+    particles.forEach(p => drawParticle(p, t));
     t += 0.016;
 
     // Stop if splash is hidden
