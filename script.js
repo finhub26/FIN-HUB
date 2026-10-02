@@ -1091,7 +1091,7 @@ function renderBreakdownBudget(){
   const w = rawW >= (padL+padR+minPlot) ? rawW : (padL+padR+minPlot);
   const rowH = 24;
   const selectedMonth = $('monthFilter') ? $('monthFilter').value : new Date().toISOString().slice(0,7);
-  const monthTx = transactions.filter(t=>monthKey(t.date)===selectedMonth && t.amount<0);
+  const monthTx = (selectedMonth==='all' ? transactions : transactions.filter(t=>monthKey(t.date)===selectedMonth)).filter(t=>t.amount<0);
   const totals = {};
   CATEGORIES.forEach(c=>totals[c]=0);
   monthTx.forEach(t=>{ totals[t.category]=(totals[t.category]||0)+Math.abs(t.amount); });
@@ -1915,7 +1915,7 @@ $('menuLogoutBtn').removeEventListener && null; // already bound above
     drawStars(t);
     drawCenterGlow(t);
     rings.forEach(r => drawEllipseRing(r, t));
-    particles.forEach(p => drawParticle(p, t));
+    // particles removed
     t += 0.016;
 
     // Stop if splash is hidden
