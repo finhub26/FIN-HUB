@@ -70,7 +70,7 @@ html[data-theme="light"] {
   --brass-dark: #4f46e5;
   --sage:       #059669;
   --rust:       #dc2626;
-  --muted:      rgba(30,27,75,0.90);
+  --muted:      rgba(30,27,75,0.72);
   --surface:    #ffffff;
   --hover:      #f1f0f8;
   --on-dark:    #1e1b4b;
@@ -2219,7 +2219,7 @@ html[data-theme="light"] .header-greeting-name .greeting-username {
 }
 html[data-theme="light"] .hms-bar-track { background: rgba(30,27,75,0.08); }
 html[data-theme="light"] .hms-pct { color: #1e1b4b; }
-html[data-theme="light"] .hms-label { color: rgba(30,27,75,0.35); }
+html[data-theme="light"] .hms-label { color: rgba(30,27,75,0.85); }
 
 /* ── Creative right panel in header: sparkline + quick insight ── */
 .header-insight-panel {
@@ -2257,7 +2257,7 @@ html[data-theme="light"] .header-insight-panel {
   color: rgba(255,255,255,0.55);
   transition: color 0.3s;
 }
-html[data-theme="light"] .header-sparkline-label { color: rgba(30,27,75,0.45); }
+html[data-theme="light"] .header-sparkline-label { color: rgba(30,27,75,0.85); }
 
 .header-sparkline-svg { display: block; }
 
@@ -2283,7 +2283,7 @@ html[data-theme="light"] .header-insight-divider { background: rgba(99,102,241,0
   color: rgba(255,255,255,0.55);
   transition: color 0.3s;
 }
-html[data-theme="light"] .header-insight-kpi-label { color: rgba(30,27,75,0.45); }
+html[data-theme="light"] .header-insight-kpi-label { color: rgba(30,27,75,0.85); }
 
 .header-insight-kpi-val {
   font-family: var(--font-mono);
@@ -2554,7 +2554,7 @@ html[data-theme="light"] .quick-stats {
   border-color: rgba(99,102,241,0.1);
   box-shadow: 0 2px 12px rgba(99,102,241,0.06);
 }
-html[data-theme="light"] .qs-label { color: rgba(30,27,75,0.45); }
+html[data-theme="light"] .qs-label { color: rgba(30,27,75,0.85); }
 html[data-theme="light"] .qs-item { border-right-color: rgba(99,102,241,0.1); }
 
 /* ── Inputs & selects ── */
@@ -2571,7 +2571,7 @@ html[data-theme="light"] select:focus {
   box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
 }
 html[data-theme="light"] input::placeholder { color: rgba(30,27,75,0.3); }
-html[data-theme="light"] label { color: rgba(30,27,75,0.55); }
+html[data-theme="light"] label { color: rgba(30,27,75,0.88); }
 
 /* ── Toggle row (Expense / Income) ── */
 html[data-theme="light"] .toggle-row {
@@ -2681,7 +2681,7 @@ html[data-theme="light"] .graph-stats-item {
   background: #f8f7ff;
   border-color: rgba(99,102,241,0.12);
 }
-html[data-theme="light"] .graph-stats-label { color: rgba(30,27,75,0.45); }
+html[data-theme="light"] .graph-stats-label { color: rgba(30,27,75,0.85); }
 html[data-theme="light"] .graph-stats-value { color: #1e1b4b; }
 html[data-theme="light"] .graph-tabs { border-bottom-color: rgba(99,102,241,0.15); }
 html[data-theme="light"] .graph-tab { color: rgba(30,27,75,0.4); }
