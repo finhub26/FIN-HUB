@@ -1935,14 +1935,16 @@ body {
 .login-brand-name {
   font-family: var(--font-display);
   font-size: 32px; font-weight: 700;
-  color: transparent;
-  background: linear-gradient(180deg, rgba(240,235,216,0.92) 0%, rgba(212,160,23,0.78) 100%);
-  -webkit-background-clip: text; background-clip: text;
+  color: #d4a017;
+  -webkit-text-fill-color: #d4a017;
+  background: none;
+  -webkit-background-clip: unset; background-clip: unset;
   letter-spacing: 0.05em;
   line-height: 1;
   margin-bottom: 3px;
+  text-shadow: 0 0 18px rgba(212,160,23,0.35);
 }
-.login-brand-name span { color: var(--l-gold); -webkit-text-fill-color: var(--l-gold); }
+.login-brand-name span { color: #d4a017; -webkit-text-fill-color: #d4a017; }
 .login-brand-sub {
   font-family: var(--font-display);
   font-size: 13px; font-style: italic; font-weight: 500;

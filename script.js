@@ -377,9 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // ════════════════════════════════════════
 (function(){
   function fmtCur(v){ return '₹'+Math.abs(v).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-IN'}; return L[window._finhubLang]||'en-US'; }
   function getISOWeek(d){ const date=new Date(d); date.setHours(0,0,0,0); date.setDate(date.getDate()+3-(date.getDay()+6)%7); const w1=new Date(date.getFullYear(),0,4); return [date.getFullYear(),1+Math.round(((date-w1)/86400000-3+(w1.getDay()+6)%7)/7)]; }
   function weekKey(ds){ const [y,w]=getISOWeek(new Date(ds)); return y+'-W'+(w<10?'0':'')+w; }
-  function weekLabel(key){ const [yr,wn]=key.split('-W'); const j=new Date(parseInt(yr),0,4); const dw=(j.getDay()+6)%7; const mon=new Date(j); mon.setDate(j.getDate()-dw+(parseInt(wn)-1)*7); return 'W'+wn+' '+mon.toLocaleString('default',{month:'short'}); }
+  function weekLabel(key){ const [yr,wn]=key.split('-W'); const j=new Date(parseInt(yr),0,4); const dw=(j.getDay()+6)%7; const mon=new Date(j); mon.setDate(j.getDate()-dw+(parseInt(wn)-1)*7); return 'W'+wn+' '+mon.toLocaleString(_gsLoc(),{month:'short'}); }
   const COLS=['#7C3AED','#0EA5E9','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#84CC16','#F97316'];
   const CATS=["Food","Groceries","Dining Out","Transport","Fuel","Housing","Utilities","Entertainment","Shopping","Clothing","Medical","Education","Subscriptions","Insurance","EMI / Loan","Personal Care","Travel","Gifts","Savings","Other"];
   function catColor(c){ return COLS[CATS.indexOf(c)%COLS.length]||COLS[0]; }
@@ -448,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(!window.transactions) return;
     const now=new Date(); const months=[];
     for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.toISOString().slice(0,7)); }
-    const md=months.map(m=>{ const tx=window.transactions.filter(t=>t.date.slice(0,7)===m); const d=new Date(m+'-01T00:00:00'); return {m,label:d.toLocaleString('default',{month:'short'}),income:tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0),expense:tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0),tx}; });
+    const md=months.map(m=>{ const tx=window.transactions.filter(t=>t.date.slice(0,7)===m); const d=new Date(m+'-01T00:00:00'); return {m,label:d.toLocaleString(_gsLoc(),{month:'short'}),income:tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0),expense:tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0),tx}; });
     const all=[...window.transactions].sort((a,b)=>a.date.localeCompare(b.date)); let run=0,idx=0;
     const bals=md.map(m=>{ while(idx<all.length&&all[idx].date.slice(0,7)<=m.m){run+=all[idx].amount;idx++;} return run; });
     barPairChart('gsMonthlyBarWrap',md.map(d=>d.label),md.map(d=>d.income),md.map(d=>d.expense),true,bals);
@@ -753,7 +754,8 @@ function renderQuickStats(){
   }
   const biggest = Math.max(...monthTx.map(t=>Math.abs(t.amount)));
   const bigEntry = monthTx.find(t=>Math.abs(t.amount)===biggest);
-  $('qsBig').textContent = bigEntry ? `${fmt(-biggest)} (${bigEntry.desc.slice(0,14)})` : '—';
+  const _bd = bigEntry ? bigEntry.desc.slice(0,14) : '';
+  $('qsBig').textContent = bigEntry ? `${fmt(-biggest)} (${window.__fhTr?window.__fhTr(_bd):_bd})` : '—';
   const daysInMonth = new Date(selectedMonth.slice(0,4), parseInt(selectedMonth.slice(5))+1, 0).getDate();
   const today = new Date();
   const passedDays = (monthKey(today.toISOString().slice(0,10))===selectedMonth) ? today.getDate() : daysInMonth;
@@ -920,7 +922,7 @@ function renderGraphWeekly(){
     const expense = tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
     // week label: "W1", "W2"… or day-range
     const d = new Date(end);
-    const label = d.toLocaleString('default',{month:'short',day:'numeric'});
+    const label = d.toLocaleString(_gsLoc(),{month:'short',day:'numeric'});
     buckets.push({ startStr, endStr, endKey: endStr, income, expense, label });
   }
   const totalInc = buckets.reduce((s,b)=>s+b.income,0);
@@ -969,7 +971,7 @@ function renderGraphMonthly(){
   ];
   buildBarLineSVG(wrap, buckets, (b,i,len) => {
     const d = new Date(b.m+'-01T00:00:00');
-    return (i===0||i===len-1||i%2===0) ? d.toLocaleString('default',{month:'short'}) : '';
+    return (i===0||i===len-1||i%2===0) ? d.toLocaleString(_gsLoc(),{month:'short'}) : '';
   }, statsWrap, statsCards);
 }
 
@@ -1259,7 +1261,7 @@ function renderGoals(){
     <td class="num" colspan="2"><input type="number" id="goalTarget" placeholder="Target ₹" min="0" step="1" style="text-align:right;"></td>
     <td></td>
     <td></td>
-    <td><button class="tfoot-add-btn" id="addGoalBtn">+ Add</button></td>
+    <td><button class="tfoot-add-btn" id="addGoalBtn">${window.__fhTr?window.__fhTr('+ Add'):'+ Add'}</button></td>
   </tr>`;
   tbl.appendChild(tbody); tbl.appendChild(tfoot);
   tableWrap.appendChild(tbl); wrap.appendChild(tableWrap);
@@ -1798,7 +1800,9 @@ function updateHeaderInsight(){
       netEl.className='header-insight-kpi-val'+(net<0?' neg':'');
       if(subEl){
         const txCount=monthTx.length;
-        subEl.textContent=txCount>0?`${txCount} entr${txCount===1?'y':'ies'} this month`:'no entries yet';
+        const _np=window.__fhTr?window.__fhTr('no entries yet'):'no entries yet';
+        const _ep=window.__fhTr?window.__fhTr(txCount===1?'entry this month':'entries this month'):(txCount===1?'entry this month':'entries this month');
+        subEl.textContent=txCount>0?`${txCount} ${_ep}`:_np;
       }
     }
   } catch(e){}
@@ -2356,43 +2360,46 @@ async function handleGuestLogin() {
   let progress = 0;
   let msgIdx = 0;
 
-  const interval = setInterval(() => {
-    progress += Math.random() * 8 + 5;   // bar fills in ~1.5 seconds
-    if (progress > 100) progress = 100;
-    if (bar) bar.style.width = progress + '%';
-
-    const newIdx = Math.min(Math.floor(progress / 26), msgs.length - 1);
-    if (newIdx !== msgIdx) {
-      msgIdx = newIdx;
-      if (txt) txt.textContent = msgs[msgIdx];
-    }
-
-    if (progress >= 100) {
-      clearInterval(interval);
-      setTimeout(() => {                   // 0.4s pause at 100%
-        const splash = document.getElementById('splashScreen');
-        if (splash) {
-          splash.classList.add('fade-out');
-          setTimeout(() => {               // 0.9s fade → total ≈ 2.8–3.5s
-            splash.classList.add('hidden');
-            const hp = document.getElementById('homePage');
-            if (hp) hp.style.display = 'none';
-            if (typeof initAuth === 'function') initAuth();
-            const lo = document.getElementById('loginOverlay');
-            if (lo) {
-              lo.classList.remove('hidden');
-              const loginCard = lo.querySelector('.ad-card');
-              if (loginCard) {
-                loginCard.classList.remove('ad-animate');
-                void loginCard.offsetWidth;
-                loginCard.classList.add('ad-animate');
-              }
-            }
-          }, 900);
+  // Exact 2.2s bar fill via CSS transition, then 0.4s pause, then 0.9s fade
+  // Total = 3.5s
+  if (bar) {
+    bar.style.transition = 'width 2.2s cubic-bezier(0.4, 0, 0.2, 1)';
+    bar.style.width = '0%';
+    // Cycle loading messages evenly across 2.2s
+    const msgTimings = [0, 600, 1300, 1900];
+    msgTimings.forEach((delay, i) => {
+      setTimeout(() => {
+        if (txt) txt.textContent = msgs[i] || msgs[msgs.length - 1];
+      }, delay);
+    });
+    // Trigger fill on next frame so transition fires
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      bar.style.width = '100%';
+    }));
+  }
+  // After 1.5s fill + 0.4s pause = 1.9s, start fade
+  setTimeout(() => {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => {               // 0.9s fade → total ≈ 2.8s
+        splash.classList.add('hidden');
+        const hp = document.getElementById('homePage');
+        if (hp) hp.style.display = 'none';
+        if (typeof initAuth === 'function') initAuth();
+        const lo = document.getElementById('loginOverlay');
+        if (lo) {
+          lo.classList.remove('hidden');
+          const loginCard = lo.querySelector('.ad-card');
+          if (loginCard) {
+            loginCard.classList.remove('ad-animate');
+            void loginCard.offsetWidth;
+            loginCard.classList.add('ad-animate');
+          }
         }
-      }, 400);
+      }, 900);
     }
-  }, 75); // total ≈ 2.8–3.5s (1.5s bar + 0.4s pause + 0.9s fade)
+  }, 2600); // 2.2s fill + 0.4s pause
 })();
 
 // ── Orbit Canvas Animation ──
@@ -3565,6 +3572,8 @@ function homeToLogin(){
     ["All Months", "सभी महीने", "அனைத்து மாதங்கள்", "అన్ని నెలలు", "എല്ലാ മാസങ്ങളും", "ಎಲ್ಲಾ ತಿಂಗಳುಗಳು"],
     ["no entries yet", "अभी कोई प्रविष्टि नहीं", "இன்னும் பதிவுகள் இல்லை", "ఇంకా ఎంట్రీలు లేవు", "എൻട്രികളൊന്നുമില്ല", "ಇನ್ನೂ ನಮೂದುಗಳಿಲ್ಲ"],
     ["No entries yet", "अभी कोई प्रविष्टि नहीं", "இன்னும் பதிவுகள் இல்லை", "ఇంకా ఎంట్రీలు లేవు", "എൻട്രികളൊന്നുമില്ല", "ಇನ್ನೂ ನಮೂದುಗಳಿಲ್ಲ"],
+    ["entries this month", "इस माह प्रविष्टियाँ", "இம்மாத பதிவுகள்", "ఈ నెల నమోదులు", "ഈ മാസം എൻട്രികൾ", "ಈ ತಿಂಗಳ ನಮೂದುಗಳು"],
+    ["entry this month", "इस माह प्रविष्टि", "இம்மாத பதிவு", "ఈ నెల నమోదు", "ഈ മാസം എൻട്രി", "ಈ ತಿಂಗಳ ನಮೂದು"],
     ["Deposit", "जमा करें", "டெபாசிட்", "డిపాజిట్", "നിക്ഷേപിക്കുക", "ಜಮಾ ಮಾಡಿ"],
     ["Post", "पोस्ट करें", "பதிவிடு", "పోస్ట్", "പോസ്റ്റ്", "ಪೋಸ್ಟ್"],
     ["Save", "सहेजें", "சேமி", "సేవ్", "സേവ്", "ಉಳಿಸಿ"],
