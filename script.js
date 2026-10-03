@@ -1747,6 +1747,7 @@ async function startApp(){
     if (_currentUserId && _currentUserId === _startUid) {
       window.transactions = transactions;
       renderAll();
+      updateHeaderPills();
     }
   }, 1500);
 }
@@ -1918,47 +1919,46 @@ $('themeToggle').addEventListener('click',toggleTheme);
 
 // ── Header Month Strip ──
 function updateHeaderPills(){
-  try {
-    const now = new Date();
-    // Use the selected month; if not set or 'all', fall back to most recent month with data
-    const selEl = $('monthFilter');
-    const selVal = selEl && selEl.value && selEl.value !== 'all' ? selEl.value : null;
-    const txMonthsPill = [...new Set((window.transactions||[]).map(t=>t.date.slice(0,7)))].sort().reverse();
-    const activeMonth = selVal || txMonthsPill[0] || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const now = new Date();
+  const nowMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-    const yr = parseInt(activeMonth.slice(0,4));
-    const mo = parseInt(activeMonth.slice(5)) - 1; // 0-based
-    const totalDays = new Date(yr, mo + 1, 0).getDate();
-    const nowMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-    // For past months: 100%. Current month: real %. Future: 0%
-    let elapsed, daysLeft;
-    if (activeMonth < nowMonthKey) {
-      elapsed = totalDays; daysLeft = 0;
-    } else if (activeMonth === nowMonthKey) {
-      elapsed = now.getDate(); daysLeft = totalDays - elapsed;
-    } else {
-      elapsed = 0; daysLeft = totalDays;
-    }
-    const pct = Math.round((elapsed / totalDays) * 100);
+  // Pick the active month: filter value → most recent tx month → current month
+  const selEl = $('monthFilter');
+  const selVal = (selEl && selEl.value && selEl.value !== 'all') ? selEl.value : null;
+  const txList = window.transactions || transactions || [];
+  const txMonths = [...new Set(txList.map(t => t.date.slice(0,7)))].sort().reverse();
+  const activeMonth = selVal || txMonths[0] || nowMonthKey;
 
-    const fill = document.getElementById('hmsBarFill');
-    const glow = document.getElementById('hmsBarGlow');
-    const pctEl = document.getElementById('hmsPct');
-    const lblEl = document.getElementById('hmsLabel');
+  const yr = parseInt(activeMonth.slice(0,4));
+  const mo = parseInt(activeMonth.slice(5)) - 1;
+  const totalDays = new Date(yr, mo + 1, 0).getDate();
 
-    // Set text immediately
-    if(pctEl) pctEl.textContent = pct + '%';
-    // Defer bar width so the CSS transition fires correctly after first paint
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if(fill) fill.style.width = pct + '%';
-      if(glow) glow.style.right = (100 - pct) + '%';
-    }));
-    // Use i18n string if available, else English
-    const _lang2 = window._finhubLang || 'en';
-    const _s2 = (window.finhubI18n && window.finhubI18n.strings && window.finhubI18n.strings[_lang2]) || {};
-    const _elapsed = _s2['header_month_elapsed'] || 'of month elapsed';
-    if(lblEl) lblEl.textContent = daysLeft === 0 ? 'last day of month' : _elapsed;
-  } catch(e){}
+  // Past month = 100%, current = real %, future = 0%
+  let elapsed;
+  if (activeMonth < nowMonthKey)      { elapsed = totalDays; }
+  else if (activeMonth === nowMonthKey){ elapsed = now.getDate(); }
+  else                                 { elapsed = 0; }
+  const daysLeft = totalDays - elapsed;
+  const pct = Math.round((elapsed / totalDays) * 100);
+
+  const fill   = document.getElementById('hmsBarFill');
+  const glow   = document.getElementById('hmsBarGlow');
+  const pctEl  = document.getElementById('hmsPct');
+  const lblEl  = document.getElementById('hmsLabel');
+
+  if(pctEl) pctEl.textContent = pct + '%';
+
+  const _lang2   = window._finhubLang || 'en';
+  const _s2      = (window.finhubI18n && window.finhubI18n.strings && window.finhubI18n.strings[_lang2]) || {};
+  const _elapsed = _s2['header_month_elapsed'] || 'of month elapsed';
+  if(lblEl) lblEl.textContent = daysLeft === 0 ? 'last day of month' : _elapsed;
+
+  // Force reflow then animate bar (double-rAF so CSS transition fires)
+  if(fill) fill.style.width = '0%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if(fill) fill.style.width = pct + '%';
+    if(glow) glow.style.right = (100 - pct) + '%';
+  }));
 }
 
 // ── Navigate to login ──
