@@ -2418,10 +2418,10 @@ async function handleGuestLogin() {
     { r:145, speed:-0.012, tilt:-8,  color:'rgba(167,139,250,', dash:[10,8],  width:0.7, glowColor:'rgba(167,139,250,0.2)' },
   ];
 
-  const stars = Array.from({length:40}, ()=>({
+  const stars = Array.from({length:10}, ()=>({
     x: Math.random()*800-400,
     y: Math.random()*600-300,
-    r: Math.random()*1.2+0.3,
+    r: Math.random()*0.5+0.2,
     twinkle: Math.random()*Math.PI*2,
     speed: Math.random()*0.02+0.008
   }));
