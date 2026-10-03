@@ -301,8 +301,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const joinKey = `tally:user:${uid}:joined`;
     let joined = localStorage.getItem(joinKey);
     if(!joined){ joined = new Date().toISOString().slice(0,10); localStorage.setItem(joinKey, joined); }
-    if($id('ppMemberSince')) $id('ppMemberSince').textContent =
-      new Date(joined).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+    if($id('ppMemberSince')) {
+      const _locMap = {hi:'hi-IN', ta:'ta-IN', te:'te-IN', ml:'ml-IN', kn:'kn-IN', en:'en-IN'};
+      const _curLang = window._finhubLang || 'en';
+      const _loc = _locMap[_curLang] || 'en-IN';
+      $id('ppMemberSince').textContent =
+        new Date(joined).toLocaleDateString(_loc, {day:'numeric', month:'short', year:'numeric'});
+    }
 
     // Transactions & stats
     const txRaw = localStorage.getItem(`tally:user:${uid}:transactions`);
@@ -326,6 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if($id('ppStorageUsed')) $id('ppStorageUsed').textContent = fmtBytes(bytes);
   }
+  window.populateProfile = populateProfile; // expose for language change date refresh
 
   const copyBtn=$id('ppCopyId');
   if(copyBtn) copyBtn.addEventListener('click',()=>{
@@ -1128,8 +1134,12 @@ function renderBreakdownBudget(){
   // area to ~0px and cram every label/value/tick on top of each other.
   // Skip rendering entirely while invisible; a later call (on view switch /
   // resize) will draw it correctly once real dimensions are available.
-  if(wrap.offsetParent===null) return;
+  // If element has no width yet (hidden/transitioning), retry after a short delay
   const rawW = wrap.getBoundingClientRect().width || wrap.clientWidth;
+  if(!rawW || rawW < 10) {
+    setTimeout(() => renderBreakdownBudget(), 150);
+    return;
+  }
   const padL=fhLabelPad(130), padR=90, padT=10, padB=10;
   const minPlot=120; // never let the plotting area collapse below this
   const w = rawW >= (padL+padR+minPlot) ? rawW : (padL+padR+minPlot);
@@ -1656,6 +1666,12 @@ async function startApp(){
   if(sbA) sbA.textContent = displayName ? displayName[0].toUpperCase() : '?';
   if(sbN) sbN.textContent = displayName || currentUserId || '—';
 
+  // Always start on Dashboard view
+  switchView('dashboard');
+  allNavBtns.forEach(b => b.classList.remove('active'));
+  const dashBtn = document.getElementById('sbNavDashboard');
+  if(dashBtn) dashBtn.classList.add('active');
+
   renderAll();
   if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
@@ -1800,9 +1816,14 @@ function updateHeaderInsight(){
       netEl.className='header-insight-kpi-val'+(net<0?' neg':'');
       if(subEl){
         const txCount=monthTx.length;
-        const _np=window.__fhTr?window.__fhTr('no entries yet'):'no entries yet';
-        const _ep=window.__fhTr?window.__fhTr(txCount===1?'entry this month':'entries this month'):(txCount===1?'entry this month':'entries this month');
-        subEl.textContent=txCount>0?`${txCount} ${_ep}`:_np;
+        // Use i18n keys if available, otherwise English fallback
+        const lang = window._finhubLang || 'en';
+        const strings = (window.finhubI18n && window.finhubI18n.strings && window.finhubI18n.strings[lang]) || {};
+        const _np = strings['header_no_entries'] || 'no entries yet';
+        const _ep = txCount === 1
+          ? (strings['header_entry_month'] || 'entry this month')
+          : (strings['header_entries_month'] || 'entries this month');
+        subEl.textContent = txCount > 0 ? `${txCount} ${_ep}` : _np;
       }
     }
   } catch(e){}
@@ -1839,7 +1860,11 @@ function updateHeaderPills(){
     if(fill) fill.style.width = pct + '%';
     if(glow) glow.style.right = (100 - pct) + '%';
     if(pctEl) pctEl.textContent = pct + '%';
-    if(lblEl) lblEl.textContent = daysLeft === 0 ? 'last day of month' : daysLeft + ' days remaining';
+    // Use i18n string if available, else English
+    const _lang2 = window._finhubLang || 'en';
+    const _s2 = (window.finhubI18n && window.finhubI18n.strings && window.finhubI18n.strings[_lang2]) || {};
+    const _elapsed = _s2['header_month_elapsed'] || 'of month elapsed';
+    if(lblEl) lblEl.textContent = daysLeft === 0 ? 'last day of month' : _elapsed;
   } catch(e){}
 }
 
@@ -2074,7 +2099,17 @@ $('pdfOverlay').addEventListener('click', e=>{
     // Re-render breakdown when switching to budgets
     if(viewName === 'budgets') {
       try { if(typeof renderBudgetInputs === 'function') renderBudgetInputs(); } catch(e) {}
+      // Retry multiple times — offsetParent can be null briefly during CSS transition
       setTimeout(() => renderBreakdownBudget(), 60);
+      setTimeout(() => renderBreakdownBudget(), 200);
+      setTimeout(() => renderBreakdownBudget(), 500);
+    }
+    // Re-render goals and recurring when switching to goals view
+    if(viewName === 'goals') {
+      requestAnimationFrame(() => {
+        if(typeof renderGoals === 'function') renderGoals();
+        if(typeof renderRecurring === 'function') renderRecurring();
+      });
     }
     // Sync the full ledger view
     if(viewName === 'ledger') {
@@ -2508,6 +2543,8 @@ function homeToLogin(){
       header_7day_flow:  '7-day flow',
       header_net_month:  'Net this month',
       header_no_entries: 'no entries yet',
+      header_entries_month: 'entries this month',
+      header_entry_month: 'entry this month',
       header_month_elapsed: 'of month elapsed',
       // Balance strip
       card_balance:      'Balance',
@@ -2781,6 +2818,8 @@ function homeToLogin(){
       header_7day_flow:  '7-நாள் ஓட்டம்',
       header_net_month:  'இம்மாத நிகர',
       header_no_entries: 'இன்னும் பதிவுகள் இல்லை',
+      header_entries_month: 'இம்மாத பதிவுகள்',
+      header_entry_month: 'இம்மாத பதிவு',
       header_month_elapsed: 'மாதம் கடந்தது',
       card_balance:      'இருப்பு',
       card_month_spent:  'மாத செலவு',
@@ -3283,7 +3322,7 @@ function homeToLogin(){
     ['.sb-section-label:last-of-type',       'nav_account'],
     // Header
     ['#headerGreetingLine',                  'header_greeting'],
-    ['#hmsLabel',                            'header_month_elapsed'],
+    // hmsLabel is handled dynamically by updateHeaderPills() — do not translate here
     ['.header-sparkline-label',              'header_7day_flow'],
     ['.header-insight-kpi-label',            'header_net_month'],
     // Balance strip
@@ -3486,7 +3525,7 @@ function homeToLogin(){
   }
 
   // Public API
-  window.finhubI18n = { apply: applyLang, t: (k) => (window._finhubT || TRANSLATIONS.en)[k] || k };
+  window.finhubI18n = { apply: applyLang, t: (k) => (window._finhubT || TRANSLATIONS.en)[k] || k, strings: TRANSLATIONS };
 
   // ── Language Settings Page ───────────────────────────
   const LANG_NAMES = {
@@ -3503,11 +3542,18 @@ function homeToLogin(){
     if (el) el.textContent = LANG_NAMES[lang] || 'English';
   }
 
-  // Patch applyLang to also update the nav button label
+  // Patch applyLang to also update the nav button label and profile date
   const _origApply = window.finhubI18n.apply;
   window.finhubI18n.apply = function(lang) {
     _origApply(lang);
     updateLangNavLabel(lang);
+    // Refresh profile date format if profile page is open
+    const pp = document.getElementById('profilePage');
+    if(pp && pp.classList.contains('visible') && typeof populateProfile === 'function') {
+      setTimeout(() => populateProfile(), 50);
+    }
+    // Also refresh header pills (month elapsed label)
+    if(typeof updateHeaderPills === 'function') updateHeaderPills();
   };
 
   function initLangPage() {
