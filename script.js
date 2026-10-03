@@ -578,21 +578,32 @@ async function loadData(){
   await loadGoals();
   await loadRecurring();
 
-  // Load transactions: try Supabase cloud first, fallback to localStorage
+  // Always read localStorage FIRST as a safe baseline — never lose it
+  let localTx = [];
+  try { const t = localStorage.getItem(userKey('transactions')); localTx = t ? JSON.parse(t) : []; } catch(e) {}
+
   const uid = window.currentUserId || currentUserId;
   if (uid && window._sb && navigator.onLine) {
     try {
       const cloudTx = await window._sb.load(uid);
-      if (cloudTx !== null) {
+      if (cloudTx !== null && cloudTx.length > 0) {
+        // Cloud has real data — use it as source of truth
         transactions = cloudTx;
         try { localStorage.setItem(userKey('transactions'), JSON.stringify(transactions)); } catch(e) {}
         console.log('FinHub: Loaded', transactions.length, 'transactions from Supabase ☁️');
         return;
+      } else if (cloudTx !== null && cloudTx.length === 0 && localTx.length > 0) {
+        // Cloud returned empty but local has data — push local up to cloud, use local
+        transactions = localTx;
+        console.log('FinHub: Cloud empty, restoring from localStorage and syncing ☁️📱');
+        window._sb.fullSync(uid, localTx).catch(() => {});
+        return;
       }
     } catch(e) { console.warn('Cloud load failed, using local:', e); }
   }
+
   // Fallback: localStorage
-  try{ const t = localStorage.getItem(userKey('transactions')); transactions = t ? JSON.parse(t) : []; }catch(e){ transactions = []; }
+  transactions = localTx;
   console.log('FinHub: Loaded', transactions.length, 'transactions from localStorage 📱');
 }
 async function saveTransactions(){
