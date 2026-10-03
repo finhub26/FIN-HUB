@@ -309,13 +309,13 @@ body {
   font-size: 28px;
   font-weight: 600;
   color: transparent;
-  background: linear-gradient(180deg, rgba(240,235,216,0.9) 0%, rgba(212,160,23,0.7) 100%);
+  background: linear-gradient(180deg, rgba(240,235,216,0.55) 0%, rgba(212,160,23,0.35) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin-bottom: 6px;
-  filter: drop-shadow(0 0 12px rgba(212,160,23,0.2));
+  filter: drop-shadow(0 0 6px rgba(212,160,23,0.08));
 }
 
 .splash-brand-subtitle {
@@ -331,7 +331,7 @@ body {
 .splash-tagline {
   font-family: var(--font-mono);
   font-size: 8px;
-  color: rgba(212,160,23,0.4);
+  color: rgba(212,160,23,0.18);
   letter-spacing: 0.32em;
   text-transform: uppercase;
   margin-bottom: 20px;
@@ -390,18 +390,18 @@ body {
 .splash-divider-line {
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212,160,23,0.35), transparent);
+  background: linear-gradient(90deg, transparent, rgba(212,160,23,0.15), transparent);
 }
 .splash-intention {
   font-family: 'Cormorant Garamond', serif;
   font-style: italic;
   font-size: 13px;
-  color: rgba(212,160,23,0.38);
+  color: rgba(212,160,23,0.18);
   letter-spacing: 0.04em;
 }
 .splash-lb-dot {
   font-size: 7px;
-  color: rgba(212,160,23,0.35);
+  color: rgba(212,160,23,0.15);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -612,13 +612,13 @@ body {
   font-size: 28px;
   font-weight: 600;
   color: transparent;
-  background: linear-gradient(180deg, rgba(240,235,216,0.9) 0%, rgba(212,160,23,0.7) 100%);
+  background: linear-gradient(180deg, rgba(240,235,216,0.55) 0%, rgba(212,160,23,0.35) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin-bottom: 6px;
-  filter: drop-shadow(0 0 12px rgba(212,160,23,0.2));
+  filter: drop-shadow(0 0 6px rgba(212,160,23,0.08));
 }
 
 .splash-brand-subtitle {
@@ -634,7 +634,7 @@ body {
 .splash-tagline {
   font-family: var(--font-mono);
   font-size: 8px;
-  color: rgba(212,160,23,0.4);
+  color: rgba(212,160,23,0.18);
   letter-spacing: 0.32em;
   text-transform: uppercase;
   margin-bottom: 20px;
@@ -693,18 +693,18 @@ body {
 .splash-divider-line {
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212,160,23,0.35), transparent);
+  background: linear-gradient(90deg, transparent, rgba(212,160,23,0.15), transparent);
 }
 .splash-intention {
   font-family: 'Cormorant Garamond', serif;
   font-style: italic;
   font-size: 13px;
-  color: rgba(212,160,23,0.38);
+  color: rgba(212,160,23,0.18);
   letter-spacing: 0.04em;
 }
 .splash-lb-dot {
   font-size: 7px;
-  color: rgba(212,160,23,0.35);
+  color: rgba(212,160,23,0.15);
 }
 
 #splashScreen.fade-out {
@@ -832,7 +832,7 @@ body {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.28em;
-  color: rgba(212,160,23,0.35);
+  color: rgba(212,160,23,0.15);
   margin-bottom: 36px;
 }
 
@@ -928,7 +928,7 @@ body {
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.24em;
-  color: rgba(212,160,23,0.38);
+  color: rgba(212,160,23,0.18);
   margin-bottom: 10px;
 }
 .home-ticker-month {
@@ -980,7 +980,7 @@ body {
 .home-ticker-row:hover { background: rgba(255,255,255,0.025); }
 .home-ticker-row.inc .tkr-amt { color: rgba(52,211,153,0.72); }
 .home-ticker-row.exp .tkr-amt { color: rgba(248,113,113,0.65); }
-.tkr-date { color: rgba(212,160,23,0.35); font-size: 9.5px; padding-top: 1px; }
+.tkr-date { color: rgba(212,160,23,0.15); font-size: 9.5px; padding-top: 1px; }
 .tkr-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(240,235,216,0.38); }
 .tkr-desc small { display: block; font-size: 9px; color: rgba(255,255,255,0.18); margin-top: 1px; }
 .tkr-amt { text-align: right; font-weight: 700; font-size: 12px; }
@@ -1263,7 +1263,7 @@ body {
   font-size: 11px;
   letter-spacing: 0.2em;
   font-weight: 700;
-  color: rgba(212,160,23,0.35);
+  color: rgba(212,160,23,0.15);
 }
 .home-footer-brand span { color: rgba(64,145,108,0.4); }
 .home-footer-copy {
@@ -1954,7 +1954,7 @@ body {
 .login-brand .login-tagline {
   font-family: var(--font-mono);
   font-size: 8px;
-  color: rgba(212,160,23,0.38);
+  color: rgba(212,160,23,0.18);
   letter-spacing: 0.28em;
   text-transform: uppercase;
   border-left: none; padding-left: 0;
@@ -2252,7 +2252,7 @@ html[data-theme="light"] .header-date-chip .header-date-label {
   animation: none;
 }
 html[data-theme="light"] .header-date-chip .header-date-month {
-  border-left-color: rgba(212,160,23,0.4);
+  border-left-color: rgba(212,160,23,0.18);
   color: #d4a017;
   background: none;
   -webkit-background-clip: unset;
@@ -4409,7 +4409,7 @@ html[data-theme="dark"] #graphSheetPage { background:#080808; }
   background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(201,148,31,0.06) 0%, transparent 70%);
 }
 .ad-corner-svg { position: absolute; pointer-events: none; }
-.ad-corner-line { stroke: #c9941f; stroke-width: 1; fill: none; opacity: 0; stroke-dasharray: 50; stroke-dashoffset: 50; }
+.ad-corner-line { stroke: #c9941f; stroke-width: 1; fill: none; opacity: 0; filter: opacity(0.4); stroke-dasharray: 50; stroke-dashoffset: 50; }
 .ad-corner-tl { top: 10px; left: 10px; }
 .ad-corner-tr { top: 10px; right: 10px; }
 .ad-corner-bl { bottom: 10px; left: 10px; }
