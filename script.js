@@ -696,7 +696,9 @@ function populateMonthFilter(){
   if(prev && (prev==='all' || months.includes(prev))){
     sel.value = prev;
   } else {
-    sel.value = months.includes(current) ? current : (months[0] || 'all');
+    // Default to most recent month WITH transactions; fall back to current month if no data yet
+    const txMonths = Array.from(new Set(transactions.map(t=>monthKey(t.date)))).sort().reverse();
+    sel.value = txMonths.length > 0 ? txMonths[0] : (months.includes(current) ? current : (months[0] || 'all'));
   }
 }
 
@@ -1115,7 +1117,12 @@ function populateMonthFilterLedger(){
     o.textContent=d.toLocaleString('default',{month:'long',year:'numeric'});
     sel.appendChild(o);
   });
-  sel.value = (currentVal && (currentVal==='all' || months.includes(currentVal))) ? currentVal : 'all';
+  if(currentVal && (currentVal==='all' || months.includes(currentVal))){
+    sel.value = currentVal;
+  } else {
+    const txMonths = Array.from(new Set(transactions.map(t=>monthKey(t.date)))).sort().reverse();
+    sel.value = txMonths.length > 0 ? txMonths[0] : 'all';
+  }
 }
 
 function renderLedgerFull(){
