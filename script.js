@@ -707,9 +707,9 @@ function populateMonthFilter(){
   if(prev && (prev==='all' || months.includes(prev))){
     sel.value = prev;
   } else {
-    // If current month has no transactions, default to 'all' so data is visible
-    const currentMonthHasData = transactions.some(t => monthKey(t.date) === current);
-    sel.value = currentMonthHasData ? current : 'all';
+    // Default to the most recent month that actually has transactions
+    const txMonths = [...new Set(transactions.map(t => monthKey(t.date)))].sort().reverse();
+    sel.value = txMonths.length ? txMonths[0] : 'all';
   }
 }
 
@@ -1835,11 +1835,11 @@ $('menuLogoutBtn').addEventListener('click', ()=>{
 function updateHeaderInsight(){
   try {
     const now = new Date();
-    // Use the same month the user has selected, not UTC now
+    // Use the selected month; if not set or 'all', fall back to most recent month with data
     const selEl = $('monthFilter');
-    const monthKey7 = (selEl && selEl.value && selEl.value !== 'all')
-      ? selEl.value
-      : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const selVal = selEl && selEl.value && selEl.value !== 'all' ? selEl.value : null;
+    const txMonths7 = [...new Set((window.transactions||[]).map(t=>t.date.slice(0,7)))].sort().reverse();
+    const monthKey7 = selVal || txMonths7[0] || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     // Last 7 days buckets using LOCAL dates (not UTC)
     const buckets = [];
     for(let i=6;i>=0;i--){
@@ -1920,10 +1920,26 @@ $('themeToggle').addEventListener('click',toggleTheme);
 function updateHeaderPills(){
   try {
     const now = new Date();
-    const totalDays = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-    const elapsed = now.getDate();
+    // Use the selected month; if not set or 'all', fall back to most recent month with data
+    const selEl = $('monthFilter');
+    const selVal = selEl && selEl.value && selEl.value !== 'all' ? selEl.value : null;
+    const txMonthsPill = [...new Set((window.transactions||[]).map(t=>t.date.slice(0,7)))].sort().reverse();
+    const activeMonth = selVal || txMonthsPill[0] || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+    const yr = parseInt(activeMonth.slice(0,4));
+    const mo = parseInt(activeMonth.slice(5)) - 1; // 0-based
+    const totalDays = new Date(yr, mo + 1, 0).getDate();
+    const nowMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    // For past months: 100%. Current month: real %. Future: 0%
+    let elapsed, daysLeft;
+    if (activeMonth < nowMonthKey) {
+      elapsed = totalDays; daysLeft = 0;
+    } else if (activeMonth === nowMonthKey) {
+      elapsed = now.getDate(); daysLeft = totalDays - elapsed;
+    } else {
+      elapsed = 0; daysLeft = totalDays;
+    }
     const pct = Math.round((elapsed / totalDays) * 100);
-    const daysLeft = totalDays - elapsed;
 
     const fill = document.getElementById('hmsBarFill');
     const glow = document.getElementById('hmsBarGlow');
