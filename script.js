@@ -2357,7 +2357,7 @@ async function handleGuestLogin() {
   let msgIdx = 0;
 
   const interval = setInterval(() => {
-    progress += Math.random() * 7 + 4.5; // ~2.1 seconds for bar fill
+    progress += Math.random() * 8 + 5;   // bar fills in ~1.5 seconds
     if (progress > 100) progress = 100;
     if (bar) bar.style.width = progress + '%';
 
@@ -2369,11 +2369,11 @@ async function handleGuestLogin() {
 
     if (progress >= 100) {
       clearInterval(interval);
-      setTimeout(() => {                   // 0.5s pause at 100%
+      setTimeout(() => {                   // 0.4s pause at 100%
         const splash = document.getElementById('splashScreen');
         if (splash) {
           splash.classList.add('fade-out');
-          setTimeout(() => {               // 0.9s fade-out → total ~3.5s
+          setTimeout(() => {               // 0.9s fade → total ≈ 2.8–3.5s
             splash.classList.add('hidden');
             const hp = document.getElementById('homePage');
             if (hp) hp.style.display = 'none';
@@ -2390,9 +2390,9 @@ async function handleGuestLogin() {
             }
           }, 900);
         }
-      }, 500);
+      }, 400);
     }
-  }, 100); // ~3.5 seconds total (2.1s bar + 0.5s pause + 0.9s fade)
+  }, 75); // total ≈ 2.8–3.5s (1.5s bar + 0.4s pause + 0.9s fade)
 })();
 
 // ── Orbit Canvas Animation ──
