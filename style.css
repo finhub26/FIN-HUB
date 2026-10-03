@@ -713,6 +713,15 @@ body {
   pointer-events: none;
 }
 
+/* ── Splash logo card: gold dots hidden ── */
+#splashScreen .ad-diamond,
+#splashScreen .ad-diamond-bottom,
+#splashScreen .ad-h-rule-dot,
+#splashScreen .ad-dot2,
+#splashScreen .splash-lb-dot {
+  display: none !important;
+}
+
 /* ══════════════════════════════════════════════════════
    HOME PAGE — "The Counting House" — Creative Redesign
 ══════════════════════════════════════════════════════ */
