@@ -709,7 +709,7 @@ function computeLedger(){
 
 function renderLedger(){
   // Safety guard: clear and bail if no user is logged in
-  if (!window.currentUserId && !currentUserId) {
+  if (!_currentUserId) {
     const body = $('ledgerBody'); if (body) body.innerHTML = '';
     const es = $('emptyState'); if (es) es.style.display = 'block';
     return;
@@ -759,7 +759,7 @@ function renderLedger(){
 
 // ── Quick Stats ──
 function renderQuickStats(){
-  if (!window.currentUserId && !currentUserId) return;
+  if (!_currentUserId) return;
   const selectedMonth = $('monthFilter').value;
   const monthTx = (selectedMonth==='all' ? transactions : transactions.filter(t=>monthKey(t.date)===selectedMonth)).filter(t=>t.amount<0);
   if(!monthTx.length){
@@ -782,7 +782,7 @@ function renderQuickStats(){
 
 // ── Top strip ──
 function renderTopStrip(){
-  if (!window.currentUserId && !currentUserId) return;
+  if (!_currentUserId) return;
   const all = computeLedger();
   const totalBalance = all.length ? all[0].balance : 0;
   $('totalBalance').textContent = fmt(totalBalance);
@@ -1043,7 +1043,7 @@ function renderGraphSheet(){ renderGraphWeekly(); }
 
 function renderAll(){
   // Safety guard: never render data when no user is logged in
-  if (!window.currentUserId && !currentUserId) return;
+  if (!_currentUserId) return;
   // Ensure _finhubT is pre-populated with the saved language before dynamic renders
   if (!window._finhubT && window.finhubI18n) {
     const _savedLang = (function(){ try{ return localStorage.getItem('finhub_lang'); }catch(e){ return null; } })();
@@ -1702,9 +1702,9 @@ async function startApp(){
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
   setTimeout(() => updateHeaderGreeting(), 50);
   // Deferred re-render: only fires if the same user is still logged in
-  const _startUid = window.currentUserId;
+  const _startUid = _currentUserId;
   setTimeout(() => {
-    if (window.currentUserId && window.currentUserId === _startUid) {
+    if (_currentUserId && _currentUserId === _startUid) {
       window.transactions = transactions;
       renderAll();
     }
