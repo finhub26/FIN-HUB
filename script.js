@@ -761,23 +761,46 @@ function renderLedger(){
 function renderQuickStats(){
   if (!_currentUserId) return;
   const selectedMonth = $('monthFilter').value;
-  const monthTx = (selectedMonth==='all' ? transactions : transactions.filter(t=>monthKey(t.date)===selectedMonth)).filter(t=>t.amount<0);
-  if(!monthTx.length){
-    $('qsBig').textContent='—'; $('qsAvg').textContent='—'; $('qsDays').textContent='—'; return;
-  }
-  const biggest = Math.max(...monthTx.map(t=>Math.abs(t.amount)));
-  const bigEntry = monthTx.find(t=>Math.abs(t.amount)===biggest);
-  const _bd = bigEntry ? bigEntry.desc.slice(0,14) : '';
-  $('qsBig').textContent = bigEntry ? `${fmt(-biggest)} (${window.__fhTr?window.__fhTr(_bd):_bd})` : '—';
-  const daysInMonth = new Date(selectedMonth.slice(0,4), parseInt(selectedMonth.slice(5))+1, 0).getDate();
   const today = new Date();
-  const passedDays = (monthKey(today.toISOString().slice(0,10))===selectedMonth) ? today.getDate() : daysInMonth;
-  const totalSpent = monthTx.reduce((s,t)=>s+Math.abs(t.amount),0);
-  $('qsAvg').textContent = passedDays > 0 ? fmt(totalSpent/passedDays)+'/day' : '—';
-  const lastDay = new Date(selectedMonth.slice(0,4), parseInt(selectedMonth.slice(5)), 0).getDate();
-  const daysLeft = lastDay - today.getDate();
-  $('qsDays').textContent = monthKey(today.toISOString().slice(0,10))===selectedMonth
-    ? (daysLeft >= 0 ? daysLeft + ' days' : 'Last day') : '—';
+  const todayMonthKey = monthKey(today.toISOString().slice(0,10));
+
+  // Resolve the effective month (for "all", use current month for date-based stats)
+  const effectiveMonth = (selectedMonth === 'all') ? todayMonthKey : selectedMonth;
+
+  const monthTx = (selectedMonth==='all' ? transactions : transactions.filter(t=>monthKey(t.date)===selectedMonth)).filter(t=>t.amount<0);
+
+  // ── Biggest Expense ──
+  if (monthTx.length) {
+    const biggest = Math.max(...monthTx.map(t=>Math.abs(t.amount)));
+    const bigEntry = monthTx.find(t=>Math.abs(t.amount)===biggest);
+    const _bd = bigEntry ? bigEntry.desc.slice(0,14) : '';
+    $('qsBig').textContent = bigEntry ? `${fmt(-biggest)} (${window.__fhTr?window.__fhTr(_bd):_bd})` : '—';
+  } else {
+    $('qsBig').textContent = '—';
+  }
+
+  // ── Avg Daily Spend ──
+  if (monthTx.length) {
+    const yr = parseInt(effectiveMonth.slice(0,4));
+    const mo = parseInt(effectiveMonth.slice(5)) - 1; // 0-based month
+    const daysInMonth = new Date(yr, mo + 1, 0).getDate();
+    const passedDays = (todayMonthKey === effectiveMonth) ? today.getDate() : daysInMonth;
+    const totalSpent = monthTx.reduce((s,t)=>s+Math.abs(t.amount),0);
+    $('qsAvg').textContent = passedDays > 0 ? fmt(totalSpent/passedDays)+'/day' : '—';
+  } else {
+    $('qsAvg').textContent = '—';
+  }
+
+  // ── Days to Payday (last day of selected month) ──
+  if (todayMonthKey === effectiveMonth) {
+    const yr = parseInt(effectiveMonth.slice(0,4));
+    const mo = parseInt(effectiveMonth.slice(5)) - 1; // 0-based month
+    const lastDay = new Date(yr, mo + 1, 0).getDate(); // last day of month
+    const daysLeft = lastDay - today.getDate();
+    $('qsDays').textContent = daysLeft > 0 ? daysLeft + ' days' : 'Last day';
+  } else {
+    $('qsDays').textContent = '—';
+  }
 }
 
 // ── Top strip ──
