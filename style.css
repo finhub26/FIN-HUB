@@ -101,6 +101,618 @@ body {
 
 .hidden { display: none !important; }
 
+/* ═══════════════════════════════════════════════════════
+   SPLASH / LOGO PAGE — Enhanced v3
+═══════════════════════════════════════════════════════ */
+
+#splashScreen {
+  position: fixed;
+  inset: 0;
+  background: #030508;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px 0;
+}
+
+/* Animated star field dots */
+#splashScreen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(212,160,23,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 72% 12%, rgba(212,160,23,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 48% 65%, rgba(212,160,23,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 44%, rgba(212,160,23,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 6% 78%, rgba(212,160,23,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 33% 90%, rgba(64,145,108,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 62% 36%, rgba(64,145,108,0.2) 0%, transparent 100%),
+    radial-gradient(2px 2px at 91% 88%, rgba(212,160,23,0.15) 0%, transparent 100%),
+    repeating-linear-gradient(180deg, transparent 0px, transparent 80px, rgba(201,148,31,0.025) 80px, rgba(201,148,31,0.025) 81px),
+    repeating-linear-gradient(90deg,  transparent 0px, transparent 80px, rgba(201,148,31,0.02)  80px, rgba(201,148,31,0.02)  81px);
+  pointer-events: none;
+}
+
+/* Deep radial glow */
+#splashScreen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 42%, rgba(212,160,23,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 35% at 50% 42%, rgba(64,145,108,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Animated rotating outer arc */
+.splash-orbit {
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(212,160,23,0.12);
+  border-right-color: rgba(212,160,23,0.06);
+  animation: orbitSpin 18s linear infinite;
+  pointer-events: none;
+}
+.splash-orbit-2 {
+  width: 260px; height: 260px;
+  border-top-color: rgba(64,145,108,0.1);
+  border-left-color: rgba(64,145,108,0.05);
+  animation: orbitSpin 12s linear infinite reverse;
+}
+@keyframes orbitSpin { to { transform: rotate(360deg); } }
+
+/* Orbit dot (planet) */
+.splash-orbit::before {
+  content: '';
+  position: absolute;
+  top: -3px; left: 50%;
+  width: 6px; height: 6px;
+  background: rgba(212,160,23,0.6);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(212,160,23,0.4);
+  transform: translateX(-50%);
+}
+.splash-orbit-2::before {
+  width: 4px; height: 4px;
+  background: rgba(64,145,108,0.55);
+  box-shadow: 0 0 6px rgba(64,145,108,0.35);
+}
+
+.splash-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+/* ── the main crest / logo mark ── */
+.splash-crest {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 16px;
+}
+
+.splash-crest-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212,160,23,0.3);
+  animation: ringPulse 4s ease-in-out infinite;
+}
+.splash-crest-ring-2 {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,160,23,0.16);
+  animation: ringPulse 4s ease-in-out infinite 0.6s;
+}
+.splash-crest-ring-3 {
+  position: absolute;
+  inset: 28px;
+  border-radius: 50%;
+  border: 1px dashed rgba(212,160,23,0.1);
+  animation: ringPulse 4s ease-in-out infinite 1.2s;
+}
+
+/* Hexagonal inner shape */
+.splash-crest-hex {
+  position: absolute;
+  inset: 44px;
+  background: rgba(212,160,23,0.04);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: none;
+}
+
+@keyframes ringPulse {
+  0%,100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.012); }
+}
+
+.splash-crest-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* The main T mark inside crest */
+.splash-t-mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 72px;
+  line-height: 0.85;
+  color: transparent;
+  background: linear-gradient(160deg,
+    rgba(255,248,220,0.95) 0%,
+    rgba(240,220,140,0.9) 35%,
+    rgba(212,160,23,0.85) 65%,
+    rgba(180,120,10,0.75) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 20px rgba(212,160,23,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  letter-spacing: -2px;
+}
+
+.splash-crest-dot-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+}
+.splash-crest-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--l-gold);
+  opacity: 0.7;
+  animation: dotBlink 2s ease-in-out infinite;
+}
+.splash-crest-dot:nth-child(2) { animation-delay: 0.3s; }
+.splash-crest-dot:nth-child(3) { animation-delay: 0.6s; }
+@keyframes dotBlink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+/* decorative corner ornaments inside crest */
+.splash-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+}
+.splash-corner::before, .splash-corner::after {
+  content: '';
+  position: absolute;
+  background: rgba(212,160,23,0.5);
+}
+.splash-corner::before { width: 100%; height: 1.5px; top: 0; }
+.splash-corner::after  { width: 1.5px; height: 100%; top: 0; }
+
+.splash-corner-tl { top: 36px; left: 36px; }
+.splash-corner-tr { top: 36px; right: 36px; transform: scaleX(-1); }
+.splash-corner-bl { bottom: 36px; left: 36px; transform: scaleY(-1); }
+.splash-corner-br { bottom: 36px; right: 36px; transform: scale(-1); }
+
+/* text below crest */
+.splash-brand-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(240,235,216,0.9) 0%, rgba(212,160,23,0.7) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 12px rgba(212,160,23,0.2));
+}
+
+.splash-brand-subtitle {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  font-style: italic;
+  color: rgba(240,235,216,0.28);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.splash-tagline {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(212,160,23,0.4);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+/* loading bar */
+.splash-bar-wrap {
+  width: 160px;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 2;
+}
+.splash-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--l-sage), var(--l-gold));
+  border-radius: 1px;
+  transition: width 0.08s linear;
+}
+
+.splash-loading-text {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(240,235,216,0.22);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+}
+
+/* corner decorative hatch strips - hidden */
+.splash-hatch-tl, .splash-hatch-br {
+  display: none !important;
+}
+
+/* accent bars on left / right - hidden */
+.splash-bar-left, .splash-bar-right {
+  display: none !important;
+}
+
+/* version tag at very bottom */
+.splash-version { display: none; }
+
+.splash-divider-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  width: 240px;
+}
+.splash-divider-line {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,160,23,0.35), transparent);
+}
+.splash-intention {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: rgba(212,160,23,0.38);
+  letter-spacing: 0.04em;
+}
+.splash-lb-dot {
+  font-size: 7px;
+  color: rgba(212,160,23,0.35);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SPLASH / LOGO PAGE — Enhanced v3
+═══════════════════════════════════════════════════════ */
+
+#splashScreen {
+  position: fixed;
+  inset: 0;
+  background: #030508;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px 0;
+}
+
+/* Animated star field dots */
+#splashScreen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(212,160,23,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 72% 12%, rgba(212,160,23,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 48% 65%, rgba(212,160,23,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 44%, rgba(212,160,23,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 6% 78%, rgba(212,160,23,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 33% 90%, rgba(64,145,108,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 62% 36%, rgba(64,145,108,0.2) 0%, transparent 100%),
+    radial-gradient(2px 2px at 91% 88%, rgba(212,160,23,0.15) 0%, transparent 100%),
+    repeating-linear-gradient(180deg, transparent 0px, transparent 80px, rgba(201,148,31,0.025) 80px, rgba(201,148,31,0.025) 81px),
+    repeating-linear-gradient(90deg,  transparent 0px, transparent 80px, rgba(201,148,31,0.02)  80px, rgba(201,148,31,0.02)  81px);
+  pointer-events: none;
+}
+
+/* Deep radial glow */
+#splashScreen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 42%, rgba(212,160,23,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 35% at 50% 42%, rgba(64,145,108,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Animated rotating outer arc */
+.splash-orbit {
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(212,160,23,0.12);
+  border-right-color: rgba(212,160,23,0.06);
+  animation: orbitSpin 18s linear infinite;
+  pointer-events: none;
+}
+.splash-orbit-2 {
+  width: 260px; height: 260px;
+  border-top-color: rgba(64,145,108,0.1);
+  border-left-color: rgba(64,145,108,0.05);
+  animation: orbitSpin 12s linear infinite reverse;
+}
+@keyframes orbitSpin { to { transform: rotate(360deg); } }
+
+/* Orbit dot (planet) */
+.splash-orbit::before {
+  content: '';
+  position: absolute;
+  top: -3px; left: 50%;
+  width: 6px; height: 6px;
+  background: rgba(212,160,23,0.6);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(212,160,23,0.4);
+  transform: translateX(-50%);
+}
+.splash-orbit-2::before {
+  width: 4px; height: 4px;
+  background: rgba(64,145,108,0.55);
+  box-shadow: 0 0 6px rgba(64,145,108,0.35);
+}
+
+.splash-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+/* ── the main crest / logo mark ── */
+.splash-crest {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 16px;
+}
+
+.splash-crest-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212,160,23,0.3);
+  animation: ringPulse 4s ease-in-out infinite;
+}
+.splash-crest-ring-2 {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,160,23,0.16);
+  animation: ringPulse 4s ease-in-out infinite 0.6s;
+}
+.splash-crest-ring-3 {
+  position: absolute;
+  inset: 28px;
+  border-radius: 50%;
+  border: 1px dashed rgba(212,160,23,0.1);
+  animation: ringPulse 4s ease-in-out infinite 1.2s;
+}
+
+/* Hexagonal inner shape */
+.splash-crest-hex {
+  position: absolute;
+  inset: 44px;
+  background: rgba(212,160,23,0.04);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: none;
+}
+
+@keyframes ringPulse {
+  0%,100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.012); }
+}
+
+.splash-crest-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* The main T mark inside crest */
+.splash-t-mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 72px;
+  line-height: 0.85;
+  color: transparent;
+  background: linear-gradient(160deg,
+    rgba(255,248,220,0.95) 0%,
+    rgba(240,220,140,0.9) 35%,
+    rgba(212,160,23,0.85) 65%,
+    rgba(180,120,10,0.75) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 20px rgba(212,160,23,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  letter-spacing: -2px;
+}
+
+.splash-crest-dot-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+}
+.splash-crest-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--l-gold);
+  opacity: 0.7;
+  animation: dotBlink 2s ease-in-out infinite;
+}
+.splash-crest-dot:nth-child(2) { animation-delay: 0.3s; }
+.splash-crest-dot:nth-child(3) { animation-delay: 0.6s; }
+@keyframes dotBlink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+/* decorative corner ornaments inside crest */
+.splash-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+}
+.splash-corner::before, .splash-corner::after {
+  content: '';
+  position: absolute;
+  background: rgba(212,160,23,0.5);
+}
+.splash-corner::before { width: 100%; height: 1.5px; top: 0; }
+.splash-corner::after  { width: 1.5px; height: 100%; top: 0; }
+
+.splash-corner-tl { top: 36px; left: 36px; }
+.splash-corner-tr { top: 36px; right: 36px; transform: scaleX(-1); }
+.splash-corner-bl { bottom: 36px; left: 36px; transform: scaleY(-1); }
+.splash-corner-br { bottom: 36px; right: 36px; transform: scale(-1); }
+
+/* text below crest */
+.splash-brand-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(240,235,216,0.9) 0%, rgba(212,160,23,0.7) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 12px rgba(212,160,23,0.2));
+}
+
+.splash-brand-subtitle {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  font-style: italic;
+  color: rgba(240,235,216,0.28);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.splash-tagline {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(212,160,23,0.4);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+/* loading bar */
+.splash-bar-wrap {
+  width: 160px;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 2;
+}
+.splash-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--l-sage), var(--l-gold));
+  border-radius: 1px;
+  transition: width 0.08s linear;
+}
+
+.splash-loading-text {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(240,235,216,0.22);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+}
+
+/* corner decorative hatch strips - hidden */
+.splash-hatch-tl, .splash-hatch-br {
+  display: none !important;
+}
+
+/* accent bars on left / right - hidden */
+.splash-bar-left, .splash-bar-right {
+  display: none !important;
+}
+
+/* version tag at very bottom */
+.splash-version { display: none; }
+
+.splash-divider-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  width: 240px;
+}
+.splash-divider-line {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,160,23,0.35), transparent);
+}
+.splash-intention {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: rgba(212,160,23,0.38);
+  letter-spacing: 0.04em;
+}
+.splash-lb-dot {
+  font-size: 7px;
+  color: rgba(212,160,23,0.35);
+}
+
+#splashScreen.fade-out {
+  opacity: 0;
+  transition: opacity 1.1s ease;
+  pointer-events: none;
+}
+
 /* ══════════════════════════════════════════════════════
    HOME PAGE — "The Counting House" — Creative Redesign
 ══════════════════════════════════════════════════════ */
@@ -4245,95 +4857,4 @@ html[data-theme="light"] .sb-section-label {
   color: rgba(30,27,75,0.65) !important;
   font-weight: 700 !important;
   letter-spacing: 0.1em !important;
-}
-
-/* ══════════════════════════════════════════════════════════
-   SPLASH SCREEN
-   ══════════════════════════════════════════════════════════ */
-#splashScreen {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: #050810;
-  overflow: hidden;
-  transition: opacity 0.6s ease, visibility 0.6s ease;
-}
-#splashScreen.splash-fade-out {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-.splash-bg-rings {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.splash-bg-rings svg {
-  position: absolute;
-  opacity: 0;
-  animation: splashRingFade 2s ease forwards;
-}
-.splash-bg-rings svg:nth-child(1) { animation-delay: 0.1s; }
-.splash-bg-rings svg:nth-child(2) { animation-delay: 0.3s; }
-.splash-bg-rings svg:nth-child(3) { animation-delay: 0.5s; }
-@keyframes splashRingFade {
-  0%   { opacity: 0; transform: scale(0.85); }
-  60%  { opacity: 1; }
-  100% { opacity: 0.18; transform: scale(1); }
-}
-.splash-card-wrap {
-  position: relative;
-  z-index: 2;
-  opacity: 0;
-  transform: translateY(18px) scale(0.97);
-  animation: splashCardIn 0.9s cubic-bezier(0.22,1,0.36,1) 0.4s forwards;
-}
-@keyframes splashCardIn {
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-.splash-tagline {
-  position: relative;
-  z-index: 2;
-  margin-top: 28px;
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: rgba(201,148,31,0.55);
-  opacity: 0;
-  animation: splashTagIn 0.8s ease 1s forwards;
-}
-@keyframes splashTagIn {
-  to { opacity: 1; }
-}
-.splash-dots {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  gap: 8px;
-  margin-top: 20px;
-  opacity: 0;
-  animation: splashTagIn 0.6s ease 1.3s forwards;
-}
-.splash-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(201,148,31,0.4);
-  animation: splashDotPulse 1s ease-in-out infinite;
-}
-.splash-dot:nth-child(1) { animation-delay: 0s; }
-.splash-dot:nth-child(2) { animation-delay: 0.2s; }
-.splash-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes splashDotPulse {
-  0%, 100% { background: rgba(201,148,31,0.25); transform: scale(0.85); }
-  50%       { background: rgba(201,148,31,0.75); transform: scale(1.15); }
 }

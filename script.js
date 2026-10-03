@@ -2341,45 +2341,135 @@ async function handleGuestLogin() {
   await startApp();
 }
 
-// ── Splash Screen → Login ──
-(function() {
-  const SPLASH_DURATION = 2500; // ms to show splash before fading to login
+// ═══════════════════════════════════════════════════════
+//  SPLASH SCREEN — Logo animation, NO sound
+// ═══════════════════════════════════════════════════════
+(function runSplash(){
+  const bar = document.getElementById('splashBarFill');
+  const txt = document.getElementById('splashLoadingText');
+  const msgs = [
+    'Opening the Ledger…',
+    'Loading your data…',
+    'Almost ready…',
+    'Welcome to FinHub!'
+  ];
+  let progress = 0;
+  let msgIdx = 0;
 
-  function showLogin() {
-    if (typeof initAuth === 'function') initAuth();
-    const lo = document.getElementById('loginOverlay');
-    if (lo) lo.classList.remove('hidden');
-  }
+  const interval = setInterval(() => {
+    progress += Math.random() * 18 + 8;
+    if (progress > 100) progress = 100;
+    if (bar) bar.style.width = progress + '%';
 
-  function hideSplash() {
-    const splash = document.getElementById('splashScreen');
-    if (!splash) { showLogin(); return; }
-    splash.classList.add('splash-fade-out');
-    // After fade transition (600ms) fully remove it and show login
-    setTimeout(function() {
-      splash.style.display = 'none';
-      showLogin();
-    }, 650);
-  }
+    const newIdx = Math.min(Math.floor(progress / 26), msgs.length - 1);
+    if (newIdx !== msgIdx) {
+      msgIdx = newIdx;
+      if (txt) txt.textContent = msgs[msgIdx];
+    }
 
-  function initSplash() {
-    const splash = document.getElementById('splashScreen');
-    if (!splash) { showLogin(); return; }
-    // Hide login overlay while splash shows
-    const lo = document.getElementById('loginOverlay');
-    if (lo) lo.classList.add('hidden');
-    // After SPLASH_DURATION, fade out splash and reveal login
-    setTimeout(hideSplash, SPLASH_DURATION);
-  }
-
-  window.homeToLogin = showLogin;
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSplash);
-  } else {
-    initSplash();
-  }
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        const splash = document.getElementById('splashScreen');
+        if (splash) {
+          splash.classList.add('fade-out');
+          setTimeout(() => {
+            splash.classList.add('hidden');
+            const hp = document.getElementById('homePage');
+            if (hp) hp.style.display = 'none';
+            if (typeof initAuth === 'function') initAuth();
+            const lo = document.getElementById('loginOverlay');
+            if (lo) {
+              lo.classList.remove('hidden');
+              const loginCard = lo.querySelector('.ad-card');
+              if (loginCard) {
+                loginCard.classList.remove('ad-animate');
+                void loginCard.offsetWidth;
+                loginCard.classList.add('ad-animate');
+              }
+            }
+          }, 950);
+        }
+      }, 400);
+    }
+  }, 120);
 })();
+
+// ── Orbit Canvas Animation ──
+(function initOrbitCanvas(){
+  const canvas = document.getElementById('splashOrbitCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, cx, cy, raf;
+  let t = 0;
+
+  function resize(){
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    cx = W/2; cy = H/2;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const rings = [
+    { r:210, speed:0.004,  tilt:12,  color:'rgba(212,160,23,',  dash:[18,10], width:1.2, glowColor:'rgba(212,160,23,0.35)' },
+    { r:175, speed:-0.007, tilt:-20, color:'rgba(64,145,108,',  dash:[6,14],  width:0.8, glowColor:'rgba(64,145,108,0.25)' },
+    { r:245, speed:0.0025, tilt:30,  color:'rgba(212,160,23,',  dash:[2,20],  width:0.6, glowColor:'rgba(212,160,23,0.15)' },
+    { r:145, speed:-0.012, tilt:-8,  color:'rgba(167,139,250,', dash:[10,8],  width:0.7, glowColor:'rgba(167,139,250,0.2)' },
+  ];
+
+  const stars = Array.from({length:40}, ()=>({
+    x: Math.random()*800-400,
+    y: Math.random()*600-300,
+    r: Math.random()*1.2+0.3,
+    twinkle: Math.random()*Math.PI*2,
+    speed: Math.random()*0.02+0.008
+  }));
+
+  function drawStars(time){
+    stars.forEach(s => {
+      s.twinkle += s.speed;
+      const alpha = 0.3 + 0.5*Math.abs(Math.sin(s.twinkle));
+      ctx.beginPath();
+      ctx.arc(cx + s.x, cy + s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(212,160,23,${alpha})`;
+      ctx.fill();
+    });
+  }
+
+  function drawCenterGlow(time){
+    const pulse = 0.6 + 0.4*Math.sin(time*1.8);
+    const grad = ctx.createRadialGradient(cx,cy,0, cx,cy,130);
+    grad.addColorStop(0,   `rgba(212,160,23,${0.06*pulse})`);
+    grad.addColorStop(0.5, `rgba(64,145,108,${0.03*pulse})`);
+    grad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, 130, 0, Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    drawStars(t);
+    drawCenterGlow(t);
+    t += 0.016;
+    const splash = document.getElementById('splashScreen');
+    if (splash && (splash.classList.contains('hidden') || splash.style.display==='none')) {
+      cancelAnimationFrame(raf);
+      return;
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+})();
+
+// ── Navigate to login ──
+function homeToLogin(){
+  if (typeof initAuth === 'function') initAuth();
+  const lo = document.getElementById('loginOverlay');
+  if (lo) lo.classList.remove('hidden');
+}
 
 /* ===== i18n.js ===== */
 // ══════════════════════════════════════════════════════════
