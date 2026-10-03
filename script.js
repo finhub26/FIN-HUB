@@ -2357,7 +2357,7 @@ async function handleGuestLogin() {
   let msgIdx = 0;
 
   const interval = setInterval(() => {
-    progress += Math.random() * 3 + 1.5; // ~8 seconds
+    progress += Math.random() * 7 + 4.5; // ~2.1 seconds for bar fill
     if (progress > 100) progress = 100;
     if (bar) bar.style.width = progress + '%';
 
@@ -2369,11 +2369,11 @@ async function handleGuestLogin() {
 
     if (progress >= 100) {
       clearInterval(interval);
-      setTimeout(() => {
+      setTimeout(() => {                   // 0.5s pause at 100%
         const splash = document.getElementById('splashScreen');
         if (splash) {
           splash.classList.add('fade-out');
-          setTimeout(() => {
+          setTimeout(() => {               // 0.9s fade-out → total ~3.5s
             splash.classList.add('hidden');
             const hp = document.getElementById('homePage');
             if (hp) hp.style.display = 'none';
@@ -2392,7 +2392,7 @@ async function handleGuestLogin() {
         }
       }, 500);
     }
-  }, 150); // ~8 seconds total
+  }, 100); // ~3.5 seconds total (2.1s bar + 0.5s pause + 0.9s fade)
 })();
 
 // ── Orbit Canvas Animation ──
