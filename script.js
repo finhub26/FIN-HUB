@@ -2341,18 +2341,43 @@ async function handleGuestLogin() {
   await startApp();
 }
 
-// No splash — go straight to login on DOM ready
+// ── Splash Screen → Login ──
 (function() {
+  const SPLASH_DURATION = 2500; // ms to show splash before fading to login
+
   function showLogin() {
     if (typeof initAuth === 'function') initAuth();
     const lo = document.getElementById('loginOverlay');
     if (lo) lo.classList.remove('hidden');
   }
+
+  function hideSplash() {
+    const splash = document.getElementById('splashScreen');
+    if (!splash) { showLogin(); return; }
+    splash.classList.add('splash-fade-out');
+    // After fade transition (600ms) fully remove it and show login
+    setTimeout(function() {
+      splash.style.display = 'none';
+      showLogin();
+    }, 650);
+  }
+
+  function initSplash() {
+    const splash = document.getElementById('splashScreen');
+    if (!splash) { showLogin(); return; }
+    // Hide login overlay while splash shows
+    const lo = document.getElementById('loginOverlay');
+    if (lo) lo.classList.add('hidden');
+    // After SPLASH_DURATION, fade out splash and reveal login
+    setTimeout(hideSplash, SPLASH_DURATION);
+  }
+
   window.homeToLogin = showLogin;
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', showLogin);
+    document.addEventListener('DOMContentLoaded', initSplash);
   } else {
-    showLogin();
+    initSplash();
   }
 })();
 

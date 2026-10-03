@@ -29,6 +29,69 @@
 
 <body>
 
+<!-- ═══════════════════════════ SPLASH SCREEN ═══════════════════════════ -->
+<div id="splashScreen">
+  <!-- Background decorative rings -->
+  <div class="splash-bg-rings" aria-hidden="true">
+    <svg width="520" height="520" viewBox="0 0 520 520">
+      <circle cx="260" cy="260" r="250" fill="none" stroke="#d4a017" stroke-width="1" opacity="0.25"/>
+    </svg>
+    <svg width="380" height="380" viewBox="0 0 380 380">
+      <circle cx="190" cy="190" r="182" fill="none" stroke="#d4a017" stroke-width="1.5" opacity="0.3"/>
+    </svg>
+    <svg width="260" height="260" viewBox="0 0 260 260">
+      <polygon points="130,12 248,68 248,192 130,248 12,192 12,68"
+        fill="rgba(212,160,23,0.05)" stroke="#d4a017" stroke-width="1.5" opacity="0.35"/>
+    </svg>
+  </div>
+
+  <!-- Art Deco Logo Card (same design as login panel) -->
+  <div class="splash-card-wrap">
+    <div class="ad-card splash-ad-card ad-animate" role="img" aria-label="FinHub logo">
+      <div class="ad-glow-center"></div>
+      <svg class="ad-card-border-svg" viewBox="0 0 200 154">
+        <rect class="ad-border-rect" x="8" y="8" width="184" height="138" rx="5"/>
+        <rect class="ad-border-rect-inner" x="13" y="13" width="174" height="128" rx="3"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-tl" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-ctl" points="16,2 2,2 2,16"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-tr" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-ctr" points="0,2 14,2 14,16"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-bl" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-cbl" points="16,14 2,14 2,0"/>
+      </svg>
+      <svg class="ad-corner-svg ad-corner-br" width="16" height="16" viewBox="0 0 16 16">
+        <polyline class="ad-corner-line ad-cbr" points="0,14 14,14 14,0"/>
+      </svg>
+      <div class="ad-center">
+        <div class="ad-diamond" style="margin-bottom:6px;"></div>
+        <div class="ad-h-rule">
+          <div class="ad-h-rule-line ad-left"></div>
+          <div class="ad-h-rule-dot"></div>
+          <div class="ad-h-rule-line ad-right"></div>
+        </div>
+        <div class="ad-t-mark">FH</div>
+        <div class="ad-h-rule" style="margin-top:1px;">
+          <div class="ad-h-rule-line ad-left2"></div>
+          <div class="ad-h-rule-dot ad-dot2"></div>
+          <div class="ad-h-rule-line ad-right2"></div>
+        </div>
+        <div class="ad-tally-text">Fin Hub</div>
+        <div class="ad-diamond ad-diamond-bottom" style="margin-top:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="splash-tagline">Your Household Ledger</div>
+  <div class="splash-dots" aria-hidden="true">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════ LOGIN OVERLAY ═══════════════════════════ -->
 <div id="loginOverlay" class="hidden">
 
