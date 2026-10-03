@@ -707,9 +707,9 @@ function populateMonthFilter(){
   if(prev && (prev==='all' || months.includes(prev))){
     sel.value = prev;
   } else {
-    // Default to most recent month WITH transactions; fall back to current month if no data yet
-    const txMonths = Array.from(new Set(transactions.map(t=>monthKey(t.date)))).sort().reverse();
-    sel.value = txMonths.length > 0 ? txMonths[0] : (months.includes(current) ? current : (months[0] || 'all'));
+    // If current month has no transactions, default to 'all' so data is visible
+    const currentMonthHasData = transactions.some(t => monthKey(t.date) === current);
+    sel.value = currentMonthHasData ? current : 'all';
   }
 }
 
@@ -1131,8 +1131,7 @@ function populateMonthFilterLedger(){
   if(currentVal && (currentVal==='all' || months.includes(currentVal))){
     sel.value = currentVal;
   } else {
-    const txMonths = Array.from(new Set(transactions.map(t=>monthKey(t.date)))).sort().reverse();
-    sel.value = txMonths.length > 0 ? txMonths[0] : 'all';
+    sel.value = 'all';
   }
 }
 
