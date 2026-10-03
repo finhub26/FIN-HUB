@@ -696,7 +696,7 @@ function populateMonthFilter(){
   if(prev && (prev==='all' || months.includes(prev))){
     sel.value = prev;
   } else {
-    sel.value = 'all';
+    sel.value = months.includes(current) ? current : (months[0] || 'all');
   }
 }
 
@@ -1145,7 +1145,10 @@ function renderBreakdownBudget(){
   const w = rawW >= (padL+padR+minPlot) ? rawW : (padL+padR+minPlot);
   const rowH = 24;
   const selectedMonth = $('monthFilter') ? $('monthFilter').value : new Date().toISOString().slice(0,7);
-  const monthTx = transactions.filter(t=>monthKey(t.date)===selectedMonth && t.amount<0);
+  const monthTx = (selectedMonth === 'all'
+    ? transactions
+    : transactions.filter(t=>monthKey(t.date)===selectedMonth)
+  ).filter(t=>t.amount<0);
   const totals = {};
   CATEGORIES.forEach(c=>totals[c]=0);
   monthTx.forEach(t=>{ totals[t.category]=(totals[t.category]||0)+Math.abs(t.amount); });
@@ -1228,25 +1231,26 @@ function renderGoals(){
   const wrap=$('goalsList'); wrap.innerHTML='';
   const tableWrap=document.createElement('div'); tableWrap.className='goals-table-wrap';
   const tbl=document.createElement('table'); tbl.className='goals-table';
+  const _T = window._finhubT || {};
   tbl.innerHTML=`<thead><tr>
-    <th>Goal Name</th>
-    <th>Marychide</th>
-    <th class="num">Saved (₹)</th>
-    <th class="num">Target (₹)</th>
-    <th class="col-progress">Progress</th>
-    <th>Deposit</th>
+    <th>${_T.goals_col_name||'Goal Name'}</th>
+    <th>${_T.goals_col_marychide||'Due Date'}</th>
+    <th class="num">${_T.goals_col_saved||'Saved (₹)'}</th>
+    <th class="num">${_T.goals_col_target||'Target (₹)'}</th>
+    <th class="col-progress">${_T.goals_col_progress||'Progress'}</th>
+    <th>${_T.goals_col_deposit||'Deposit'}</th>
     <th></th>
   </tr></thead>`;
   const tbody=document.createElement('tbody');
   if(!goals.length){
-    tbody.innerHTML=`<tr><td colspan="7" style="font-size:12px;color:var(--muted);padding:14px 12px;">No goals yet — add one below.</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="7" style="font-size:12px;color:var(--muted);padding:14px 12px;">${_T.goals_no_goals||'No goals yet — add one below.'}</td></tr>`;
   } else {
     goals.forEach((g,i)=>{
       const pct=Math.min(100,g.target>0?(g.saved/g.target)*100:0);
       const done=g.saved>=g.target&&g.target>0;
       const tr=document.createElement('tr');
       tr.innerHTML=`
-        <td><strong>${g.name}</strong>${done?` <span class="gt-done-badge">✓ Reached</span>`:''}</td>
+        <td><strong>${g.name}</strong>${done?` <span class="gt-done-badge">${_T.goals_done_badge||'✓ Reached'}</span>`:''}</td>
         <td class="col-marychide">${g.marychide||'—'}</td>
         <td class="num">${fmt(g.saved)}</td>
         <td class="num">${fmt(g.target)}</td>
@@ -1257,7 +1261,7 @@ function renderGoals(){
         <td>${!done?`<div class="gt-deposit">
           <input type="number" class="goal-deposit-input" placeholder="₹" min="0.01" step="0.01" data-idx="${i}">
           <button class="gt-deposit-btn" data-idx="${i}">Save</button>
-        </div>`:'<span style="color:var(--brass);font-size:11px;">Complete</span>'}</td>
+        </div>`:`<span style="color:var(--brass);font-size:11px;">${_T.goals_complete||'Complete'}</span>`}</td>
         <td><button class="goal-del-btn" data-idx="${i}" title="Delete" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;">✕</button></td>
       `;
       tbody.appendChild(tr);
@@ -1266,12 +1270,12 @@ function renderGoals(){
   // tfoot — inline add row
   const tfoot=document.createElement('tfoot');
   tfoot.innerHTML=`<tr>
-    <td><input type="text" id="goalName" placeholder="Goal name…"></td>
-    <td><input type="text" id="goalMarychide" placeholder="Marychide…"></td>
-    <td class="num" colspan="2"><input type="number" id="goalTarget" placeholder="Target ₹" min="0" step="1" style="text-align:right;"></td>
+    <td><input type="text" id="goalName" placeholder="${_T.goals_add_name_ph||'Goal name…'}"></td>
+    <td><input type="text" id="goalMarychide" placeholder="${_T.goals_add_marychide_ph||'Due date…'}"></td>
+    <td class="num" colspan="2"><input type="number" id="goalTarget" placeholder="${_T.goals_add_target_ph||'Target ₹'}" min="0" step="1" style="text-align:right;"></td>
     <td></td>
     <td></td>
-    <td><button class="tfoot-add-btn" id="addGoalBtn">${window.__fhTr?window.__fhTr('+ Add'):'+ Add'}</button></td>
+    <td><button class="tfoot-add-btn" id="addGoalBtn">${_T.goals_add_btn||'+ Add'}</button></td>
   </tr>`;
   tbl.appendChild(tbody); tbl.appendChild(tfoot);
   tableWrap.appendChild(tbl); wrap.appendChild(tableWrap);
@@ -1309,31 +1313,32 @@ function renderRecurring(){
   const tbl=document.createElement('table'); tbl.className='recur-table';
   // Build category options
   const catOptions=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const _TR = window._finhubT || {};
   tbl.innerHTML=`<thead><tr>
-    <th>Name</th>
-    <th>Category</th>
-    <th>Frequency</th>
-    <th>Type</th>
-    <th>Marychide</th>
-    <th class="num">Amount (₹)</th>
+    <th>${_TR.recur_col_name||'Name'}</th>
+    <th>${_TR.recur_col_cat||'Category'}</th>
+    <th>${_TR.recur_col_freq||'Frequency'}</th>
+    <th>${_TR.recur_col_type||'Type'}</th>
+    <th>${_TR.recur_col_marychide||'Due Date'}</th>
+    <th class="num">${_TR.recur_col_amt||'Amount (₹)'}</th>
     <th></th>
   </tr></thead>`;
   const tbody=document.createElement('tbody');
   if(!recurringItems.length){
-    tbody.innerHTML=`<tr><td colspan="7" style="font-size:12px;color:var(--muted);padding:14px 12px;">No recurring items yet — add one below.</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="7" style="font-size:12px;color:var(--muted);padding:14px 12px;">${_TR.recur_no_items||'No recurring items yet — add one below.'}</td></tr>`;
   } else {
     recurringItems.forEach((r,i)=>{
-      const freqLabel={monthly:'Monthly',weekly:'Weekly',yearly:'Yearly'}[r.freq]||r.freq;
+      const freqLabel={monthly:_TR.recur_freq_monthly||'Monthly',weekly:_TR.recur_freq_weekly||'Weekly',yearly:_TR.recur_freq_yearly||'Yearly'}[r.freq]||r.freq;
       const tr=document.createElement('tr');
       tr.innerHTML=`
         <td class="rt-name">${r.name}</td>
         <td><span class="cat-pill">${r.category}</span></td>
         <td style="font-size:12px;font-family:var(--font-mono);color:var(--muted);">${freqLabel}</td>
-        <td><span style="font-size:11px;font-weight:600;color:${r.type==='income'?'var(--sage)':'var(--rust)'};">${r.type==='income'?'Income':'Expense'}</span></td>
+        <td><span style="font-size:11px;font-weight:600;color:${r.type==='income'?'var(--sage)':'var(--rust)'};">${r.type==='income'?(_TR.recur_type_income||'Income'):(_TR.recur_type_expense||'Expense')}</span></td>
         <td class="col-marychide">${r.marychide||'—'}</td>
         <td class="num rt-amt ${r.type}">${r.type==='expense'?'− ':'+ '}${fmt(r.amount)}</td>
         <td><div class="rt-actions">
-          <button class="rt-post-btn" data-idx="${i}" title="Post now">Post</button>
+          <button class="rt-post-btn" data-idx="${i}" title="Post now">${_TR.recur_post_btn||'Post'}</button>
           <button class="rt-del-btn" data-idx="${i}" title="Delete">✕</button>
         </div></td>
       `;
@@ -1343,7 +1348,7 @@ function renderRecurring(){
   // tfoot — inline add row
   const tfoot=document.createElement('tfoot');
   tfoot.innerHTML=`<tr>
-    <td><input type="text" id="recurName" placeholder="Name…"></td>
+    <td><input type="text" id="recurName" placeholder="${_TR.recur_add_name_ph||'Name…'}"></td>
     <td><select id="recurCat">${catOptions}</select></td>
     <td><select id="recurFreq">
       <option value="weekly">Weekly</option>
@@ -1354,9 +1359,9 @@ function renderRecurring(){
       <option value="expense">Expense</option>
       <option value="income">Income</option>
     </select></td>
-    <td><input type="text" id="recurMarychide" placeholder="Marychide…"></td>
+    <td><input type="text" id="recurMarychide" placeholder="${_TR.recur_add_marychide_ph||'Due date…'}"></td>
     <td class="num"><input type="number" id="recurAmt" placeholder="₹" min="0" step="0.01" style="text-align:right;"></td>
-    <td><button class="tfoot-add-btn" id="addRecurBtn">+ Add</button></td>
+    <td><button class="tfoot-add-btn" id="addRecurBtn">${_TR.recur_add_btn||'+ Add'}</button></td>
   </tr>`;
   tbl.appendChild(tbody); tbl.appendChild(tfoot);
   tableWrap.appendChild(tbl); wrap.appendChild(tableWrap);
@@ -1676,6 +1681,7 @@ async function startApp(){
   if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
   setTimeout(() => updateHeaderGreeting(), 50);
+  setTimeout(() => { window.transactions = transactions; renderAll(); }, 1500);
 }
 
 function resetAuthForms(){
@@ -2668,6 +2674,36 @@ function homeToLogin(){
       gs_yearly_cat_title:    'Year-by-Year Category Breakdown',
       gs_savrate_lbl:         'Savings Rate %',
       gs_budget_limit:        'Budget limit',
+      // Goals & Recurring
+      goals_col_name:         'Goal Name',
+      goals_col_marychide:    'Due Date',
+      goals_col_saved:        'Saved (₹)',
+      goals_col_target:       'Target (₹)',
+      goals_col_progress:     'Progress',
+      goals_col_deposit:      'Deposit',
+      goals_add_name_ph:      'Goal name…',
+      goals_add_marychide_ph: 'Due date…',
+      goals_add_target_ph:    'Target ₹',
+      goals_add_btn:          '+ Add',
+      goals_done_badge:       '✓ Reached',
+      goals_complete:         'Complete',
+      goals_no_goals:         'No goals yet — add one below.',
+      recur_col_name:         'Name',
+      recur_col_cat:          'Category',
+      recur_col_freq:         'Frequency',
+      recur_col_type:         'Type',
+      recur_col_marychide:    'Due Date',
+      recur_col_amt:          'Amount (₹)',
+      recur_freq_weekly:      'Weekly',
+      recur_freq_monthly:     'Monthly',
+      recur_freq_yearly:      'Yearly',
+      recur_type_expense:     'Expense',
+      recur_type_income:      'Income',
+      recur_add_name_ph:      'Name…',
+      recur_add_marychide_ph: 'Due date…',
+      recur_add_btn:          '+ Add',
+      recur_post_btn:         'Post',
+      recur_no_items:         'No recurring items yet — add one below.',
     },
 
     hi: {
@@ -2795,6 +2831,35 @@ function homeToLogin(){
       gs_yearly_cat_title:    'वर्ष-दर-वर्ष श्रेणी विभाजन',
       gs_savrate_lbl:         'बचत दर %',
       gs_budget_limit:        'बजट सीमा',
+      goals_col_name:         'लक्ष्य नाम',
+      goals_col_marychide:    'नियत तारीख',
+      goals_col_saved:        'जमा (₹)',
+      goals_col_target:       'लक्ष्य (₹)',
+      goals_col_progress:     'प्रगति',
+      goals_col_deposit:      'जमा करें',
+      goals_add_name_ph:      'लक्ष्य नाम…',
+      goals_add_marychide_ph: 'नियत तारीख…',
+      goals_add_target_ph:    'लक्ष्य ₹',
+      goals_add_btn:          '+ जोड़ें',
+      goals_done_badge:       '✓ पहुंचा',
+      goals_complete:         'पूर्ण',
+      goals_no_goals:         'अभी कोई लक्ष्य नहीं — नीचे जोड़ें।',
+      recur_col_name:         'नाम',
+      recur_col_cat:          'श्रेणी',
+      recur_col_freq:         'आवृत्ति',
+      recur_col_type:         'प्रकार',
+      recur_col_marychide:    'नियत तारीख',
+      recur_col_amt:          'राशि (₹)',
+      recur_freq_weekly:      'साप्ताहिक',
+      recur_freq_monthly:     'मासिक',
+      recur_freq_yearly:      'वार्षिक',
+      recur_type_expense:     'व्यय',
+      recur_type_income:      'आय',
+      recur_add_name_ph:      'नाम…',
+      recur_add_marychide_ph: 'नियत तारीख…',
+      recur_add_btn:          '+ जोड़ें',
+      recur_post_btn:         'पोस्ट',
+      recur_no_items:         'अभी कोई आवर्ती नहीं — नीचे जोड़ें।',
     },
 
     ta: {
@@ -2924,6 +2989,35 @@ function homeToLogin(){
       gs_yearly_cat_title:    'ஆண்டு வாரியான வகை பிரிப்பு',
       gs_savrate_lbl:         'சேமிப்பு விகிதம் %',
       gs_budget_limit:        'பட்ஜெட் வரம்பு',
+      goals_col_name:         'இலக்கின் பெயர்',
+      goals_col_marychide:    'இலக்கு தேதி',
+      goals_col_saved:        'சேமித்தது (₹)',
+      goals_col_target:       'இலக்கு (₹)',
+      goals_col_progress:     'முன்னேற்றம்',
+      goals_col_deposit:      'டெபாசிட்',
+      goals_add_name_ph:      'இலக்கின் பெயர்…',
+      goals_add_marychide_ph: 'இலக்கு தேதி…',
+      goals_add_target_ph:    'இலக்கு ₹',
+      goals_add_btn:          '+ சேர்',
+      goals_done_badge:       '✓ அடைந்தது',
+      goals_complete:         'நிறைவடைந்தது',
+      goals_no_goals:         'இன்னும் இலக்குகள் இல்லை — கீழே சேர்க்கவும்.',
+      recur_col_name:         'பெயர்',
+      recur_col_cat:          'வகை',
+      recur_col_freq:         'அடிர்வெண்',
+      recur_col_type:         'வகை',
+      recur_col_marychide:    'இலக்கு தேதி',
+      recur_col_amt:          'தொகை (₹)',
+      recur_freq_weekly:      'வாராந்திரம்',
+      recur_freq_monthly:     'மாதாந்திரம்',
+      recur_freq_yearly:      'வருடாந்திரம்',
+      recur_type_expense:     'செலவு',
+      recur_type_income:      'வருமானம்',
+      recur_add_name_ph:      'பெயர்…',
+      recur_add_marychide_ph: 'இலக்கு தேதி…',
+      recur_add_btn:          '+ சேர்',
+      recur_post_btn:         'பதிவிடு',
+      recur_no_items:         'இன்னும் தொடர் பதிவுகள் இல்லை — கீழே சேர்க்கவும்.',
     },
 
     te: {
@@ -3051,6 +3145,35 @@ function homeToLogin(){
       gs_yearly_cat_title:    'సంవత్సరం వారీగా వర్గం విభజన',
       gs_savrate_lbl:         'పొదుపు రేటు %',
       gs_budget_limit:        'బడ్జెట్ పరిమితి',
+      goals_col_name:         'లక్ష్యం పేరు',
+      goals_col_marychide:    'గడువు తేదీ',
+      goals_col_saved:        'జమ చేసింది (₹)',
+      goals_col_target:       'లక్ష్యం (₹)',
+      goals_col_progress:     'పురోగతి',
+      goals_col_deposit:      'డిపాజిట్',
+      goals_add_name_ph:      'లక్ష్యం పేరు…',
+      goals_add_marychide_ph: 'గడువు తేదీ…',
+      goals_add_target_ph:    'లక్ష్యం ₹',
+      goals_add_btn:          '+ జోడించు',
+      goals_done_badge:       '✓ చేరుకున్నారు',
+      goals_complete:         'పూర్తయింది',
+      goals_no_goals:         'ఇంకా లక్ష్యాలు లేవు — క్రింద జోడించండి.',
+      recur_col_name:         'పేరు',
+      recur_col_cat:          'వర్గం',
+      recur_col_freq:         'పౌనఃపున్యం',
+      recur_col_type:         'రకం',
+      recur_col_marychide:    'గడువు తేదీ',
+      recur_col_amt:          'మొత్తం (₹)',
+      recur_freq_weekly:      'వారపు',
+      recur_freq_monthly:     'నెలవారీ',
+      recur_freq_yearly:      'వార్షిక',
+      recur_type_expense:     'ఖర్చు',
+      recur_type_income:      'ఆదాయం',
+      recur_add_name_ph:      'పేరు…',
+      recur_add_marychide_ph: 'గడువు తేదీ…',
+      recur_add_btn:          '+ జోడించు',
+      recur_post_btn:         'పోస్ట్',
+      recur_no_items:         'ఇంకా పునరావృత నమోదులు లేవు — క్రింద జోడించండి.',
     },
 
     ml: {
@@ -3178,6 +3301,35 @@ function homeToLogin(){
       gs_yearly_cat_title:    'വർഷം തോറുമുള്ള വിഭാഗ വിഭജനം',
       gs_savrate_lbl:         'സേവിംഗ്സ് നിരക്ക് %',
       gs_budget_limit:        'ബജറ്റ് പരിധി',
+      goals_col_name:         'ലക്ഷ്യം പേര്',
+      goals_col_marychide:    'അവസാന തീയതി',
+      goals_col_saved:        'സ്വരൂപിച്ചത് (₹)',
+      goals_col_target:       'ലക്ഷ്യം (₹)',
+      goals_col_progress:     'പുരോഗതി',
+      goals_col_deposit:      'നിക്ഷേപം',
+      goals_add_name_ph:      'ലക്ഷ്യം പേര്…',
+      goals_add_marychide_ph: 'അവസാന തീയതി…',
+      goals_add_target_ph:    'ലക്ഷ്യം ₹',
+      goals_add_btn:          '+ ചേർക്കുക',
+      goals_done_badge:       '✓ നേടിയത്',
+      goals_complete:         'പൂർത്തിയായി',
+      goals_no_goals:         'ഇതുവരെ ലക്ഷ്യങ്ങളില്ല — താഴെ ചേർക്കുക.',
+      recur_col_name:         'പേര്',
+      recur_col_cat:          'വിഭാഗം',
+      recur_col_freq:         'ആവൃത്തി',
+      recur_col_type:         'തരം',
+      recur_col_marychide:    'അവസാന തീയതി',
+      recur_col_amt:          'തുക (₹)',
+      recur_freq_weekly:      'പ്രതിവാര',
+      recur_freq_monthly:     'മാസിക',
+      recur_freq_yearly:      'വാർഷിക',
+      recur_type_expense:     'ചെലവ്',
+      recur_type_income:      'വരുമാനം',
+      recur_add_name_ph:      'പേര്…',
+      recur_add_marychide_ph: 'അവസാന തീയതി…',
+      recur_add_btn:          '+ ചേർക്കുക',
+      recur_post_btn:         'പോസ്റ്റ്',
+      recur_no_items:         'ഇതുവരെ ആവർത്തിക്കുന്ന ഇനങ്ങളില്ല — താഴെ ചേർക്കുക.',
     },
 
     kn: {
@@ -3305,6 +3457,35 @@ function homeToLogin(){
       gs_yearly_cat_title:    'ವರ್ಷ ವರ್ಷದ ವರ್ಗ ವಿಭಜನೆ',
       gs_savrate_lbl:         'ಉಳಿತಾಯ ದರ %',
       gs_budget_limit:        'ಬಜೆಟ್ ಮಿತಿ',
+      goals_col_name:         'ಗುರಿ ಹೆಸರು',
+      goals_col_marychide:    'ಗಡುವು ದಿನಾಂಕ',
+      goals_col_saved:        'ಉಳಿಸಿದ್ದು (₹)',
+      goals_col_target:       'ಗುರಿ (₹)',
+      goals_col_progress:     'ಪ್ರಗತಿ',
+      goals_col_deposit:      'ಠೇವಣಿ',
+      goals_add_name_ph:      'ಗುರಿ ಹೆಸರು…',
+      goals_add_marychide_ph: 'ಗಡುವು ದಿನಾಂಕ…',
+      goals_add_target_ph:    'ಗುರಿ ₹',
+      goals_add_btn:          '+ ಸೇರಿಸಿ',
+      goals_done_badge:       '✓ ತಲುಪಿದೆ',
+      goals_complete:         'ಪೂರ್ಣ',
+      goals_no_goals:         'ಇನ್ನೂ ಗುರಿಗಳಿಲ್ಲ — ಕೆಳಗೆ ಸೇರಿಸಿ.',
+      recur_col_name:         'ಹೆಸರು',
+      recur_col_cat:          'ವರ್ಗ',
+      recur_col_freq:         'ಆವೃತ್ತಿ',
+      recur_col_type:         'ಪ್ರಕಾರ',
+      recur_col_marychide:    'ಗಡುವು ದಿನಾಂಕ',
+      recur_col_amt:          'ಮೊತ್ತ (₹)',
+      recur_freq_weekly:      'ಸಾಪ್ತಾಹಿಕ',
+      recur_freq_monthly:     'ಮಾಸಿಕ',
+      recur_freq_yearly:      'ವಾರ್ಷಿಕ',
+      recur_type_expense:     'ಖರ್ಚು',
+      recur_type_income:      'ಆದಾಯ',
+      recur_add_name_ph:      'ಹೆಸರು…',
+      recur_add_marychide_ph: 'ಗಡುವು ದಿನಾಂಕ…',
+      recur_add_btn:          '+ ಸೇರಿಸಿ',
+      recur_post_btn:         'ಪೋಸ್ಟ್',
+      recur_no_items:         'ಇನ್ನೂ ಪುನರಾವರ್ತಿತ ನಮೂದುಗಳಿಲ್ಲ — ಕೆಳಗೆ ಸೇರಿಸಿ.',
     },
   };
 
