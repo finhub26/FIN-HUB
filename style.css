@@ -713,9 +713,11 @@ body {
   pointer-events: none;
 }
 
-/* ── Splash logo card: gold dots hidden ── */
+/* ── Splash logo card: gold decorations hidden ── */
 #splashScreen .ad-diamond,
 #splashScreen .ad-diamond-bottom,
+#splashScreen .ad-h-rule,
+#splashScreen .ad-h-rule-line,
 #splashScreen .ad-h-rule-dot,
 #splashScreen .ad-dot2,
 #splashScreen .splash-lb-dot {
