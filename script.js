@@ -708,6 +708,12 @@ function computeLedger(){
 }
 
 function renderLedger(){
+  // Safety guard: clear and bail if no user is logged in
+  if (!window.currentUserId && !currentUserId) {
+    const body = $('ledgerBody'); if (body) body.innerHTML = '';
+    const es = $('emptyState'); if (es) es.style.display = 'block';
+    return;
+  }
   const selectedMonth = $('monthFilter').value;
   const query = ($('searchInput')||{value:''}).value.trim().toLowerCase();
   const withBal = computeLedger();
@@ -753,6 +759,7 @@ function renderLedger(){
 
 // ── Quick Stats ──
 function renderQuickStats(){
+  if (!window.currentUserId && !currentUserId) return;
   const selectedMonth = $('monthFilter').value;
   const monthTx = (selectedMonth==='all' ? transactions : transactions.filter(t=>monthKey(t.date)===selectedMonth)).filter(t=>t.amount<0);
   if(!monthTx.length){
@@ -775,6 +782,7 @@ function renderQuickStats(){
 
 // ── Top strip ──
 function renderTopStrip(){
+  if (!window.currentUserId && !currentUserId) return;
   const all = computeLedger();
   const totalBalance = all.length ? all[0].balance : 0;
   $('totalBalance').textContent = fmt(totalBalance);
@@ -1034,6 +1042,15 @@ function switchGraphTab(tab){
 function renderGraphSheet(){ renderGraphWeekly(); }
 
 function renderAll(){
+  // Safety guard: never render data when no user is logged in
+  if (!window.currentUserId && !currentUserId) return;
+  // Ensure _finhubT is pre-populated with the saved language before dynamic renders
+  if (!window._finhubT && window.finhubI18n) {
+    const _savedLang = (function(){ try{ return localStorage.getItem('finhub_lang'); }catch(e){ return null; } })();
+    const _lang = (_savedLang && window.finhubI18n.strings[_savedLang]) ? _savedLang : 'en';
+    window._finhubT = window.finhubI18n.strings[_lang];
+    window._finhubLang = _lang;
+  }
   window.transactions = transactions; // expose for sidebar and other consumers
   populateMonthFilter();
   renderLedger();
@@ -1684,7 +1701,14 @@ async function startApp(){
   if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
   setTimeout(() => updateHeaderGreeting(), 50);
-  setTimeout(() => { window.transactions = transactions; renderAll(); }, 1500);
+  // Deferred re-render: only fires if the same user is still logged in
+  const _startUid = window.currentUserId;
+  setTimeout(() => {
+    if (window.currentUserId && window.currentUserId === _startUid) {
+      window.transactions = transactions;
+      renderAll();
+    }
+  }, 1500);
 }
 
 function resetAuthForms(){
@@ -3667,6 +3691,14 @@ function homeToLogin(){
     // Expose for dynamic JS (greetings etc)
     window._finhubT = T;
     window._finhubLang = lang;
+
+    // Re-render dynamically-built tables so their headers & buttons translate
+    if (typeof renderGoals === 'function') {
+      try { renderGoals(); } catch(e) {}
+    }
+    if (typeof renderRecurring === 'function') {
+      try { renderRecurring(); } catch(e) {}
+    }
   }
 
   // ── Wire up language buttons ────────────────────────────
