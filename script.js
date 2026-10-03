@@ -1733,7 +1733,7 @@ async function startApp(){
 
   // Always start on Dashboard view
   switchView('dashboard');
-  allNavBtns.forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sb-nav-item').forEach(b => b.classList.remove('active'));
   const dashBtn = document.getElementById('sbNavDashboard');
   if(dashBtn) dashBtn.classList.add('active');
 
