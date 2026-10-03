@@ -828,11 +828,14 @@ function renderBreakdown(){
     const y=padT+i*rowH; const barY=y+rowH*0.22; const barH=rowH*0.5;
     const barW=(spent/maxVal)*plotW; const over=limit>0&&spent>limit;
     const color=categoryColor(c);
-    rows+=`<text x="${padL-8}" y="${y+rowH*0.55}" font-size="12" fill="var(--charcoal)" font-family="Source Sans 3,sans-serif" text-anchor="end">${fhCatLabel(c)}</text>`;
+    const _isLight = document.documentElement.dataset.theme === 'light';
+    const _lblClr = _isLight ? '#1e1b4b' : '#e2e8f0';
+    const _valClr = _isLight ? 'rgba(30,27,75,0.72)' : '#6b7a8d';
+    rows+=`<text x="${padL-8}" y="${y+rowH*0.55}" font-size="12" fill="${_lblClr}" font-family="Source Sans 3,sans-serif" text-anchor="end">${fhCatLabel(c)}</text>`;
     rows+=`<rect x="${padL}" y="${barY}" width="${plotW}" height="${barH}" fill="none" stroke="var(--paper-line)"></rect>`;
     rows+=`<rect x="${padL}" y="${barY}" width="${Math.max(1,barW)}" height="${barH}" fill="${color}" ${over?'stroke="var(--rust)" stroke-width="2"':''}></rect>`;
 
-    rows+=`<text x="${padL+plotW+8}" y="${y+rowH*0.55}" font-size="11" fill="var(--muted)" font-family="Space Mono,monospace">${fmt(-spent)}</text>`;
+    rows+=`<text x="${padL+plotW+8}" y="${y+rowH*0.55}" font-size="11" fill="${_valClr}" font-family="Space Mono,monospace">${fmt(-spent)}</text>`;
   });
   wrap.innerHTML=`<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${rows}</svg>`;
   const legend=$('breakdownLegend');
@@ -1162,8 +1165,8 @@ function renderBreakdownBudget(){
     const barW=(spent/maxVal)*plotW; const over=limit>0&&spent>limit;
     const color=categoryColor(c);
     const isLight = document.documentElement.dataset.theme === 'light';
-    const labelColor = isLight ? '#1e1b4b' : 'var(--charcoal)';
-    const valueColor = isLight ? 'rgba(30,27,75,0.72)' : 'var(--muted)';
+    const labelColor = isLight ? '#1e1b4b' : '#e2e8f0';
+    const valueColor = isLight ? 'rgba(30,27,75,0.72)' : '#6b7a8d';
     rows+=`<text x="${padL-8}" y="${y+rowH*0.65}" font-size="12" fill="${labelColor}" font-family="Source Sans 3,sans-serif" text-anchor="end">${fhCatLabel(c)}</text>`;
     rows+=`<rect x="${padL}" y="${barY}" width="${plotW}" height="${barH}" fill="none" stroke="var(--paper-line)"></rect>`;
     rows+=`<rect x="${padL}" y="${barY}" width="${Math.max(1,barW)}" height="${barH}" fill="${color}" ${over?'stroke="var(--rust)" stroke-width="2"':''}></rect>`;
