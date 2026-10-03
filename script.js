@@ -2451,7 +2451,6 @@ async function handleGuestLogin() {
 
   function frame(){
     ctx.clearRect(0,0,W,H);
-    drawStars(t);
     drawCenterGlow(t);
     t += 0.016;
     const splash = document.getElementById('splashScreen');
