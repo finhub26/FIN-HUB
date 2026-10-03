@@ -120,12 +120,54 @@
     }
   }
 
+  // ── Save user hash+profile to Supabase users table ──
+  async function sbSaveUser(uid, passhash, profile) {
+    try {
+      const body = JSON.stringify({
+        user_id: uid,
+        passhash: passhash,
+        name: (profile && profile.name) || '',
+        email: (profile && profile.email) || '',
+        phone: (profile && profile.phone) || ''
+      });
+      // Upsert: insert or update if already exists
+      const res = await fetch(SB_URL + '/rest/v1/users', {
+        method: 'POST',
+        headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body
+      });
+      return res.ok;
+    } catch(e) {
+      console.warn('FinHub Supabase saveUser error:', e);
+      return false;
+    }
+  }
+
+  // ── Load user hash+profile from Supabase ──
+  async function sbLoadUser(uid) {
+    try {
+      const res = await fetch(
+        SB_URL + '/rest/v1/users?user_id=eq.' + encodeURIComponent(uid) + '&limit=1',
+        { method: 'GET', headers: { ...HEADERS, 'Prefer': 'return=representation' } }
+      );
+      if (!res.ok) return null;
+      const rows = await res.json();
+      if (!rows || !rows.length) return null;
+      return rows[0]; // { user_id, passhash, name, email, phone }
+    } catch(e) {
+      console.warn('FinHub Supabase loadUser error:', e);
+      return null;
+    }
+  }
+
   // Expose on window so app.js functions can call them
   window._sb = {
     load: sbLoadTransactions,
     save: sbSaveTransaction,
     delete: sbDeleteTransaction,
-    fullSync: sbFullSync
+    fullSync: sbFullSync,
+    saveUser: sbSaveUser,
+    loadUser: sbLoadUser
   };
 })();
 /* ===== lang-page.js ===== */
@@ -1445,13 +1487,81 @@ document.addEventListener('click', e=>{
 }, true);
 
 // ── Auth ──
-async function getStoredHash(uid){ try{ return localStorage.getItem(`tally:user:${uid}:passhash`); }catch(e){ return null; } }
-async function setStoredHash(uid,hash){ try{ localStorage.setItem(`tally:user:${uid}:passhash`,hash); }catch(e){} }
+async function getStoredHash(uid){
+  // 1. Check localStorage first (fast, offline)
+  try {
+    const local = localStorage.getItem(`tally:user:${uid}:passhash`);
+    if (local) return local;
+  } catch(e) {}
+  // 2. Fallback: check Supabase cloud (cross-device login)
+  if (window._sb && navigator.onLine) {
+    try {
+      const row = await window._sb.loadUser(uid);
+      if (row && row.passhash) {
+        // Cache locally for future offline use
+        try { localStorage.setItem(`tally:user:${uid}:passhash`, row.passhash); } catch(e) {}
+        // Also cache profile
+        if (row.name || row.email || row.phone) {
+          try {
+            const existing = JSON.parse(localStorage.getItem(`tally:user:${uid}:profile`) || '{}');
+            if (!existing.name) localStorage.setItem(`tally:user:${uid}:profile`, JSON.stringify({ name: row.name, email: row.email, phone: row.phone }));
+          } catch(e) {}
+        }
+        return row.passhash;
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+async function setStoredHash(uid, hash){
+  // Save to localStorage
+  try { localStorage.setItem(`tally:user:${uid}:passhash`, hash); } catch(e) {}
+  // Save to Supabase for cross-device login
+  if (window._sb && navigator.onLine) {
+    try {
+      const profRaw = localStorage.getItem(`tally:user:${uid}:profile`);
+      const profile = profRaw ? JSON.parse(profRaw) : {};
+      await window._sb.saveUser(uid, hash, profile);
+    } catch(e) {}
+  }
+}
 async function clearUserData(uid){
   ['passhash','transactions','budgets','profile','goals','recurring'].forEach(k=>{ try{ localStorage.removeItem(`tally:user:${uid}:${k}`); }catch(e){} });
 }
-async function setUserProfile(uid,profile){ try{ localStorage.setItem(`tally:user:${uid}:profile`,JSON.stringify(profile)); }catch(e){} }
-async function getUserProfile(uid){ try{ const p=localStorage.getItem(`tally:user:${uid}:profile`); return p?JSON.parse(p):{}; }catch(e){ return {}; } }
+async function setUserProfile(uid, profile) {
+  try { localStorage.setItem(`tally:user:${uid}:profile`, JSON.stringify(profile)); } catch(e) {}
+  // Also save to Supabase so other devices get the profile
+  if (window._sb && navigator.onLine) {
+    try {
+      const hash = localStorage.getItem(`tally:user:${uid}:passhash`) || '';
+      await window._sb.saveUser(uid, hash, profile);
+    } catch(e) {}
+  }
+}
+async function getUserProfile(uid) {
+  // 1. Check localStorage first
+  try {
+    const p = localStorage.getItem(`tally:user:${uid}:profile`);
+    if (p) {
+      const parsed = JSON.parse(p);
+      if (parsed && parsed.name) return parsed; // has name = good
+    }
+  } catch(e) {}
+  // 2. Fallback: fetch from Supabase (cross-device)
+  if (window._sb && navigator.onLine) {
+    try {
+      const row = await window._sb.loadUser(uid);
+      if (row && (row.name || row.email || row.phone)) {
+        const profile = { name: row.name || '', email: row.email || '', phone: row.phone || '' };
+        // Cache locally
+        try { localStorage.setItem(`tally:user:${uid}:profile`, JSON.stringify(profile)); } catch(e) {}
+        return profile;
+      }
+    } catch(e) {}
+  }
+  return {};
+}
 
 function renderProfileStrip(profile){
   const strip=$('profileStrip'), avatarEl=$('profileAvatar'), nameEl=$('profileName'),
@@ -1538,6 +1648,12 @@ async function startApp(){
   renderProfileStrip(profile);
   const displayName = (profile && profile.name) ? profile.name : (currentUserId ? currentUserId.charAt(0).toUpperCase() + currentUserId.slice(1) : '');
   updateHeaderGreeting(displayName);
+
+  // Update sidebar user strip with real profile name (after Supabase fetch)
+  const sbA = document.getElementById('sbAvatar'), sbN = document.getElementById('sbUserName');
+  if(sbA) sbA.textContent = displayName ? displayName[0].toUpperCase() : '?';
+  if(sbN) sbN.textContent = displayName || currentUserId || '—';
+
   renderAll();
   if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
@@ -1682,20 +1798,7 @@ function updateHeaderInsight(){
       netEl.className='header-insight-kpi-val'+(net<0?' neg':'');
       if(subEl){
         const txCount=monthTx.length;
-        if(txCount>0){
-          const _lang=window._finhubLang||(function(){try{return localStorage.getItem('finhub_lang');}catch(e){return null;}})();
-          const _entryWord=(function(){
-            const _map={ta:'பதிவு',hi:'प्रविष्टि',te:'ఎంట్రీ',ml:'എൻട്രി',kn:'ನಮೂದು'};
-            return _map[_lang]||'entr'+(txCount===1?'y':'ies');
-          })();
-          const _thisMonth=(function(){
-            const _map={ta:'இம்மாதம்',hi:'इस महीने',te:'ఈ నెల',ml:'ഈ മാസം',kn:'ಈ ತಿಂಗಳು'};
-            return _map[_lang]||'this month';
-          })();
-          subEl.textContent=`${txCount} ${_entryWord} ${_thisMonth}`;
-        } else {
-          subEl.textContent=(window.finhubI18n&&window.finhubI18n.t)?window.finhubI18n.t('no entries yet'):'no entries yet';
-        }
+        subEl.textContent=txCount>0?`${txCount} entr${txCount===1?'y':'ies'} this month`:'no entries yet';
       }
     }
   } catch(e){}
