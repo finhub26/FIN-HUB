@@ -1750,6 +1750,8 @@ async function startApp(){
       updateHeaderPills();
     }
   }, 1500);
+  // Extra safety: update pills again after everything has definitely settled
+  setTimeout(() => { if(_currentUserId) updateHeaderPills(); }, 2500);
 }
 
 function resetAuthForms(){
@@ -1953,12 +1955,14 @@ function updateHeaderPills(){
   const _elapsed = _s2['header_month_elapsed'] || 'of month elapsed';
   if(lblEl) lblEl.textContent = daysLeft === 0 ? 'last day of month' : _elapsed;
 
-  // Force reflow then animate bar (double-rAF so CSS transition fires)
-  if(fill) fill.style.width = '0%';
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    if(fill) fill.style.width = pct + '%';
-    if(glow) glow.style.right = (100 - pct) + '%';
-  }));
+  // Set bar width — disable transition first so shimmer animation doesn't fight it
+  if(fill){
+    fill.style.transition = 'none';
+    fill.style.width = pct + '%';
+    // Re-enable transition after paint for future updates
+    requestAnimationFrame(() => { fill.style.transition = ''; });
+  }
+  if(glow) glow.style.right = (100 - pct) + '%';
 }
 
 // ── Navigate to login ──
@@ -3968,6 +3972,7 @@ function homeToLogin(){
         var p = n.parentNode; if (!p) return NodeFilter.FILTER_REJECT;
         var tag = p.nodeName;
         if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA' || tag === 'NOSCRIPT') return NodeFilter.FILTER_REJECT;
+        if (p.getAttribute && p.getAttribute('data-no-i18n')) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       }
     });
