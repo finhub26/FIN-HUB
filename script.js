@@ -2357,7 +2357,7 @@ async function handleGuestLogin() {
   let msgIdx = 0;
 
   const interval = setInterval(() => {
-    progress += Math.random() * 3 + 1.5; // ~8 seconds
+    progress += Math.random() * 8 + 4; // ~1.5 seconds
     if (progress > 100) progress = 100;
     if (bar) bar.style.width = progress + '%';
 
@@ -2390,9 +2390,9 @@ async function handleGuestLogin() {
             }
           }, 900);
         }
-      }, 500);
+      }, 400);
     }
-  }, 150); // ~8 seconds total
+  }, 150); // ~1.5s fill + 0.4s wait + 0.9s fade = ~2.8s total
 })();
 
 // ── Orbit Canvas Animation ──

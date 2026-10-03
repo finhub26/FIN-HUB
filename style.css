@@ -709,7 +709,7 @@ body {
 
 #splashScreen.fade-out {
   opacity: 0;
-  transition: opacity 1.1s ease;
+  transition: opacity 0.9s ease;
   pointer-events: none;
 }
 
