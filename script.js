@@ -5,7 +5,7 @@
 */
 (function(){
   const SB_URL = 'https://uvfeswirizqaidzlnjcs.supabase.co';
-  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2ZmVzd2lyaXpxYWlkemxuamNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTc1NjQsImV4cCI6MjEwNjMzMzU2NH0.jG1XMaeinSpfO_Vdt11zZNLX9mIGn6hMQ9bZGnDb9r0';
+  const SB_KEY = 'sb_publishable_R9AQV26TWbfnzsNyQ3eZzg_WPeEAKl_';
   const HEADERS = {
     'Content-Type': 'application/json',
     'apikey': SB_KEY,
@@ -25,11 +25,10 @@
       return rows.map(r => ({
         id: String(r.id),
         date: r.date,
-        desc: r.description || '',
-        description: r.description || '',
-        category: r.category || '',
+        desc: r.desc,
+        category: r.category,
         note: r.note || '',
-        amount: parseFloat(r.amount) || 0
+        amount: parseFloat(r.amount)
       }));
     } catch(e) {
       console.warn('FinHub Supabase load error:', e);
@@ -42,24 +41,18 @@
     try {
       const body = JSON.stringify({
         user_id: uid,
-        description: tx.desc || tx.description || '',
-        amount: parseFloat(tx.amount) || 0,
-        category: tx.category || '',
+        desc: tx.desc,
+        amount: tx.amount,
+        category: tx.category,
         date: tx.date,
-        note: tx.note || '',
-        type: tx.amount > 0 ? 'income' : 'expense'
+        note: tx.note || ''
       });
       const res = await fetch(SB_URL + '/rest/v1/transactions', {
         method: 'POST',
         headers: HEADERS,
         body
       });
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error('FinHub Supabase save error:', res.status, errText);
-        return false;
-      }
-      return true;
+      return res.ok || res.status === 201;
     } catch(e) {
       console.warn('FinHub Supabase save error:', e);
       return false;
@@ -71,7 +64,7 @@
     try {
       const res = await fetch(
         SB_URL + '/rest/v1/transactions?user_id=eq.' + encodeURIComponent(uid) +
-        '&description=eq.' + encodeURIComponent(tx.desc) +
+        '&desc=eq.' + encodeURIComponent(tx.desc) +
         '&date=eq.' + encodeURIComponent(tx.date) +
         '&amount=eq.' + encodeURIComponent(tx.amount),
         { method: 'DELETE', headers: HEADERS }
@@ -95,68 +88,21 @@
       if (!localTransactions.length) return true;
       const rows = localTransactions.map(tx => ({
         user_id: uid,
-        description: tx.desc || tx.description || '',
-        amount: parseFloat(tx.amount) || 0,
-        category: tx.category || '',
+        desc: tx.desc,
+        amount: tx.amount,
+        category: tx.category,
         date: tx.date,
-        note: tx.note || '',
-        type: tx.amount > 0 ? 'income' : 'expense'
+        note: tx.note || ''
       }));
       const res = await fetch(SB_URL + '/rest/v1/transactions', {
         method: 'POST',
         headers: HEADERS,
         body: JSON.stringify(rows)
       });
-      if (!res.ok) {
-        const err = await res.text();
-        console.error('FinHub Supabase insert error:', res.status, err);
-        return false;
-      }
-      console.log('FinHub: Synced', rows.length, 'rows to Supabase ☁️');
-      return true;
+      return res.ok || res.status === 201;
     } catch(e) {
       console.warn('FinHub Supabase full sync error:', e);
       return false;
-    }
-  }
-
-  // ── Save user hash+profile to Supabase users table ──
-  async function sbSaveUser(uid, passhash, profile) {
-    try {
-      const body = JSON.stringify({
-        user_id: uid,
-        passhash: passhash,
-        name: (profile && profile.name) || '',
-        email: (profile && profile.email) || '',
-        phone: (profile && profile.phone) || ''
-      });
-      // Upsert: insert or update if already exists
-      const res = await fetch(SB_URL + '/rest/v1/users', {
-        method: 'POST',
-        headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body
-      });
-      return res.ok;
-    } catch(e) {
-      console.warn('FinHub Supabase saveUser error:', e);
-      return false;
-    }
-  }
-
-  // ── Load user hash+profile from Supabase ──
-  async function sbLoadUser(uid) {
-    try {
-      const res = await fetch(
-        SB_URL + '/rest/v1/users?user_id=eq.' + encodeURIComponent(uid) + '&limit=1',
-        { method: 'GET', headers: { ...HEADERS, 'Prefer': 'return=representation' } }
-      );
-      if (!res.ok) return null;
-      const rows = await res.json();
-      if (!rows || !rows.length) return null;
-      return rows[0]; // { user_id, passhash, name, email, phone }
-    } catch(e) {
-      console.warn('FinHub Supabase loadUser error:', e);
-      return null;
     }
   }
 
@@ -165,9 +111,7 @@
     load: sbLoadTransactions,
     save: sbSaveTransaction,
     delete: sbDeleteTransaction,
-    fullSync: sbFullSync,
-    saveUser: sbSaveUser,
-    loadUser: sbLoadUser
+    fullSync: sbFullSync
   };
 })();
 /* ===== lang-page.js ===== */
@@ -572,21 +516,20 @@ async function loadData(){
   await loadRecurring();
 
   // Load transactions: try Supabase cloud first, fallback to localStorage
-  const uid = window.currentUserId || currentUserId;
-  if (uid && window._sb && navigator.onLine) {
-    try {
+  try {
+    const uid = window.currentUserId;
+    if (uid && window._sb && navigator.onLine) {
       const cloudTx = await window._sb.load(uid);
-      if (cloudTx !== null) {
+      if (cloudTx && cloudTx.length >= 0) {
         transactions = cloudTx;
+        // Update localStorage cache
         try { localStorage.setItem(userKey('transactions'), JSON.stringify(transactions)); } catch(e) {}
-        console.log('FinHub: Loaded', transactions.length, 'transactions from Supabase ☁️');
         return;
       }
-    } catch(e) { console.warn('Cloud load failed, using local:', e); }
-  }
+    }
+  } catch(e) { console.warn('Cloud load failed, using local:', e); }
   // Fallback: localStorage
   try{ const t = localStorage.getItem(userKey('transactions')); transactions = t ? JSON.parse(t) : []; }catch(e){ transactions = []; }
-  console.log('FinHub: Loaded', transactions.length, 'transactions from localStorage 📱');
 }
 async function saveTransactions(){
   // Always save to localStorage first (instant, works offline)
@@ -1487,87 +1430,18 @@ document.addEventListener('click', e=>{
 }, true);
 
 // ── Auth ──
-async function getStoredHash(uid){
-  // 1. Check localStorage first (fast, offline)
-  try {
-    const local = localStorage.getItem(`tally:user:${uid}:passhash`);
-    if (local) return local;
-  } catch(e) {}
-  // 2. Fallback: check Supabase cloud (cross-device login)
-  if (window._sb && navigator.onLine) {
-    try {
-      const row = await window._sb.loadUser(uid);
-      if (row && row.passhash) {
-        // Cache locally for future offline use
-        try { localStorage.setItem(`tally:user:${uid}:passhash`, row.passhash); } catch(e) {}
-        // Also cache profile
-        if (row.name || row.email || row.phone) {
-          try {
-            const existing = JSON.parse(localStorage.getItem(`tally:user:${uid}:profile`) || '{}');
-            if (!existing.name) localStorage.setItem(`tally:user:${uid}:profile`, JSON.stringify({ name: row.name, email: row.email, phone: row.phone }));
-          } catch(e) {}
-        }
-        return row.passhash;
-      }
-    } catch(e) {}
-  }
-  return null;
-}
-
-async function setStoredHash(uid, hash){
-  // Save to localStorage
-  try { localStorage.setItem(`tally:user:${uid}:passhash`, hash); } catch(e) {}
-  // Save to Supabase for cross-device login
-  if (window._sb && navigator.onLine) {
-    try {
-      const profRaw = localStorage.getItem(`tally:user:${uid}:profile`);
-      const profile = profRaw ? JSON.parse(profRaw) : {};
-      await window._sb.saveUser(uid, hash, profile);
-    } catch(e) {}
-  }
-}
+async function getStoredHash(uid){ try{ return localStorage.getItem(`tally:user:${uid}:passhash`); }catch(e){ return null; } }
+async function setStoredHash(uid,hash){ try{ localStorage.setItem(`tally:user:${uid}:passhash`,hash); }catch(e){} }
 async function clearUserData(uid){
   ['passhash','transactions','budgets','profile','goals','recurring'].forEach(k=>{ try{ localStorage.removeItem(`tally:user:${uid}:${k}`); }catch(e){} });
 }
-async function setUserProfile(uid, profile) {
-  try { localStorage.setItem(`tally:user:${uid}:profile`, JSON.stringify(profile)); } catch(e) {}
-  // Also save to Supabase so other devices get the profile
-  if (window._sb && navigator.onLine) {
-    try {
-      const hash = localStorage.getItem(`tally:user:${uid}:passhash`) || '';
-      await window._sb.saveUser(uid, hash, profile);
-    } catch(e) {}
-  }
-}
-async function getUserProfile(uid) {
-  // 1. Check localStorage first
-  try {
-    const p = localStorage.getItem(`tally:user:${uid}:profile`);
-    if (p) {
-      const parsed = JSON.parse(p);
-      if (parsed && parsed.name) return parsed; // has name = good
-    }
-  } catch(e) {}
-  // 2. Fallback: fetch from Supabase (cross-device)
-  if (window._sb && navigator.onLine) {
-    try {
-      const row = await window._sb.loadUser(uid);
-      if (row && (row.name || row.email || row.phone)) {
-        const profile = { name: row.name || '', email: row.email || '', phone: row.phone || '' };
-        // Cache locally
-        try { localStorage.setItem(`tally:user:${uid}:profile`, JSON.stringify(profile)); } catch(e) {}
-        return profile;
-      }
-    } catch(e) {}
-  }
-  return {};
-}
+async function setUserProfile(uid,profile){ try{ localStorage.setItem(`tally:user:${uid}:profile`,JSON.stringify(profile)); }catch(e){} }
+async function getUserProfile(uid){ try{ const p=localStorage.getItem(`tally:user:${uid}:profile`); return p?JSON.parse(p):{}; }catch(e){ return {}; } }
 
 function renderProfileStrip(profile){
   const strip=$('profileStrip'), avatarEl=$('profileAvatar'), nameEl=$('profileName'),
         idEl=$('headerUserTag'), emailEl=$('profileEmail'), phoneEl=$('profilePhone'),
         sepEmailEl=$('profileSepEmail'), sepPhoneEl=$('profileSepPhone');
-  if(!strip || !avatarEl || !nameEl) return;
   const name=(profile&&profile.name)||''; const email=(profile&&profile.email)||''; const phone=(profile&&profile.phone)||'';
   strip.classList.remove('hidden-strip');
   if(name){ const parts=name.trim().split(/\s+/); avatarEl.textContent=parts.length>=2?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():parts[0].slice(0,2).toUpperCase(); }
@@ -1648,12 +1522,6 @@ async function startApp(){
   renderProfileStrip(profile);
   const displayName = (profile && profile.name) ? profile.name : (currentUserId ? currentUserId.charAt(0).toUpperCase() + currentUserId.slice(1) : '');
   updateHeaderGreeting(displayName);
-
-  // Update sidebar user strip with real profile name (after Supabase fetch)
-  const sbA = document.getElementById('sbAvatar'), sbN = document.getElementById('sbUserName');
-  if(sbA) sbA.textContent = displayName ? displayName[0].toUpperCase() : '?';
-  if(sbN) sbN.textContent = displayName || currentUserId || '—';
-
   renderAll();
   if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
@@ -1730,6 +1598,8 @@ $('menuLogoutBtn').addEventListener('click', ()=>{
   $('appShell').classList.add('hidden');
   window._greetingUser = undefined;
   resetAuthForms();
+  const hp = $('homePage');
+  if(hp) hp.style.display = 'none';
   if(typeof initAuth === 'function') initAuth();
   const lo = $('loginOverlay');
   if(lo){
@@ -1805,7 +1675,7 @@ function updateHeaderInsight(){
 }
 
 // ── Theme ──
-function getSavedTheme(){ try{ const t=localStorage.getItem('tally:theme'); return t||'light'; }catch(e){ return 'light'; } }
+function getSavedTheme(){ try{ const t=localStorage.getItem('tally:theme'); return t||'dark'; }catch(e){ return 'dark'; } }
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme',theme==='dark'?'dark':'light');
   const label=theme==='dark'?'☀️ White':'🌙 Dark';
@@ -1839,16 +1709,209 @@ function updateHeaderPills(){
   } catch(e){}
 }
 
-// ── Navigate to login ──
+// ── Navigate from home page to login ──
 function homeToLogin(){
-  if(typeof initAuth === 'function') initAuth();
-  const lo = $('loginOverlay');
-  if(lo) lo.classList.remove('hidden');
+  const hp = $('homePage');
+  hp.style.opacity='1';
+  hp.style.transition='opacity 0.4s ease';
+  hp.style.opacity='0';
+  setTimeout(()=>{
+    hp.style.display='none';
+    initAuth();
+    $('loginOverlay').classList.remove('hidden');
+  }, 400);
 }
 
 // ── Logout goes back to home ──
 $('menuLogoutBtn').removeEventListener && null; // already bound above
 
+// ═══════════════════════════════════════════════════════
+//  SPLASH SCREEN ANIMATION + INIT
+// ═══════════════════════════════════════════════════════
+(function runSplash(){
+  const bar = $('splashBarFill');
+  const txt = $('splashLoadingText');
+  const messages = [
+    'Preparing your ledger…',
+    'Loading fonts…',
+    'Checking your data…',
+    'Almost ready…'
+  ];
+  let progress = 0;
+  let msgIdx = 0;
+
+  const interval = setInterval(()=>{
+    progress += Math.random()*8 + 4;
+    if(progress >= 100) progress = 100;
+    bar.style.width = progress + '%';
+    if(progress > 25 && msgIdx < 1){ msgIdx=1; txt.textContent=messages[1]; }
+    if(progress > 55 && msgIdx < 2){ msgIdx=2; txt.textContent=messages[2]; }
+    if(progress > 80 && msgIdx < 3){ msgIdx=3; txt.textContent=messages[3]; }
+    if(progress >= 100){
+      clearInterval(interval);
+      setTimeout(()=>{
+        const splash = $('splashScreen');
+        splash.classList.add('fade-out');
+        setTimeout(()=>{
+          splash.classList.add('hidden');
+          // Show home page
+          const hp = $('homePage');
+          hp.style.display = 'block';
+          hp.style.opacity = '0';
+          hp.style.transition = 'opacity 0.6s ease';
+          requestAnimationFrame(()=>{
+            requestAnimationFrame(()=>{ hp.style.opacity = '1'; });
+          });
+        }, 900);
+      }, 400);
+    }
+  }, 150);
+})();
+
+// ── Creative Orbit Canvas ──
+(function initOrbitCanvas(){
+  const canvas = document.getElementById('splashOrbitCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, cx, cy, raf;
+  let t = 0;
+
+  function resize(){
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    cx = W/2; cy = H/2;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Ring configs
+  const rings = [
+    { r:210, speed:0.004,  tilt:12,  color:'rgba(212,160,23,',  dash:[18,10], width:1.2, glowColor:'rgba(212,160,23,0.35)' },
+    { r:175, speed:-0.007, tilt:-20, color:'rgba(64,145,108,',  dash:[6,14],  width:0.8, glowColor:'rgba(64,145,108,0.25)' },
+    { r:245, speed:0.0025, tilt:30,  color:'rgba(212,160,23,',  dash:[2,20],  width:0.6, glowColor:'rgba(212,160,23,0.15)' },
+    { r:145, speed:-0.012, tilt:-8,  color:'rgba(167,139,250,', dash:[10,8],  width:0.7, glowColor:'rgba(167,139,250,0.2)' },
+  ];
+
+  // Particles orbiting each ring
+  const particles = [
+    { ringIdx:0, angle:0,    size:5, trail:12 },
+    { ringIdx:0, angle:Math.PI, size:3, trail:8 },
+    { ringIdx:1, angle:1.2,  size:4, trail:10 },
+    { ringIdx:2, angle:2.5,  size:3, trail:7  },
+    { ringIdx:3, angle:0.8,  size:5, trail:14 },
+    { ringIdx:3, angle:3.5,  size:2.5, trail:6 },
+  ];
+
+  // Floating stardust
+  const stars = Array.from({length:40}, ()=>({
+    x: Math.random()*800-400,
+    y: Math.random()*600-300,
+    r: Math.random()*1.2+0.3,
+    twinkle: Math.random()*Math.PI*2,
+    speed: Math.random()*0.02+0.008
+  }));
+
+  function drawEllipseRing(ring, time){
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ring.tilt * Math.PI/180);
+    const scaleY = 0.32;
+
+    // Glow shadow
+    ctx.shadowColor = ring.glowColor;
+    ctx.shadowBlur  = 18;
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ring.r, ring.r * scaleY, 0, 0, Math.PI*2);
+    ctx.setLineDash(ring.dash);
+    ctx.lineDashOffset = -time * ring.r * Math.abs(ring.speed) * 80;
+    ctx.strokeStyle = ring.color + '0.22)';
+    ctx.lineWidth = ring.width;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  function getParticleXY(ring, angle){
+    const scaleY = 0.32;
+    const rad = ring.tilt * Math.PI/180;
+    const ex = ring.r * Math.cos(angle);
+    const ey = ring.r * scaleY * Math.sin(angle);
+    return {
+      x: cx + ex*Math.cos(rad) - ey*Math.sin(rad),
+      y: cy + ex*Math.sin(rad) + ey*Math.cos(rad)
+    };
+  }
+
+  function drawParticle(p, time){
+    const ring = rings[p.ringIdx];
+    const angle = p.angle + time * ring.speed * 60;
+
+    // Draw trail
+    for(let i=p.trail; i>=0; i--){
+      const a = angle - i * 0.07 * Math.sign(ring.speed);
+      const pos = getParticleXY(ring, a);
+      const alpha = (1 - i/p.trail) * 0.6;
+      const sz = p.size * (1 - i/p.trail * 0.7);
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, Math.max(0.2, sz), 0, Math.PI*2);
+      ctx.fillStyle = ring.color + alpha + ')';
+      ctx.fill();
+    }
+
+    // Draw core dot with glow
+    const pos = getParticleXY(ring, angle);
+    ctx.save();
+    ctx.shadowColor = ring.glowColor;
+    ctx.shadowBlur  = 12;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, p.size, 0, Math.PI*2);
+    ctx.fillStyle = ring.color + '0.95)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStars(time){
+    stars.forEach(s=>{
+      const pulse = 0.4 + 0.6*Math.sin(s.twinkle + time * s.speed * 60);
+      ctx.beginPath();
+      ctx.arc(cx + s.x, cy + s.y, s.r * pulse, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(212,160,23,${0.08 + 0.12*pulse})`;
+      ctx.fill();
+    });
+  }
+
+  // Central radial glow pulse
+  function drawCenterGlow(time){
+    const pulse = 0.6 + 0.4*Math.sin(time*1.8);
+    const grad = ctx.createRadialGradient(cx,cy,0, cx,cy,130);
+    grad.addColorStop(0,   `rgba(212,160,23,${0.06*pulse})`);
+    grad.addColorStop(0.5, `rgba(64,145,108,${0.03*pulse})`);
+    grad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, 130, 0, Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    drawStars(t);
+    drawCenterGlow(t);
+    rings.forEach(r => drawEllipseRing(r, t));
+    particles.forEach(p => drawParticle(p, t));
+    t += 0.016;
+
+    // Stop if splash is hidden
+    const splash = document.getElementById('splashScreen');
+    if(splash && (splash.classList.contains('hidden') || splash.style.display==='none')){
+      cancelAnimationFrame(raf);
+      return;
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+})();
 
 // ── PDF Export ──
 function buildPdfHtml(scope){
@@ -2341,135 +2404,39 @@ async function handleGuestLogin() {
   await startApp();
 }
 
-// ═══════════════════════════════════════════════════════
-//  SPLASH SCREEN — Logo animation, NO sound
-// ═══════════════════════════════════════════════════════
-(function runSplash(){
-  const bar = document.getElementById('splashBarFill');
-  const txt = document.getElementById('splashLoadingText');
-  const msgs = [
-    'Opening the Ledger…',
-    'Loading your data…',
-    'Almost ready…',
-    'Welcome to FinHub!'
-  ];
-  let progress = 0;
-  let msgIdx = 0;
-
-  const interval = setInterval(() => {
-    progress += Math.random() * 8 + 5; // ~3 seconds
-    if (progress > 100) progress = 100;
-    if (bar) bar.style.width = progress + '%';
-
-    const newIdx = Math.min(Math.floor(progress / 26), msgs.length - 1);
-    if (newIdx !== msgIdx) {
-      msgIdx = newIdx;
-      if (txt) txt.textContent = msgs[msgIdx];
-    }
-
-    if (progress >= 100) {
-      clearInterval(interval);
-      setTimeout(() => {
-        const splash = document.getElementById('splashScreen');
-        if (splash) {
-          splash.classList.add('fade-out');
-          setTimeout(() => {
-            splash.classList.add('hidden');
-            const hp = document.getElementById('homePage');
-            if (hp) hp.style.display = 'none';
-            if (typeof initAuth === 'function') initAuth();
-            const lo = document.getElementById('loginOverlay');
-            if (lo) {
-              lo.classList.remove('hidden');
-              const loginCard = lo.querySelector('.ad-card');
-              if (loginCard) {
-                loginCard.classList.remove('ad-animate');
-                void loginCard.offsetWidth;
-                loginCard.classList.add('ad-animate');
-              }
-            }
-          }, 900);
+// Skip home page — go straight to login after splash
+(function() {
+  const splashEl = document.getElementById('splashScreen');
+  if (splashEl) {
+    const observer = new MutationObserver(() => {
+      if (splashEl.classList.contains('hidden') || splashEl.style.display === 'none') {
+        observer.disconnect();
+        const hp = document.getElementById('homePage');
+        if (hp) hp.style.display = 'none';
+        if (typeof initAuth === 'function') initAuth();
+        const lo = document.getElementById('loginOverlay');
+        if (lo) {
+          lo.classList.remove('hidden');
+          // Re-trigger art deco card animation for login panel
+          const loginCard = lo.querySelector('.ad-card');
+          if (loginCard) {
+            loginCard.classList.remove('ad-animate');
+            void loginCard.offsetWidth; // reflow
+            loginCard.classList.add('ad-animate');
+          }
         }
-      }, 500);
-    }
-  }, 150); // ~3 seconds total
-})();
-
-// ── Orbit Canvas Animation ──
-(function initOrbitCanvas(){
-  const canvas = document.getElementById('splashOrbitCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let W, H, cx, cy, raf;
-  let t = 0;
-
-  function resize(){
-    W = canvas.width  = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
-    cx = W/2; cy = H/2;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const rings = [
-    { r:210, speed:0.004,  tilt:12,  color:'rgba(212,160,23,',  dash:[18,10], width:1.2, glowColor:'rgba(212,160,23,0.35)' },
-    { r:175, speed:-0.007, tilt:-20, color:'rgba(64,145,108,',  dash:[6,14],  width:0.8, glowColor:'rgba(64,145,108,0.25)' },
-    { r:245, speed:0.0025, tilt:30,  color:'rgba(212,160,23,',  dash:[2,20],  width:0.6, glowColor:'rgba(212,160,23,0.15)' },
-    { r:145, speed:-0.012, tilt:-8,  color:'rgba(167,139,250,', dash:[10,8],  width:0.7, glowColor:'rgba(167,139,250,0.2)' },
-  ];
-
-  const stars = Array.from({length:10}, ()=>({
-    x: Math.random()*800-400,
-    y: Math.random()*600-300,
-    r: Math.random()*0.5+0.2,
-    twinkle: Math.random()*Math.PI*2,
-    speed: Math.random()*0.02+0.008
-  }));
-
-  function drawStars(time){
-    stars.forEach(s => {
-      s.twinkle += s.speed;
-      const alpha = 0.3 + 0.5*Math.abs(Math.sin(s.twinkle));
-      ctx.beginPath();
-      ctx.arc(cx + s.x, cy + s.y, s.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(212,160,23,${alpha})`;
-      ctx.fill();
+      }
     });
+    observer.observe(splashEl, { attributes: true, attributeFilter: ['class', 'style'] });
   }
-
-  function drawCenterGlow(time){
-    const pulse = 0.6 + 0.4*Math.sin(time*1.8);
-    const grad = ctx.createRadialGradient(cx,cy,0, cx,cy,130);
-    grad.addColorStop(0,   `rgba(212,160,23,${0.06*pulse})`);
-    grad.addColorStop(0.5, `rgba(64,145,108,${0.03*pulse})`);
-    grad.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.beginPath();
-    ctx.arc(cx, cy, 130, 0, Math.PI*2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-  }
-
-  function frame(){
-    ctx.clearRect(0,0,W,H);
-    drawStars(t);
-    drawCenterGlow(t);
-    t += 0.016;
-    const splash = document.getElementById('splashScreen');
-    if (splash && (splash.classList.contains('hidden') || splash.style.display==='none')) {
-      cancelAnimationFrame(raf);
-      return;
-    }
-    raf = requestAnimationFrame(frame);
-  }
-  raf = requestAnimationFrame(frame);
+  window.homeToLogin = function() {
+    const hp = document.getElementById('homePage');
+    if (hp) hp.style.display = 'none';
+    if (typeof initAuth === 'function') initAuth();
+    const lo = document.getElementById('loginOverlay');
+    if (lo) lo.classList.remove('hidden');
+  };
 })();
-
-// ── Navigate to login ──
-function homeToLogin(){
-  if (typeof initAuth === 'function') initAuth();
-  const lo = document.getElementById('loginOverlay');
-  if (lo) lo.classList.remove('hidden');
-}
 
 /* ===== i18n.js ===== */
 // ══════════════════════════════════════════════════════════
@@ -2497,7 +2464,7 @@ function homeToLogin(){
       greeting_evening: 'Good evening',
       greeting_night: 'Good night',
       header_theme_dark:  '🌙 Dark',
-      header_theme_light: '☀️ White',
+      header_theme_light: '☀️ Light',
       header_7day_flow:  '7-day flow',
       header_net_month:  'Net this month',
       header_no_entries: 'no entries yet',
@@ -2643,7 +2610,7 @@ function homeToLogin(){
       nav_recent_months: 'हाल के महीने',
       header_greeting: 'आपकी घरेलू खाता बही',
       header_theme_dark:  '🌙 डार्क',
-      header_theme_light: '☀️ White',
+      header_theme_light: '☀️ लाइट',
       header_7day_flow:  '7-दिन का प्रवाह',
       header_net_month:  'इस माह का शुद्ध',
       header_no_entries: 'अभी कोई प्रविष्टि नहीं',
@@ -2770,7 +2737,7 @@ function homeToLogin(){
       nav_recent_months: 'சமீபத்திய மாதங்கள்',
       header_greeting: 'உங்கள் குடும்ப கணக்கேடு',
       header_theme_dark:  '🌙 இருட்டு',
-      header_theme_light: '☀️ White',
+      header_theme_light: '☀️ ஒளி',
       header_7day_flow:  '7-நாள் ஓட்டம்',
       header_net_month:  'இம்மாத நிகர',
       header_no_entries: 'இன்னும் பதிவுகள் இல்லை',
@@ -2897,7 +2864,7 @@ function homeToLogin(){
       nav_recent_months: 'ఇటీవలి నెలలు',
       header_greeting: 'మీ గృహ లెడ్జర్',
       header_theme_dark:  '🌙 డార్క్',
-      header_theme_light: '☀️ White',
+      header_theme_light: '☀️ లైట్',
       header_7day_flow:  '7-రోజుల ప్రవాహం',
       header_net_month:  'ఈ నెల నికర',
       header_no_entries: 'ఇంకా నమోదులు లేవు',
@@ -3024,7 +2991,7 @@ function homeToLogin(){
       nav_recent_months: 'സമീപ മാസങ്ങൾ',
       header_greeting: 'നിങ്ങളുടെ ഗൃഹ ലെഡ്ജർ',
       header_theme_dark:  '🌙 ഇരുണ്ടത്',
-      header_theme_light: '☀️ White',
+      header_theme_light: '☀️ വെളിച്ചം',
       header_7day_flow:  '7-ദിവസ പ്രവാഹം',
       header_net_month:  'ഈ മാസം നെറ്റ്',
       header_no_entries: 'ഇതുവരെ എൻട്രികൾ ഇല്ല',
@@ -3151,7 +3118,7 @@ function homeToLogin(){
       nav_recent_months: 'ಇತ್ತೀಚಿನ ತಿಂಗಳುಗಳು',
       header_greeting: 'ನಿಮ್ಮ ಮನೆಯ ಲೆಡ್ಜರ್',
       header_theme_dark:  '🌙 ಡಾರ್ಕ್',
-      header_theme_light: '☀️ White',
+      header_theme_light: '☀️ ಲೈಟ್',
       header_7day_flow:  '7-ದಿನ ಹರಿವು',
       header_net_month:  'ಈ ತಿಂಗಳ ನಿವ್ವಳ',
       header_no_entries: 'ಇನ್ನೂ ನಮೂದುಗಳಿಲ್ಲ',
@@ -3412,7 +3379,7 @@ function homeToLogin(){
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      themeBtn.textContent = isDark ? T.header_theme_light : T.header_theme_dark;
+      themeBtn.textContent = isDark ? T.header_theme_dark : T.header_theme_light;
     }
 
     // Update lang buttons active state
