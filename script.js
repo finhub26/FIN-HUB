@@ -1946,9 +1946,13 @@ function updateHeaderPills(){
     const pctEl = document.getElementById('hmsPct');
     const lblEl = document.getElementById('hmsLabel');
 
-    if(fill) fill.style.width = pct + '%';
-    if(glow) glow.style.right = (100 - pct) + '%';
+    // Set text immediately
     if(pctEl) pctEl.textContent = pct + '%';
+    // Defer bar width so the CSS transition fires correctly after first paint
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if(fill) fill.style.width = pct + '%';
+      if(glow) glow.style.right = (100 - pct) + '%';
+    }));
     // Use i18n string if available, else English
     const _lang2 = window._finhubLang || 'en';
     const _s2 = (window.finhubI18n && window.finhubI18n.strings && window.finhubI18n.strings[_lang2]) || {};
