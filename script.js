@@ -2418,10 +2418,10 @@ async function handleGuestLogin() {
     { r:145, speed:-0.012, tilt:-8,  color:'rgba(167,139,250,', dash:[10,8],  width:0.7, glowColor:'rgba(167,139,250,0.2)' },
   ];
 
-  const stars = Array.from({length:40}, ()=>({
+  const stars = Array.from({length:12}, ()=>({
     x: Math.random()*800-400,
     y: Math.random()*600-300,
-    r: Math.random()*1.2+0.3,
+    r: Math.random()*0.6+0.2,
     twinkle: Math.random()*Math.PI*2,
     speed: Math.random()*0.02+0.008
   }));
@@ -2429,7 +2429,7 @@ async function handleGuestLogin() {
   function drawStars(time){
     stars.forEach(s => {
       s.twinkle += s.speed;
-      const alpha = 0.3 + 0.5*Math.abs(Math.sin(s.twinkle));
+      const alpha = 0.08 + 0.10*Math.abs(Math.sin(s.twinkle));
       ctx.beginPath();
       ctx.arc(cx + s.x, cy + s.y, s.r, 0, Math.PI*2);
       ctx.fillStyle = `rgba(212,160,23,${alpha})`;
@@ -2451,6 +2451,7 @@ async function handleGuestLogin() {
 
   function frame(){
     ctx.clearRect(0,0,W,H);
+    drawStars(t);
     drawCenterGlow(t);
     t += 0.016;
     const splash = document.getElementById('splashScreen');
