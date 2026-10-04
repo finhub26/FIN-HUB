@@ -1332,16 +1332,22 @@ function renderBreakdownBudget(){
     const y=padT+i*rowH; const barY=y+rowH*0.18; const barH=rowH*0.58;
     const barW=(spent/maxVal)*plotW;
     const color=categoryColor(c);
+    const over = limit>0 && spent>limit;               // spending passed the limit
+    const lx = limit>0 ? padL+(limit/maxVal)*plotW : 0; // x position of the limit
     rows+=`<text x="${padL-8}" y="${y+rowH*0.65}" font-size="12" style="fill:var(--bb-label)" font-family="Source Sans 3,sans-serif" text-anchor="end">${fhCatLabel(c)}</text>`;
     rows+=`<rect x="${padL}" y="${barY}" width="${plotW}" height="${barH}" fill="none" stroke="var(--paper-line)"></rect>`;
     rows+=`<rect x="${padL}" y="${barY}" width="${Math.max(1,barW)}" height="${barH}" fill="${color}"></rect>`;
-    // Budget limit marker: dashed vertical line at the limit, taller than the bar so it stays visible over it
-    if(limit>0){
-      const lx=padL+(limit/maxVal)*plotW;
+    if(over){
+      // Part of the bar beyond the limit turns solid red
+      rows+=`<rect x="${lx}" y="${barY}" width="${Math.max(1,padL+barW-lx)}" height="${barH}" fill="#dc2626"></rect>`;
+      // Solid red limit line (white halo underneath so it shows on any bar colour, light or dark theme)
+      rows+=`<line x1="${lx}" y1="${y}" x2="${lx}" y2="${y+rowH}" stroke="#ffffff" stroke-width="5" opacity="0.9"></line>`;
+      rows+=`<line x1="${lx}" y1="${y}" x2="${lx}" y2="${y+rowH}" stroke="#dc2626" stroke-width="3"></line>`;
+    } else if(limit>0){
+      // Under the limit: dashed marker showing where the limit is
       rows+=`<line x1="${lx}" y1="${y+1}" x2="${lx}" y2="${y+rowH-1}" stroke="var(--rust)" stroke-width="2" stroke-dasharray="3 2"></line>`;
     }
-
-    rows+=`<text x="${padL+plotW+8}" y="${y+rowH*0.65}" font-size="11" style="fill:var(--bb-value)" font-family="Space Mono,monospace">${fmt(-spent)}</text>`;
+    rows+=`<text x="${padL+plotW+8}" y="${y+rowH*0.65}" font-size="11" ${over?'style="fill:#ef4444;font-weight:700"':'style="fill:var(--bb-value)"'} font-family="Space Mono,monospace">${fmt(-spent)}</text>`;
   });
   wrap.innerHTML=`<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">${rows}</svg>`;
   if(legend) legend.innerHTML=CATEGORIES.map(c=>`<span><span class="swatch" style="background:${categoryColor(c)};"></span>${fhCatLabel(c)}</span>`).join('')
