@@ -730,7 +730,7 @@ let goals = [];
 let recurringItems = [];
 let entryType = "expense";
 const $ = id => document.getElementById(id);
-const fmt = n => (n<0?"-":"") + "₹" + Math.abs(n).toFixed(2);
+const fmt = n => (n<0?"-":"") + "₹" + Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 let _currentUserId = null;
 Object.defineProperty(window, 'currentUserId', {
   get(){ return _currentUserId; },
@@ -2243,7 +2243,7 @@ function updateHeaderInsight(){
       const income=monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
       const spent=monthTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
       const net=income-spent;
-      netEl.textContent=`${net>=0?'':'-'}₹${Math.abs(net).toFixed(0)}`;
+      netEl.textContent=`${net>=0?'':'-'}₹${Math.abs(net).toLocaleString('en-IN',{maximumFractionDigits:0})}`;
       netEl.className='header-insight-kpi-val'+(net<0?' neg':'');
       if(subEl){
         const txCount=monthTx.length;
@@ -2357,7 +2357,7 @@ function buildPdfHtml(scope){
   const CATS = [...new Set(txList.filter(t=>t.amount<0).map(t=>t.category))];
   const catRows = CATS.map(c=>{
     const total = txList.filter(t=>t.amount<0&&t.category===c).reduce((s,t)=>s+Math.abs(t.amount),0);
-    return `<tr><td>${c}</td><td style="text-align:right">₹${total.toFixed(2)}</td></tr>`;
+    return `<tr><td>${c}</td><td style="text-align:right">₹${total.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`;
   }).join('');
 
   const txRows = txList.map(t=>`
@@ -2366,7 +2366,7 @@ function buildPdfHtml(scope){
       <td>${t.desc}${t.note?`<br><small style="color:#888">${t.note}</small>`:''}</td>
       <td>${t.category}</td>
       <td style="text-align:right;color:${t.amount>=0?'#059669':'#DC2626'};font-weight:600">
-        ${t.amount>=0?'+':''}₹${Math.abs(t.amount).toFixed(2)}
+        ${t.amount>=0?'+':''}₹${Math.abs(t.amount).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
       </td>
     </tr>`).join('');
 
@@ -2434,9 +2434,9 @@ html[data-theme="dark"] .login-input::placeholder { color: rgba(167,139,250,0.35
   </div>
   <h3>Summary</h3>
   <div class="summary-grid">
-    <div class="summary-card"><div class="label">Income</div><div class="val inc">₹${income.toFixed(2)}</div></div>
-    <div class="summary-card"><div class="label">Spent</div><div class="val exp">₹${spent.toFixed(2)}</div></div>
-    <div class="summary-card"><div class="label">Net</div><div class="val net">₹${net.toFixed(2)}</div></div>
+    <div class="summary-card"><div class="label">Income</div><div class="val inc">₹${income.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+    <div class="summary-card"><div class="label">Spent</div><div class="val exp">₹${spent.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+    <div class="summary-card"><div class="label">Net</div><div class="val net">₹${net.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
   </div>
   ${catRows ? `<h3>By Category</h3><table><thead><tr><th>Category</th><th style="text-align:right">Total</th></tr></thead><tbody>${catRows}</tbody></table>` : ''}
   ${summarySection}
