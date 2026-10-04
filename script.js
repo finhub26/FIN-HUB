@@ -2167,7 +2167,8 @@ html[data-theme="dark"] .login-input::placeholder { color: rgba(167,139,250,0.35
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Source+Sans+3:wght@300;400;600&family=Space+Mono&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Source Sans 3', sans-serif; color: #111; padding: 40px 48px; font-size: 13px; }
+    body { font-family: 'Source Sans 3', sans-serif; color: #111; padding: 0; font-size: 13px; }
+    #src { padding: 14mm 12mm; box-sizing: border-box; }
     .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #7C3AED; padding-bottom: 14px; margin-bottom: 24px; }
     .brand { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 700; color: #7C3AED; }
     .brand span { color: #d4a017; }
@@ -2182,7 +2183,15 @@ html[data-theme="dark"] .login-input::placeholder { color: rgba(167,139,250,0.35
     th { background: #f5f3ff; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 8px 10px; text-align: left; }
     td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
-    @media print { body { padding: 20px 28px; } @page { margin: 0; size: A4; } }
+    .page { width: 210mm; height: 296mm; padding: 14mm 12mm 20mm; position: relative; overflow: hidden; box-sizing: border-box; page-break-after: always; break-after: page; }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+    .pbody { height: 100%; overflow: hidden; }
+    .pbody h3 { margin: 0 0 10px; }
+    .blk { margin-bottom: 20px; }
+    .blk > :last-child { margin-bottom: 0; }
+    .pbody > .blk:last-child { margin-bottom: 0; }
+    .pfooter { position: absolute; right: 12mm; bottom: 9mm; font-size: 11px; color: #666; }
+    @media print { body { padding: 0; } @page { margin: 0; size: A4; } }
   </style>
 <style>
 /* Dark mode login — labels and inputs match white theme purple */
@@ -2190,7 +2199,7 @@ html[data-theme="dark"] .login-label { color: rgba(167,139,250,0.75) !important;
 html[data-theme="dark"] .login-input { border-color: rgba(167,139,250,0.75) !important; }
 html[data-theme="dark"] .login-input:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
 html[data-theme="dark"] .login-input::placeholder { color: rgba(167,139,250,0.35) !important; }
-</style></head><body>
+</style></head><body><div id="src">
   <div class="header">
     <div class="brand">FinHub</div>
     <div class="meta">
@@ -2207,7 +2216,74 @@ html[data-theme="dark"] .login-input::placeholder { color: rgba(167,139,250,0.35
   </div>
   ${catRows ? `<h3>By Category</h3><table><thead><tr><th>Category</th><th style="text-align:right">Total</th></tr></thead><tbody>${catRows}</tbody></table>` : ''}
   ${summarySection}
-</body></html>`;
+</div></body></html>`;
+}
+
+// Splits the PDF source into A4 pages and stamps "Page X of N" at the bottom-right of each page.
+function fhPaginatePdf(doc){
+  const src = doc.getElementById('src');
+  if(!src) return;
+  const host = doc.createElement('div'); host.id = 'pages';
+  doc.body.appendChild(host);
+  const newPage = () => {
+    const p = doc.createElement('div'); p.className = 'page';
+    const b = doc.createElement('div'); b.className = 'pbody';
+    const f = doc.createElement('div'); f.className = 'pfooter';
+    p.appendChild(b); p.appendChild(f); host.appendChild(p);
+    return b;
+  };
+  const fits = b => b.scrollHeight <= b.clientHeight + 1;
+  const blk = () => { const d = doc.createElement('div'); d.className = 'blk'; return d; };
+  let body = newPage();
+
+  const addBlock = nodes => {
+    const w = blk(); nodes.forEach(n => w.appendChild(n.cloneNode(true)));
+    body.appendChild(w);
+    if(!fits(body) && body.children.length > 1){ body.removeChild(w); body = newPage(); body.appendChild(w); }
+  };
+  const addTable = (table, heads) => {
+    const thead = table.querySelector('thead');
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    if(!rows.length){ addBlock(heads.concat([table])); return; }
+    let i = 0, first = true;
+    while(i < rows.length){
+      const w = blk();
+      if(first) heads.forEach(h => w.appendChild(h.cloneNode(true)));
+      const t = doc.createElement('table');
+      if(thead) t.appendChild(thead.cloneNode(true));
+      const tb = doc.createElement('tbody'); t.appendChild(tb); w.appendChild(t);
+      body.appendChild(w);
+      let added = 0;
+      while(i < rows.length){
+        tb.appendChild(rows[i].cloneNode(true));
+        if(!fits(body)){
+          // an oversized row on an otherwise empty page is kept so we always make progress
+          if(added === 0 && body.children.length === 1){ i++; added++; } else { tb.removeChild(tb.lastChild); }
+          break;
+        }
+        i++; added++;
+      }
+      if(added === 0){ body.removeChild(w); body = newPage(); continue; }
+      first = false;
+      if(i < rows.length) body = newPage();
+    }
+  };
+
+  const kids = Array.from(src.children);
+  for(let k = 0; k < kids.length; k++){
+    const el = kids[k];
+    if(el.tagName === 'H3'){
+      const nx = kids[k+1];
+      if(nx && nx.tagName === 'TABLE'){ addTable(nx, [el]); k++; }
+      else if(nx){ addBlock([el, nx]); k++; }
+      else addBlock([el]);
+    } else if(el.tagName === 'TABLE'){ addTable(el, []); }
+    else addBlock([el]);
+  }
+
+  const pages = host.querySelectorAll('.page');
+  pages.forEach((p, idx) => { p.querySelector('.pfooter').textContent = 'Page ' + (idx + 1) + ' of ' + pages.length; });
+  src.style.display = 'none';
 }
 
 $('exportPdfBtn').addEventListener('click', ()=>{
@@ -2225,10 +2301,23 @@ $('pdfGenerateBtn').addEventListener('click', ()=>{
   const frame = $('pdfPrintFrame');
   frame.srcdoc = html;
   $('pdfOverlay').classList.remove('active');
-  frame.onload = ()=>{
+  frame.onload = async ()=>{
+    const doc = frame.contentDocument, win = frame.contentWindow;
+    // Lay the frame out off-screen so fonts load and page heights can be measured
+    frame.style.cssText = 'display:block;position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden;';
+    try{
+      void doc.body.offsetHeight;
+      await Promise.race([doc.fonts.ready, new Promise(r=>setTimeout(r,2500))]);
+      fhPaginatePdf(doc);
+    }catch(e){
+      console.warn('FinHub PDF pagination failed:', e);
+      const pg = doc.getElementById('pages'); if(pg) pg.remove();
+      const sr = doc.getElementById('src'); if(sr) sr.style.display = '';
+    }
+    frame.style.cssText = '';
     setTimeout(()=>{
-      frame.contentWindow.focus();
-      frame.contentWindow.print();
+      win.focus();
+      win.print();
     }, 300);
   };
 });
