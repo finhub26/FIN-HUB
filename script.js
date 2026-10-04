@@ -421,24 +421,26 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
   function weekLabel(key){ const [yr,wn]=key.split('-W'); const j=new Date(parseInt(yr),0,4); const dw=(j.getDay()+6)%7; const mon=new Date(j); mon.setDate(j.getDate()-dw+(parseInt(wn)-1)*7); return 'W'+wn+' '+mon.toLocaleString(_gsLoc(),{month:'short'}); }
   const COLS=['#7C3AED','#0EA5E9','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#84CC16','#F97316'];
   const CATS=["Food","Groceries","Dining Out","Transport","Fuel","Housing","Utilities","Entertainment","Shopping","Clothing","Medical","Education","Subscriptions","Insurance","EMI / Loan","Personal Care","Travel","Gifts","Savings","Other"];
-  function catColor(c){ return COLS[CATS.indexOf(c)%COLS.length]||COLS[0]; }
+  const CAT_COL={"Food":"#F97316","Groceries":"#65A30D","Dining Out":"#E11D48","Transport":"#0EA5E9","Fuel":"#EAB308","Housing":"#4F46E5","Utilities":"#14B8A6","Entertainment":"#EC4899","Shopping":"#A855F7","Clothing":"#C026D3","Medical":"#EF4444","Education":"#2563EB","Subscriptions":"#8B5CF6","Insurance":"#06B6D4","EMI / Loan":"#92400E","Personal Care":"#F472B6","Travel":"#22C55E","Gifts":"#FB923C","Savings":"#10B981","Other":"#64748B"};
+  function catColor(c){ return CAT_COL[c]||'#7C3AED'; }
+  function gDefs(p,x1,x2){ const g=(k,c,o)=>`<linearGradient id="${p}-${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${c}"/><stop offset="1" style="stop-color:${c};stop-opacity:${o}"/></linearGradient>`; return `<defs>${g('inc','var(--sage)',.55)}${g('exp','var(--rust)',.55)}${g('net','var(--brass)',.55)}<linearGradient id="${p}-ln" gradientUnits="userSpaceOnUse" x1="${x1}" y1="0" x2="${x2}" y2="0"><stop offset="0" style="stop-color:var(--brass)"/><stop offset="1" style="stop-color:#0EA5E9"/></linearGradient><linearGradient id="${p}-ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--brass);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--brass);stop-opacity:0"/></linearGradient></defs>`; }
 
   function barPairChart(id,labels,incomes,expenses,showBal,balances){
     const wrap=document.getElementById(id); if(!wrap) return;
     const W=Math.max(wrap.clientWidth,500),H=200,PL=50,PR=14,PT=14,PB=26;
     const n=labels.length; const maxV=Math.max(1,...incomes,...expenses);
-    const gW=(W-PL-PR)/n; const bw=Math.min(13,gW*0.28); const pH=H-PT-PB;
+    const gW=(W-PL-PR)/n; const bw=Math.min(24,gW*0.34); const pH=H-PT-PB;
     const yB=v=>PT+pH-(v/maxV)*pH;
     let yL='',bars='',line='',dots='';
     for(let i=0;i<=4;i++){ const v=(maxV/4)*i; const y=yB(v); yL+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${fmtCur(v)}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    labels.forEach((l,i)=>{ const cx=PL+gW*i+gW/2; const ih=(incomes[i]/maxV)*pH; const eh=(expenses[i]/maxV)*pH; bars+=`<rect x="${cx-bw-1}" y="${yB(incomes[i])}" width="${bw}" height="${Math.max(1,ih)}" fill="var(--sage)" rx="1"/><rect x="${cx+1}" y="${yB(expenses[i])}" width="${bw}" height="${Math.max(1,eh)}" fill="var(--rust)" rx="1"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`; });
-    if(showBal&&balances&&balances.length===n){ const mn=Math.min(0,...balances),mx=Math.max(1,...balances),r=(mx-mn)||1; const yBl=v=>PT+pH-((v-mn)/r)*pH; const pts=balances.map((b,i)=>[PL+gW*i+gW/2,yBl(b)]); line=`<path d="${pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--brass)" stroke-width="2"/>`; dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--brass)"/>`).join(''); }
-    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${yL}${bars}${line}${dots}</svg>`;
+    labels.forEach((l,i)=>{ const cx=PL+gW*i+gW/2; const ih=(incomes[i]/maxV)*pH; const eh=(expenses[i]/maxV)*pH; bars+=`<rect x="${cx-bw-1}" y="${yB(incomes[i])}" width="${bw}" height="${Math.max(2,ih)}" fill="url(#${id}-inc)" opacity="${incomes[i]?1:.3}" rx="3"><title>${l}: ${fmtCur(incomes[i])}</title></rect><rect x="${cx+1}" y="${yB(expenses[i])}" width="${bw}" height="${Math.max(2,eh)}" fill="url(#${id}-exp)" opacity="${expenses[i]?1:.3}" rx="3"><title>${l}: ${fmtCur(expenses[i])}</title></rect><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`; });
+    if(showBal&&balances&&balances.length===n){ const mn=Math.min(0,...balances),mx=Math.max(1,...balances),r=(mx-mn)||1; const yBl=v=>PT+pH-((v-mn)/r)*pH; const pts=balances.map((b,i)=>[PL+gW*i+gW/2,yBl(b)]); line=`<path d="${pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')}" fill="none" stroke="url(#${id}-ln)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`; dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="var(--brass)" stroke="var(--cream)" stroke-width="2"/>`).join(''); }
+    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${gDefs(id,PL,W-PR)}${yL}${bars}${line}${dots}</svg>`;
   }
 
   function lineChart(id,labels,values,color,fill){
     const wrap=document.getElementById(id); if(!wrap) return;
-    const W=Math.max(wrap.clientWidth,500),H=150,PL=50,PR=14,PT=14,PB=26;
+    const W=Math.max(wrap.clientWidth,500),H=150,PL=50,PR=28,PT=14,PB=26;
     const n=labels.length; if(!n) return;
     const mn=Math.min(0,...values),mx=Math.max(1,...values),r=(mx-mn)||1;
     const pH=H-PT-PB; const yL=v=>PT+pH-((v-mn)/r)*pH; const xL=i=>PL+((W-PL-PR)/(n-1||1))*i;
@@ -446,10 +448,10 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     for(let i=0;i<=4;i++){ const v=mn+(r/4)*i; const y=yL(v); yLabels+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${v.toFixed(0)}${fill?'%':''}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
     const pts=values.map((v,i)=>[xL(i),yL(v)]);
     const lp=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-    let areaPath=''; if(fill){ const by=yL(0); areaPath=`<path d="M${pts[0][0]} ${by} ${pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')} L${pts[pts.length-1][0]} ${by} Z" fill="${color}" opacity="0.12"/>`; }
+    const zl=mn<0?`<line x1="${PL}" y1="${yL(0)}" x2="${W-PR}" y2="${yL(0)}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3"/>`:''; let areaPath=''; { const by=yL(0); areaPath=`<path d="M${pts[0][0]} ${by} ${pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')} L${pts[pts.length-1][0]} ${by} Z" fill="url(#${id}-ar)"/>`; }
     const xlbls=labels.map((l,i)=>`<text x="${xL(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`).join('');
-    const ddots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${color}"/>`).join('');
-    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${yLabels}${areaPath}<path d="${lp}" fill="none" stroke="${color}" stroke-width="2"/>${ddots}${xlbls}</svg>`;
+    const ddots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="${values[i]>=0?'var(--sage)':'var(--rust)'}" stroke="var(--cream)" stroke-width="2"><title>${labels[i]}: ${fill?values[i].toFixed(1)+'%':(values[i]<0?'-':'')+fmtCur(values[i])}</title></circle>`).join('');
+    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${gDefs(id,PL,W-PR)}${yLabels}${zl}${areaPath}<path d="${lp}" fill="none" stroke="url(#${id}-ln)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${ddots}${xlbls}</svg>`;
   }
 
   function catCards(id,txList){
@@ -457,7 +459,7 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     const totals={}; CATS.forEach(c=>totals[c]=0);
     txList.filter(t=>t.amount<0).forEach(t=>{ totals[t.category]=(totals[t.category]||0)+Math.abs(t.amount); });
     const max=Math.max(1,...Object.values(totals));
-    wrap.innerHTML=CATS.filter(c=>totals[c]>0).map(c=>`<div class="gs-cat-card"><div class="gs-cat-name">${c}</div><div class="gs-cat-val">${fmtCur(totals[c])}</div><div class="gs-cat-bar-track"><div class="gs-cat-bar-fill" style="width:${(totals[c]/max*100).toFixed(1)}%;background:${catColor(c)};"></div></div></div>`).join('')||'<div style="color:var(--muted);font-size:13px;">No expenses yet.</div>';
+    wrap.innerHTML=CATS.filter(c=>totals[c]>0).map(c=>`<div class="gs-cat-card" style="--cc:${catColor(c)}"><div class="gs-cat-name">${c}</div><div class="gs-cat-val">${fmtCur(totals[c])}</div><div class="gs-cat-bar-track"><div class="gs-cat-bar-fill" style="width:${(totals[c]/max*100).toFixed(1)}%;background:${catColor(c)};"></div></div></div>`).join('')||'<div style="color:var(--muted);font-size:13px;">No expenses yet.</div>';
   }
 
   function updateSummary(txList){
@@ -503,11 +505,11 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     const wrap=document.getElementById('gsYearlyBarWrap'); if(!wrap) return;
     const W=Math.max(wrap.clientWidth,400),H=200,PL=50,PR=14,PT=14,PB=26;
     const n=yd.length; const maxV=Math.max(1,...yd.map(d=>Math.max(d.income,d.expense)));
-    const gW=(W-PL-PR)/n; const bw=Math.min(12,gW*0.22); const pH=H-PT-PB; const yB=v=>PT+pH-(v/maxV)*pH;
+    const gW=(W-PL-PR)/n; const bw=Math.min(26,gW*0.2); const pH=H-PT-PB; const yB=v=>PT+pH-(v/maxV)*pH;
     let yL='',bars='';
     for(let i=0;i<=4;i++){ const v=(maxV/4)*i; const y=yB(v); yL+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${fmtCur(v)}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    yd.forEach((d,i)=>{ const cx=PL+gW*i+gW/2; bars+=`<rect x="${cx-bw*1.5-2}" y="${yB(d.income)}" width="${bw}" height="${Math.max(1,(d.income/maxV)*pH)}" fill="var(--sage)" rx="1"/><rect x="${cx-bw/2}" y="${yB(d.expense)}" width="${bw}" height="${Math.max(1,(d.expense/maxV)*pH)}" fill="var(--rust)" rx="1"/><rect x="${cx+bw/2+2}" y="${d.net>=0?yB(d.net):yB(0)}" width="${bw}" height="${Math.max(1,Math.abs(d.net)/maxV*pH)}" fill="var(--brass)" rx="1"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Space Mono,monospace">${d.label}</text>`; });
-    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${yL}${bars}</svg>`;
+    yd.forEach((d,i)=>{ const cx=PL+gW*i+gW/2; bars+=`<rect x="${cx-bw*1.5-2}" y="${yB(d.income)}" width="${bw}" height="${Math.max(1,(d.income/maxV)*pH)}" fill="url(#gsYB-inc)" rx="3"><title>${d.label}: ${fmtCur(d.income)}</title></rect><rect x="${cx-bw/2}" y="${yB(d.expense)}" width="${bw}" height="${Math.max(1,(d.expense/maxV)*pH)}" fill="url(#gsYB-exp)" rx="3"><title>${d.label}: ${fmtCur(d.expense)}</title></rect><rect x="${cx+bw/2+2}" y="${d.net>=0?yB(d.net):yB(0)}" width="${bw}" height="${Math.max(1,Math.abs(d.net)/maxV*pH)}" fill="url(#gsYB-net)" rx="3"><title>${d.label}: ${fmtCur(d.net)}</title></rect><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Space Mono,monospace">${d.label}</text>`; });
+    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${gDefs('gsYB',0,1)}${yL}${bars}</svg>`;
     const cw=document.getElementById('gsYearlyCatWrap'); if(!cw) return;
     const CW=Math.max(cw.clientWidth,400),CH=180; const catTotals={}; CATS.forEach(c=>{ catTotals[c]=yd.map(d=>d.tx.filter(t=>t.amount<0&&t.category===c).reduce((s,t)=>s+Math.abs(t.amount),0)); });
     const maxC=Math.max(1,...CATS.flatMap(c=>catTotals[c])); const cgW=(CW-PL-PR)/n; const cbw=Math.min(10,cgW*0.18); const cpH=CH-PT-PB; const cyB=v=>PT+cpH-(v/maxC)*cpH;

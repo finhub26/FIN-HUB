@@ -4982,3 +4982,19 @@ html[data-theme] .recur-table tfoot .tfoot-add-btn:active { transform: translate
   .fh-add-row .tfoot-add-btn { width: 100%; padding: 13px; font-size: 14px; }
   .fh-add-row > .fh-wide { text-align: left; }
 }
+
+/* ── Graph Sheet: stronger, clearer colour ── */
+.gs-chart-card { position:relative; overflow:hidden; }
+.gs-chart-card::before { content:''; position:absolute; left:0; right:0; top:0; height:3px; background:linear-gradient(90deg,#7C3AED,#0EA5E9,#10B981,#F59E0B); }
+.gs-sum-card { border-top:3px solid var(--paper-line); }
+.gs-sum-val { font-size:20px; }
+html[data-theme] .gs-sum-card:nth-child(1) { border-top-color:var(--sage);  background:color-mix(in srgb,var(--sage) 13%,transparent); }
+html[data-theme] .gs-sum-card:nth-child(2) { border-top-color:var(--rust);  background:color-mix(in srgb,var(--rust) 13%,transparent); }
+html[data-theme] .gs-sum-card:nth-child(3) { border-top-color:var(--brass); background:color-mix(in srgb,var(--brass) 13%,transparent); }
+html[data-theme] .gs-sum-card:nth-child(4) { border-top-color:#0EA5E9;      background:color-mix(in srgb,#0EA5E9 13%,transparent); }
+.gs-legend { font-size:12px; font-weight:600; }
+.gs-legend .swatch { display:inline-block; width:12px; height:12px; border-radius:3px; }
+.gs-cat-card { border-left:4px solid var(--cc,var(--brass)); background:color-mix(in srgb,var(--cc,var(--brass)) 9%,transparent); }
+.gs-cat-name { display:flex; align-items:center; gap:6px; font-weight:600; }
+.gs-cat-name::before { content:''; width:8px; height:8px; border-radius:50%; background:var(--cc,var(--brass)); flex-shrink:0; }
+.gs-cat-bar-track { height:8px; background:color-mix(in srgb,var(--cc,var(--brass)) 18%,transparent); }
