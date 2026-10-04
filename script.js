@@ -650,6 +650,10 @@ function renderBudgetInputs(){
     row.innerHTML = `<span>${c}</span>`;
     const inp = document.createElement('input');
     inp.type='number'; inp.min='0'; inp.step='1'; inp.value=budgets[c]||''; inp.placeholder='—';
+    // Live update while typing: phones fire 'change' only when the field loses focus
+    // (scrolling or hiding the keyboard doesn't), so the red limit line never appeared.
+    // Redraw just the chart here — rebuilding the inputs would drop focus and close the keyboard.
+    inp.addEventListener('input', ()=>{ budgets[c]=parseFloat(inp.value)||0; saveBudgets(); renderBreakdownBudget(); });
     inp.addEventListener('change', async ()=>{ budgets[c]=parseFloat(inp.value)||0; await saveBudgets(); renderAll(); });
     row.appendChild(inp); wrap.appendChild(row);
   });
