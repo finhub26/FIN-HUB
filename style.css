@@ -4888,3 +4888,34 @@ html[data-theme="light"] { --bb-label: #1e1b4b; --bb-value: rgba(30,27,75,0.72);
   scrollbar-width: thin;
   scrollbar-color: rgba(128,128,160,0.4) transparent;
 }
+
+/* ── "+ Add" buttons (Savings Goals + Recurring) — same look as "Add to Ledger", both themes ── */
+html[data-theme] .goals-table tfoot .tfoot-add-btn,
+html[data-theme] .recur-table tfoot .tfoot-add-btn {
+  background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 3px 12px rgba(192,38,211,0.4), 0 0 18px rgba(232,121,249,0.2);
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+html[data-theme] .goals-table tfoot .tfoot-add-btn::after,
+html[data-theme] .recur-table tfoot .tfoot-add-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+html[data-theme] .goals-table tfoot .tfoot-add-btn:hover,
+html[data-theme] .recur-table tfoot .tfoot-add-btn:hover {
+  background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 18px rgba(192,38,211,0.5), 0 0 26px rgba(232,121,249,0.25);
+  transform: translateY(-1px);
+  opacity: 1;
+}
+html[data-theme] .goals-table tfoot .tfoot-add-btn:active,
+html[data-theme] .recur-table tfoot .tfoot-add-btn:active { transform: translateY(0); }
