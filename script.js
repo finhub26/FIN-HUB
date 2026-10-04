@@ -508,10 +508,19 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     const datas=labels.map((l,i)=>({title:l,rows:series.map(s=>({color:s.color,name:s.name,value:fmtSigned(s.values[i])}))}));
     labels.forEach((l,i)=>{ hits+=hitRect(i,PL+gW*i,PT-8,gW,pH+8,l+': '+series.map(s=>s.name+' '+fmtSigned(s.values[i])).join(', ')); });
     series.forEach((s,si)=>{ s.values.forEach((v,i)=>{ const p=barPath(xc(i)-total/2+si*(bw+gap),bw,y(v),y0,4); if(p) bars+=`<path d="${p}" fill="${s.color}"/>`; }); });
-    // Label only the highest bar of each series
-    const cand=[]; series.forEach((s,si)=>{ let mi=-1,mv=0; s.values.forEach((v,i)=>{ if(v>mv){ mv=v; mi=i; } }); if(mi>=0) cand.push({x:xc(mi)-total/2+si*(bw+gap)+bw/2,y:y(mv)-7,t:fmtK(mv)}); });
-    cand.sort((a,b)=>a.x-b.x); let lastX=-1e9;
-    cand.forEach(c=>{ if(c.x-lastX<50) return; lastX=c.x; lbls+=`<text x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--charcoal)"${HALO} font-family="Space Mono,monospace">${c.t}</text>`; });
+    // Label only the highest bar of each series. The first series' label grows to the left, the last series' to the right
+    // (away from its neighbour); a label that would still touch another bar or label is dropped (tooltip has the value).
+    const binfo=[]; series.forEach((s,si)=>s.values.forEach((v,i)=>{ if(v>0){ const bx=xc(i)-total/2+si*(bw+gap); binfo.push({x0:bx,x1:bx+bw,top:y(v),si,i}); } }));
+    const cand=[]; series.forEach((s,si)=>{ let mi=-1,mv=0; s.values.forEach((v,i)=>{ if(v>mv){ mv=v; mi=i; } });
+      if(mi<0) return;
+      const bx=xc(mi)-total/2+si*(bw+gap), t=fmtK(mv), w=t.length*6.9+6;
+      let anchor='middle', ax=bx+bw/2, x0=ax-w/2;
+      if(k>1&&si===0){ anchor='end'; ax=bx+bw; x0=ax-w; }
+      else if(k>1&&si===k-1){ anchor='start'; ax=bx; x0=ax; }
+      cand.push({v:mv,t,anchor,ax,x0,x1:x0+w,y:y(mv)-7,si,i:mi}); });
+    cand.sort((a,b)=>b.v-a.v); const kept=[];
+    cand.forEach(c=>{ const clash=kept.some(o=>c.x0<o.x1+4&&c.x1>o.x0-4) || binfo.some(bb=>!(bb.si===c.si&&bb.i===c.i)&&bb.x0<c.x1&&bb.x1>c.x0&&bb.top<c.y+1) || c.x0<PL-4 || c.x1>W-2; if(!clash) kept.push(c); });
+    kept.forEach(c=>{ lbls+=`<text x="${c.ax.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.anchor}" font-size="11" font-weight="700" fill="var(--charcoal)"${HALO} font-family="Space Mono,monospace">${c.t}</text>`; });
     wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${grid}<g>${hits}</g><g pointer-events="none">${bars}${lbls}${xLabelsSvg(labels,xc,H,gW)}</g></svg>`;
     bindHits(wrap,datas);
   }

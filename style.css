@@ -4199,13 +4199,13 @@ html[data-theme="dark"] .recur-table tfoot .tfoot-add-btn:hover { background: li
 #graphSheetPage.visible { display:flex; }
 /* Graph Sheet palette (validated categorical slots; income/expense/balance/rate + 8 category slots) */
 #graphSheetPage {
-  --gs-income:#1baf7a; --gs-expense:#eb6834; --gs-balance:#2a78d6; --gs-rate:#4a3aa7;
+  --gs-income:#1baf7a; --gs-expense:#dc2626; --gs-balance:#2a78d6; --gs-rate:#4a3aa7;
   --gs-c1:#2a78d6; --gs-c2:#eb6834; --gs-c3:#1baf7a; --gs-c4:#eda100; --gs-c5:#e87ba4; --gs-c6:#008300; --gs-c7:#4a3aa7; --gs-c8:#e34948; --gs-other:#a9a7b8;
   --gs-surface:#ffffff; --gs-grid:#ecebf4; --gs-axis:#c4c2d6; --gs-hover:rgba(30,27,75,.06);
   --gs-pos:#006300; --gs-neg:#d03b3b;
 }
 html:not([data-theme="light"]) #graphSheetPage {
-  --gs-income:#199e70; --gs-expense:#d95926; --gs-balance:#3987e5; --gs-rate:#9085e9;
+  --gs-income:#199e70; --gs-expense:#ef4444; --gs-balance:#3987e5; --gs-rate:#9085e9;
   --gs-c1:#3987e5; --gs-c2:#d95926; --gs-c3:#199e70; --gs-c4:#c98500; --gs-c5:#d55181; --gs-c6:#008300; --gs-c7:#9085e9; --gs-c8:#e66767; --gs-other:#6f6d7a;
   --gs-surface:#0a0a0f; --gs-grid:#1b1b2b; --gs-axis:#34344a; --gs-hover:rgba(255,255,255,.07);
   --gs-pos:#4ade80; --gs-neg:#f87171;
