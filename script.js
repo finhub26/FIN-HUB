@@ -431,7 +431,7 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     const yB=v=>PT+pH-(v/maxV)*pH;
     let yL='',bars='',line='',dots='';
     for(let i=0;i<=4;i++){ const v=(maxV/4)*i; const y=yB(v); yL+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${fmtCur(v)}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    labels.forEach((l,i)=>{ const cx=PL+gW*i+gW/2; const ih=(incomes[i]/maxV)*pH; const eh=(expenses[i]/maxV)*pH; bars+=`<rect x="${cx-bw-1}" y="${yB(incomes[i])}" width="${bw}" height="${Math.max(1,ih)}" fill="url(#gsIncGrad)" rx="1"/><rect x="${cx+1}" y="${yB(expenses[i])}" width="${bw}" height="${Math.max(1,eh)}" fill="url(#gsExpGrad)" rx="1"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`; });
+    labels.forEach((l,i)=>{ const cx=PL+gW*i+gW/2; const ih=(incomes[i]/maxV)*pH; const eh=(expenses[i]/maxV)*pH; bars+=`<rect x="${cx-bw-1}" y="${yB(incomes[i])}" width="${bw}" height="${Math.max(1,ih)}" fill="var(--sage)" rx="1"/><rect x="${cx+1}" y="${yB(expenses[i])}" width="${bw}" height="${Math.max(1,eh)}" fill="var(--rust)" rx="1"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`; });
     if(showBal&&balances&&balances.length===n){ const mn=Math.min(0,...balances),mx=Math.max(1,...balances),r=(mx-mn)||1; const yBl=v=>PT+pH-((v-mn)/r)*pH; const pts=balances.map((b,i)=>[PL+gW*i+gW/2,yBl(b)]); line=`<path d="${pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--brass)" stroke-width="2"/>`; dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--brass)"/>`).join(''); }
     wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${yL}${bars}${line}${dots}</svg>`;
   }
@@ -446,10 +446,10 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     for(let i=0;i<=4;i++){ const v=mn+(r/4)*i; const y=yL(v); yLabels+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${v.toFixed(0)}${fill?'%':''}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
     const pts=values.map((v,i)=>[xL(i),yL(v)]);
     const lp=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-    let areaPath=''; if(fill){ const by=yL(0); areaPath=`<path d="M${pts[0][0]} ${by} ${pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')} L${pts[pts.length-1][0]} ${by} Z" fill="url(#gsAreaGrad)"/>`; }
+    let areaPath=''; if(fill){ const by=yL(0); areaPath=`<path d="M${pts[0][0]} ${by} ${pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')} L${pts[pts.length-1][0]} ${by} Z" fill="${color}" opacity="0.12"/>`; }
     const xlbls=labels.map((l,i)=>`<text x="${xL(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`).join('');
     const ddots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${color}"/>`).join('');
-    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${yLabels}${areaPath}<path d="${lp}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.18"/><path d="${lp}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>${ddots}${xlbls}</svg>`;
+    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${yLabels}${areaPath}<path d="${lp}" fill="none" stroke="${color}" stroke-width="2"/>${ddots}${xlbls}</svg>`;
   }
 
   function catCards(id,txList){
@@ -506,7 +506,7 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     const gW=(W-PL-PR)/n; const bw=Math.min(12,gW*0.22); const pH=H-PT-PB; const yB=v=>PT+pH-(v/maxV)*pH;
     let yL='',bars='';
     for(let i=0;i<=4;i++){ const v=(maxV/4)*i; const y=yB(v); yL+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${fmtCur(v)}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    yd.forEach((d,i)=>{ const cx=PL+gW*i+gW/2; bars+=`<rect x="${cx-bw*1.5-2}" y="${yB(d.income)}" width="${bw}" height="${Math.max(1,(d.income/maxV)*pH)}" fill="url(#gsIncGrad)" rx="1"/><rect x="${cx-bw/2}" y="${yB(d.expense)}" width="${bw}" height="${Math.max(1,(d.expense/maxV)*pH)}" fill="url(#gsExpGrad)" rx="1"/><rect x="${cx+bw/2+2}" y="${d.net>=0?yB(d.net):yB(0)}" width="${bw}" height="${Math.max(1,Math.abs(d.net)/maxV*pH)}" fill="url(#gsNetGrad)" rx="1"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Space Mono,monospace">${d.label}</text>`; });
+    yd.forEach((d,i)=>{ const cx=PL+gW*i+gW/2; bars+=`<rect x="${cx-bw*1.5-2}" y="${yB(d.income)}" width="${bw}" height="${Math.max(1,(d.income/maxV)*pH)}" fill="var(--sage)" rx="1"/><rect x="${cx-bw/2}" y="${yB(d.expense)}" width="${bw}" height="${Math.max(1,(d.expense/maxV)*pH)}" fill="var(--rust)" rx="1"/><rect x="${cx+bw/2+2}" y="${d.net>=0?yB(d.net):yB(0)}" width="${bw}" height="${Math.max(1,Math.abs(d.net)/maxV*pH)}" fill="var(--brass)" rx="1"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Space Mono,monospace">${d.label}</text>`; });
     wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${yL}${bars}</svg>`;
     const cw=document.getElementById('gsYearlyCatWrap'); if(!cw) return;
     const CW=Math.max(cw.clientWidth,400),CH=180; const catTotals={}; CATS.forEach(c=>{ catTotals[c]=yd.map(d=>d.tx.filter(t=>t.amount<0&&t.category===c).reduce((s,t)=>s+Math.abs(t.amount),0)); });
