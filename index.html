@@ -826,8 +826,10 @@
   <div class="pp-modal">
     <div class="pp-modal-icon">⚠️</div>
     <div class="pp-modal-title">Delete Account?</div>
-    <div class="pp-modal-msg">Type your username <strong id="ppModalUsername">—</strong> to confirm.<br>All data will be erased permanently.</div>
+    <div class="pp-modal-msg">Type your username <strong id="ppModalUsername">—</strong> and enter your password to confirm.<br>All data will be erased permanently.</div>
     <input class="pp-modal-input" id="ppModalInput" placeholder="type username here" autocomplete="off"/>
+    <input class="pp-modal-input" id="ppModalPass" type="password" placeholder="enter your password" autocomplete="current-password"/>
+    <div id="ppModalErr" style="color:var(--rust);font-size:12px;min-height:16px;margin:-6px 0 10px;text-align:center;"></div>
     <div class="pp-modal-btns">
       <button class="pp-modal-cancel" id="ppModalCancel">Cancel</button>
       <button class="pp-modal-confirm" id="ppModalConfirm" disabled>Delete Forever</button>
