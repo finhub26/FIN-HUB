@@ -1226,14 +1226,10 @@ function renderBreakdownBudget(){
     const y=padT+i*rowH; const barY=y+rowH*0.18; const barH=rowH*0.58;
     const barW=(spent/maxVal)*plotW; const over=limit>0&&spent>limit;
     const color=categoryColor(c);
-    const isLight = document.documentElement.dataset.theme === 'light';
-    const labelColor = isLight ? '#1e1b4b' : '#e2e8f0';
-    const valueColor = isLight ? 'rgba(30,27,75,0.72)' : '#6b7a8d';
-    rows+=`<text x="${padL-8}" y="${y+rowH*0.65}" font-size="12" fill="${labelColor}" font-family="Source Sans 3,sans-serif" text-anchor="end">${fhCatLabel(c)}</text>`;
-    rows+=`<rect x="${padL}" y="${barY}" width="${plotW}" height="${barH}" fill="none" stroke="var(--paper-line)"></rect>`;
-    rows+=`<rect x="${padL}" y="${barY}" width="${Math.max(1,barW)}" height="${barH}" fill="${color}" ${over?'stroke="var(--rust)" stroke-width="2"':''}></rect>`;
+    rows+=`<text x="${padL-8}" y="${y+rowH*0.65}" font-size="12" style="fill:var(--bb-label)" font-family="Source Sans 3,sans-serif" text-anchor="end">${fhCatLabel(c)}</text>`;
+    if(spent>0){ rows+=`<rect x="${padL}" y="${barY}" width="${Math.max(1,barW)}" height="${barH}" fill="${color}" ${over?'stroke="var(--rust)" stroke-width="2"':''}></rect>`; }
 
-    rows+=`<text x="${padL+plotW+8}" y="${y+rowH*0.65}" font-size="11" fill="${valueColor}" font-family="Space Mono,monospace">${fmt(-spent)}</text>`;
+    rows+=`<text x="${padL+plotW+8}" y="${y+rowH*0.65}" font-size="11" style="fill:var(--bb-value)" font-family="Space Mono,monospace">${fmt(-spent)}</text>`;
   });
   wrap.innerHTML=`<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">${rows}</svg>`;
   if(legend) legend.innerHTML=CATEGORIES.map(c=>`<span><span class="swatch" style="background:${categoryColor(c)};"></span>${fhCatLabel(c)}</span>`).join('')

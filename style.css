@@ -4876,3 +4876,15 @@ html[data-theme="light"] .sb-section-label {
     grid-template-columns: minmax(0, 360px) minmax(0, 1fr) !important;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════
+   BUDGET CHART — theme-aware labels (update live on theme change)
+   and thin scrollbars matched to the app's look
+═══════════════════════════════════════════════════════ */
+:root { --bb-label: #e2e8f0; --bb-value: #94a3b8; }
+html[data-theme="light"] { --bb-label: #1e1b4b; --bb-value: rgba(30,27,75,0.72); }
+#budgetInputs, #breakdownBudget {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128,128,160,0.4) transparent;
+}
