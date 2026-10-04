@@ -500,7 +500,7 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
 
   function renderYearly(){
     if(!window.transactions) return;
-    const now=new Date(); const years=[]; for(let i=4;i>=0;i--) years.push(now.getFullYear()-i);
+    const now=new Date(); const years=[]; for(let y=2023;y<=now.getFullYear();y++) years.push(y);
     const yd=years.map(yr=>{ const tx=window.transactions.filter(t=>parseInt(t.date.slice(0,4))===yr); const inc=tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0); const exp=tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0); return {yr,label:String(yr),income:inc,expense:exp,net:inc-exp,tx}; });
     const wrap=document.getElementById('gsYearlyBarWrap'); if(!wrap) return;
     const W=Math.max(wrap.clientWidth,400),H=200,PL=50,PR=14,PT=14,PB=26;
@@ -640,14 +640,51 @@ async function loadData(){
   transactions = localTx;
   console.log('FinHub: Loaded', transactions.length, 'transactions from localStorage 📱');
 }
+// ── Sample data 2023 → today. Open the app with ?demo=1 to load it; it is never saved to storage or cloud. ──
+function _demoTx(today){
+  today=today||new Date().toISOString().slice(0,10);
+  let s=2023; const r=()=>(s=(s*1664525+1013904223)%4294967296)/4294967296;
+  const R=(a,b)=>Math.round(a+r()*(b-a)); const out=[]; let n=0;
+  for(let y=2023;y<=2026;y++){ const k=y-2023, inf=Math.pow(1.05,k);
+    for(let m=1;m<=12;m++){
+      const mm=String(m).padStart(2,'0'), D=d=>`${y}-${mm}-${String(d).padStart(2,'0')}`;
+      const add=(d,desc,cat,amt)=>out.push({id:'demo-'+(++n),date:D(d),desc,category:cat,note:'',amount:amt});
+      const x=(d,desc,cat,a)=>add(d,desc,cat,-Math.round(a*inf));
+      add(1,'Salary','Income',Math.round(68000*Math.pow(1.07,k)/100)*100);
+      if(m%3===0) add(20,'Freelance project','Income',R(6000,15000));
+      if(m===3||m===10) add(25,'Bonus','Income',R(15000,30000));
+      x(2,'House rent','Housing',14000); add(7,'Home loan EMI','EMI / Loan',-8500);
+      x(6,'Electricity bill','Utilities',R(1600,2800)); x(8,'Internet','Utilities',700);
+      for(let w=0;w<4;w++) x(3+w*7,'Weekly groceries','Groceries',R(2200,3400));
+      for(let i=0;i<6;i++) x(R(1,28),'Meals & snacks','Food',R(120,520));
+      for(let i=0;i<2;i++) x(R(5,28),'Restaurant','Dining Out',R(500,1800));
+      for(let i=0;i<4;i++) x(R(1,28),'Auto / bus','Transport',R(150,450));
+      for(let i=0;i<2;i++) x(R(1,28),'Petrol','Fuel',R(900,1500));
+      x(5,'OTT plan','Subscriptions',499); x(12,'Music plan','Subscriptions',119);
+      if(m%3===1) x(15,'Insurance premium','Insurance',5500);
+      if(r()<0.35) x(R(1,28),'Doctor / pharmacy','Medical',R(300,2800));
+      x(R(8,26),'Online shopping','Shopping',R(900,4200));
+      if([1,4,9,10].includes(m)) x(R(8,26),'Clothes','Clothing',R(1500,5000));
+      x(R(8,26),'Movie / outing','Entertainment',R(400,1600));
+      x(R(8,26),'Salon / grooming','Personal Care',R(300,900));
+      if(m===6) x(10,'School fees','Education',18000);
+      if(m===5||m===12) x(R(10,22),'Family trip','Travel',R(14000,28000));
+      if(m===10||m===11||m===1) x(R(5,20),'Festival gifts','Gifts',R(2000,6000));
+      add(28,'Monthly savings','Savings',-4000);
+      if(r()<0.5) x(R(1,28),'Miscellaneous','Other',R(200,1500));
+    } }
+  return out.filter(t=>t.date<=today).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function applyDemoFlag(){ try{ transactions=transactions.filter(t=>!String(t.id).startsWith('demo-')); if(new URLSearchParams(location.search).get('demo')==='1') transactions=transactions.concat(_demoTx()); }catch(e){} }
+const _noDemo=a=>a.filter(t=>!String(t.id).startsWith('demo-'));
 async function saveTransactions(){
   // Always save to localStorage first (instant, works offline)
-  try{ localStorage.setItem(userKey('transactions'), JSON.stringify(transactions)); }catch(e){}
+  try{ localStorage.setItem(userKey('transactions'), JSON.stringify(_noDemo(transactions))); }catch(e){}
   // Also sync to Supabase cloud (async, non-blocking)
   try {
     const uid = window.currentUserId;
     if (uid && window._sb && navigator.onLine) {
-      window._sb.fullSync(uid, transactions).then(ok => {
+      window._sb.fullSync(uid, _noDemo(transactions)).then(ok => {
         if (!ok) console.warn('FinHub: Supabase sync failed silently');
       });
     }
@@ -1866,6 +1903,7 @@ async function startApp(){
   }
 
   await loadData();
+  applyDemoFlag();
   window.transactions = transactions;
 
   const profile = await getUserProfile(currentUserId);
