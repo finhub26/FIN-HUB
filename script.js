@@ -1101,8 +1101,11 @@ function renderAll(){
   // Refresh secondary views if they exist
   if(typeof renderLedgerFull === 'function') renderLedgerFull();
   if(typeof renderBreakdownBudget === 'function') renderBreakdownBudget();
-  if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
-  if(typeof updateHeaderPills === 'function') updateHeaderPills();
+  // Defer insight + pills until after populateMonthFilter has written its value to the DOM
+  requestAnimationFrame(function(){
+    if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
+    if(typeof updateHeaderPills === 'function') updateHeaderPills();
+  });
   // Re-apply active language so dynamic content gets translated
   const _lang = window._finhubLang || (function(){ try{ return localStorage.getItem('finhub_lang'); }catch(e){ return null; } })();
   if(_lang && _lang !== 'en' && window.finhubI18n) {
@@ -1738,7 +1741,6 @@ async function startApp(){
   if(dashBtn) dashBtn.classList.add('active');
 
   renderAll();
-  if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
   setTimeout(() => updateHeaderGreeting(), 50);
   // Deferred re-render: only fires if the same user is still logged in
@@ -1747,11 +1749,20 @@ async function startApp(){
     if (_currentUserId && _currentUserId === _startUid) {
       window.transactions = transactions;
       renderAll();
-      updateHeaderPills();
+      // renderAll fires rAF for pills+insight, but also call explicitly after it settles
+      setTimeout(() => {
+        if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
+        if(typeof updateHeaderPills === 'function') updateHeaderPills();
+      }, 100);
     }
   }, 1500);
-  // Extra safety: update pills again after everything has definitely settled
-  setTimeout(() => { if(_currentUserId) updateHeaderPills(); }, 2500);
+  // Extra safety: update pills + insight again after everything has definitely settled
+  setTimeout(() => {
+    if(_currentUserId) {
+      if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
+      if(typeof updateHeaderPills === 'function') updateHeaderPills();
+    }
+  }, 2500);
 }
 
 function resetAuthForms(){
@@ -1840,9 +1851,11 @@ function updateHeaderInsight(){
     const now = new Date();
     // Use the selected month; if not set or 'all', fall back to most recent month with data
     const selEl = $('monthFilter');
-    const selVal = selEl && selEl.value && selEl.value !== 'all' ? selEl.value : null;
+    const selVal = (selEl && selEl.value && selEl.value !== 'all' && selEl.value !== '') ? selEl.value : null;
+    const nowMonthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     const txMonths7 = [...new Set((window.transactions||[]).map(t=>t.date.slice(0,7)))].sort().reverse();
-    const monthKey7 = selVal || txMonths7[0] || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    // Prefer current month if it has transactions, then most recent month, then current month
+    const monthKey7 = selVal || (txMonths7.includes(nowMonthStr) ? nowMonthStr : txMonths7[0]) || nowMonthStr;
     // Last 7 days buckets using LOCAL dates (not UTC)
     const buckets = [];
     for(let i=6;i>=0;i--){
@@ -1926,10 +1939,11 @@ function updateHeaderPills(){
 
   // Pick the active month: filter value → most recent tx month → current month
   const selEl = $('monthFilter');
-  const selVal = (selEl && selEl.value && selEl.value !== 'all') ? selEl.value : null;
+  const selVal = (selEl && selEl.value && selEl.value !== 'all' && selEl.value !== '') ? selEl.value : null;
   const txList = window.transactions || transactions || [];
   const txMonths = [...new Set(txList.map(t => t.date.slice(0,7)))].sort().reverse();
-  const activeMonth = selVal || txMonths[0] || nowMonthKey;
+  // Prefer current month if it's in the tx list, otherwise most recent, then current month
+  const activeMonth = selVal || (txMonths.includes(nowMonthKey) ? nowMonthKey : txMonths[0]) || nowMonthKey;
 
   const yr = parseInt(activeMonth.slice(0,4));
   const mo = parseInt(activeMonth.slice(5)) - 1;
