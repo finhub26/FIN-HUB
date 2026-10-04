@@ -381,6 +381,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // ════════════════════════════════════════
 //  GRAPH SHEET
 // ════════════════════════════════════════
+// Locale helper used by graph/ledger renderers outside the graph IIFE
+function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-IN'}; return L[window._finhubLang]||'en-US'; }
 (function(){
   function fmtCur(v){ return '₹'+Math.abs(v).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0}); }
   function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-IN'}; return L[window._finhubLang]||'en-US'; }
