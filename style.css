@@ -4919,3 +4919,72 @@ html[data-theme] .recur-table tfoot .tfoot-add-btn:hover {
 }
 html[data-theme] .goals-table tfoot .tfoot-add-btn:active,
 html[data-theme] .recur-table tfoot .tfoot-add-btn:active { transform: translateY(0); }
+
+
+/* ═══════════════════════════════════════════════════════
+   GOALS & RECURRING — phone fix
+   1) A "1fr" grid track grows to fit its content, so the wide tables
+      stretched the card past the screen and the page clipped the
+      "+ Add" button. minmax(0,1fr) keeps the card at screen width and
+      lets the table scroll inside its own wrapper.
+   2) The add form is now a standalone block (.fh-add-row) below each
+      table instead of a table footer, so it never needs side-scrolling.
+═══════════════════════════════════════════════════════ */
+#view-goals { grid-template-columns: minmax(0, 1fr) !important; }
+#view-goals > div { min-width: 0; }
+.goals-table-wrap, .recur-table-wrap { max-width: 100%; -webkit-overflow-scrolling: touch; }
+
+.fh-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--paper);
+  border-top: 2px solid var(--paper-line);
+  border-radius: 0 0 10px 10px;
+}
+.fh-add-row > input,
+.fh-add-row > select { flex: 1 1 140px; min-width: 0; width: auto; }
+.fh-add-row > .fh-wide { text-align: right; }
+
+.fh-add-row .tfoot-add-btn {
+  flex: 0 0 auto;
+  padding: 10px 22px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #c026d3 0%, #7c3aed 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(192,38,211,0.4), 0 0 18px rgba(232,121,249,0.2);
+  transition: all 0.2s;
+}
+.fh-add-row .tfoot-add-btn:hover {
+  background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 18px rgba(192,38,211,0.5), 0 0 26px rgba(232,121,249,0.25);
+  transform: translateY(-1px);
+}
+.fh-add-row .tfoot-add-btn:active { transform: translateY(0); }
+
+@media (max-width: 900px) {
+  /* Stacked, thumb-friendly form: 2 columns, name + amount + button full width */
+  .fh-add-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px 12px;
+  }
+  .fh-add-row > input,
+  .fh-add-row > select { width: 100%; font-size: 16px; /* stops iOS zoom-on-focus */ }
+  .fh-add-row > :first-child,
+  .fh-add-row > .fh-wide,
+  .fh-add-row > .tfoot-add-btn { grid-column: 1 / -1; }
+  .fh-add-row .tfoot-add-btn { width: 100%; padding: 13px; font-size: 14px; }
+  .fh-add-row > .fh-wide { text-align: left; }
+}

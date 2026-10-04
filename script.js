@@ -1436,18 +1436,15 @@ function renderGoals(){
       tbody.appendChild(tr);
     });
   }
-  // tfoot — inline add row
-  const tfoot=document.createElement('tfoot');
-  tfoot.innerHTML=`<tr>
-    <td><input type="text" id="goalName" placeholder="${_T.goals_add_name_ph||'Goal name…'}"></td>
-    <td><input type="text" id="goalMarychide" placeholder="${_T.goals_add_marychide_ph||'Due date…'}"></td>
-    <td class="num" colspan="2"><input type="number" id="goalTarget" placeholder="${_T.goals_add_target_ph||'Target ₹'}" min="0" step="1" style="text-align:right;"></td>
-    <td></td>
-    <td></td>
-    <td><button class="tfoot-add-btn" id="addGoalBtn">${_T.goals_add_btn||'+ Add'}</button></td>
-  </tr>`;
-  tbl.appendChild(tbody); tbl.appendChild(tfoot);
-  tableWrap.appendChild(tbl); wrap.appendChild(tableWrap);
+  // Add form — lives outside the table so it always fits the screen on phones
+  const addRow=document.createElement('div'); addRow.className='fh-add-row';
+  addRow.innerHTML=`
+    <input type="text" id="goalName" placeholder="${_T.goals_add_name_ph||'Goal name…'}">
+    <input type="text" id="goalMarychide" placeholder="${_T.goals_add_marychide_ph||'Due date…'}">
+    <input type="number" id="goalTarget" placeholder="${_T.goals_add_target_ph||'Target ₹'}" min="0" step="1">
+    <button class="tfoot-add-btn" id="addGoalBtn" type="button">${_T.goals_add_btn||'+ Add'}</button>`;
+  tbl.appendChild(tbody);
+  tableWrap.appendChild(tbl); wrap.appendChild(tableWrap); wrap.appendChild(addRow);
 
   wrap.querySelectorAll('.goal-del-btn').forEach(btn=>{ btn.addEventListener('click', async ()=>{ goals.splice(parseInt(btn.dataset.idx),1); await saveGoals(); renderGoals(); }); });
   wrap.querySelectorAll('.gt-deposit-btn').forEach(btn=>{
@@ -1514,26 +1511,25 @@ function renderRecurring(){
       tbody.appendChild(tr);
     });
   }
-  // tfoot — inline add row
-  const tfoot=document.createElement('tfoot');
-  tfoot.innerHTML=`<tr>
-    <td><input type="text" id="recurName" placeholder="${_TR.recur_add_name_ph||'Name…'}"></td>
-    <td><select id="recurCat">${catOptions}</select></td>
-    <td><select id="recurFreq">
+  // Add form — lives outside the table so it always fits the screen on phones
+  const addRow=document.createElement('div'); addRow.className='fh-add-row';
+  addRow.innerHTML=`
+    <input type="text" id="recurName" placeholder="${_TR.recur_add_name_ph||'Name…'}">
+    <select id="recurCat">${catOptions}</select>
+    <select id="recurFreq">
       <option value="weekly">Weekly</option>
       <option value="monthly" selected>Monthly</option>
       <option value="yearly">Yearly</option>
-    </select></td>
-    <td><select id="recurType">
+    </select>
+    <select id="recurType">
       <option value="expense">Expense</option>
       <option value="income">Income</option>
-    </select></td>
-    <td><input type="text" id="recurMarychide" placeholder="${_TR.recur_add_marychide_ph||'Due date…'}"></td>
-    <td class="num"><input type="number" id="recurAmt" placeholder="₹" min="0" step="0.01" style="text-align:right;"></td>
-    <td><button class="tfoot-add-btn" id="addRecurBtn">${_TR.recur_add_btn||'+ Add'}</button></td>
-  </tr>`;
-  tbl.appendChild(tbody); tbl.appendChild(tfoot);
-  tableWrap.appendChild(tbl); wrap.appendChild(tableWrap);
+    </select>
+    <input type="text" id="recurMarychide" placeholder="${_TR.recur_add_marychide_ph||'Due date…'}">
+    <input type="number" id="recurAmt" class="fh-wide" placeholder="₹" min="0" step="0.01">
+    <button class="tfoot-add-btn" id="addRecurBtn" type="button">${_TR.recur_add_btn||'+ Add'}</button>`;
+  tbl.appendChild(tbody);
+  tableWrap.appendChild(tbl); wrap.appendChild(tableWrap); wrap.appendChild(addRow);
 
   wrap.querySelectorAll('.rt-post-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
