@@ -16,12 +16,20 @@
   // ── Fetch all transactions from Supabase for a user ──
   async function sbLoadTransactions(uid) {
     try {
-      const res = await fetch(
-        SB_URL + '/rest/v1/transactions?user_id=eq.' + encodeURIComponent(uid) + '&order=date.asc',
-        { method: 'GET', headers: { ...HEADERS, 'Prefer': 'return=representation' } }
-      );
-      if (!res.ok) return null;
-      const rows = await res.json();
+      // Supabase returns at most 1000 rows per request, so load in pages
+      const PAGE = 1000;
+      let rows = [];
+      for (let offset = 0; ; offset += PAGE) {
+        const res = await fetch(
+          SB_URL + '/rest/v1/transactions?user_id=eq.' + encodeURIComponent(uid) +
+          '&order=date.asc,id.asc&limit=' + PAGE + '&offset=' + offset,
+          { method: 'GET', headers: { ...HEADERS, 'Prefer': 'return=representation' } }
+        );
+        if (!res.ok) return null;
+        const batch = await res.json();
+        rows = rows.concat(batch);
+        if (batch.length < PAGE) break;
+      }
       return rows.map(r => ({
         id: String(r.id),
         date: r.date,
@@ -160,8 +168,28 @@
     }
   }
 
+  // ── Permanently delete a user's cloud data (transactions + login row) ──
+  async function sbDeleteAccount(uid) {
+    try {
+      const q = '?user_id=eq.' + encodeURIComponent(uid);
+      const t = await fetch(SB_URL + '/rest/v1/transactions' + q, { method: 'DELETE', headers: HEADERS });
+      const u = await fetch(SB_URL + '/rest/v1/users' + q, { method: 'DELETE', headers: HEADERS });
+      if (!t.ok || !u.ok) return false;
+      // Verify: a blocked delete can return OK while removing nothing
+      const left = await fetch(SB_URL + '/rest/v1/transactions' + q + '&limit=1',
+        { method: 'GET', headers: { ...HEADERS, 'Prefer': 'return=representation' } });
+      if (!left.ok || (await left.json()).length > 0) return false;
+      const row = await sbLoadUser(uid);
+      return !row;
+    } catch(e) {
+      console.warn('FinHub Supabase deleteAccount error:', e);
+      return false;
+    }
+  }
+
   // Expose on window so app.js functions can call them
   window._sb = {
+    deleteAccount: sbDeleteAccount,
     load: sbLoadTransactions,
     save: sbSaveTransaction,
     delete: sbDeleteTransaction,
@@ -387,6 +415,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
     }
+    if(uid!=='guest' && window._sb && window._sb.deleteAccount){
+      const cloudOk = await window._sb.deleteAccount(uid);
+      if(!cloudOk){
+        if(modalErr) modalErr.textContent='Could not delete cloud data. Check your internet and try again.';
+        confirmBtn.disabled=false;
+        return;
+      }
+    }
     const keys=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(`tally:user:${uid}:`)) keys.push(k); }
     keys.forEach(k=>localStorage.removeItem(k));
     try{ const lr=localStorage.getItem('tally:users'); const l=lr?JSON.parse(lr):[]; localStorage.setItem('tally:users',JSON.stringify(l.filter(u=>u!==uid))); }catch(e){}
@@ -419,47 +455,148 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
   function getISOWeek(d){ const date=new Date(d); date.setHours(0,0,0,0); date.setDate(date.getDate()+3-(date.getDay()+6)%7); const w1=new Date(date.getFullYear(),0,4); return [date.getFullYear(),1+Math.round(((date-w1)/86400000-3+(w1.getDay()+6)%7)/7)]; }
   function weekKey(ds){ const [y,w]=getISOWeek(new Date(ds)); return y+'-W'+(w<10?'0':'')+w; }
   function weekLabel(key){ const [yr,wn]=key.split('-W'); const j=new Date(parseInt(yr),0,4); const dw=(j.getDay()+6)%7; const mon=new Date(j); mon.setDate(j.getDate()-dw+(parseInt(wn)-1)*7); return 'W'+wn+' '+mon.toLocaleString(_gsLoc(),{month:'short'}); }
-  const COLS=['#7C3AED','#0EA5E9','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#84CC16','#F97316'];
   const CATS=["Food","Groceries","Dining Out","Transport","Fuel","Housing","Utilities","Entertainment","Shopping","Clothing","Medical","Education","Subscriptions","Insurance","EMI / Loan","Personal Care","Travel","Gifts","Savings","Other"];
-  const CAT_COL={"Food":"#F97316","Groceries":"#65A30D","Dining Out":"#E11D48","Transport":"#0EA5E9","Fuel":"#EAB308","Housing":"#4F46E5","Utilities":"#14B8A6","Entertainment":"#EC4899","Shopping":"#A855F7","Clothing":"#C026D3","Medical":"#EF4444","Education":"#2563EB","Subscriptions":"#8B5CF6","Insurance":"#06B6D4","EMI / Loan":"#92400E","Personal Care":"#F472B6","Travel":"#22C55E","Gifts":"#FB923C","Savings":"#10B981","Other":"#64748B"};
-  function catColor(c){ return CAT_COL[c]||'#7C3AED'; }
-  function gDefs(p,x1,x2){ const g=(k,c,o)=>`<linearGradient id="${p}-${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${c}"/><stop offset="1" style="stop-color:${c};stop-opacity:${o}"/></linearGradient>`; return `<defs>${g('inc','var(--sage)',.55)}${g('exp','var(--rust)',.55)}${g('net','var(--brass)',.55)}<linearGradient id="${p}-ln" gradientUnits="userSpaceOnUse" x1="${x1}" y1="0" x2="${x2}" y2="0"><stop offset="0" style="stop-color:var(--brass)"/><stop offset="1" style="stop-color:#0EA5E9"/></linearGradient><linearGradient id="${p}-ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--brass);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--brass);stop-opacity:0"/></linearGradient></defs>`; }
 
-  function barPairChart(id,labels,incomes,expenses,showBal,balances){
-    const wrap=document.getElementById(id); if(!wrap) return;
-    const W=Math.max(wrap.clientWidth,500),H=200,PL=50,PR=14,PT=14,PB=26;
-    const n=labels.length; const maxV=Math.max(1,...incomes,...expenses);
-    const gW=(W-PL-PR)/n; const bw=Math.min(24,gW*0.34); const pH=H-PT-PB;
-    const yB=v=>PT+pH-(v/maxV)*pH;
-    let yL='',bars='',line='',dots='';
-    for(let i=0;i<=4;i++){ const v=(maxV/4)*i; const y=yB(v); yL+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${fmtCur(v)}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    labels.forEach((l,i)=>{ const cx=PL+gW*i+gW/2; const ih=(incomes[i]/maxV)*pH; const eh=(expenses[i]/maxV)*pH; bars+=`<rect x="${cx-bw-1}" y="${yB(incomes[i])}" width="${bw}" height="${Math.max(2,ih)}" fill="url(#${id}-inc)" opacity="${incomes[i]?1:.3}" rx="3"><title>${l}: ${fmtCur(incomes[i])}</title></rect><rect x="${cx+1}" y="${yB(expenses[i])}" width="${bw}" height="${Math.max(2,eh)}" fill="url(#${id}-exp)" opacity="${expenses[i]?1:.3}" rx="3"><title>${l}: ${fmtCur(expenses[i])}</title></rect><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`; });
-    if(showBal&&balances&&balances.length===n){ const mn=Math.min(0,...balances),mx=Math.max(1,...balances),r=(mx-mn)||1; const yBl=v=>PT+pH-((v-mn)/r)*pH; const pts=balances.map((b,i)=>[PL+gW*i+gW/2,yBl(b)]); line=`<path d="${pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')}" fill="none" stroke="url(#${id}-ln)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`; dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="var(--brass)" stroke="var(--cream)" stroke-width="2"/>`).join(''); }
-    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${gDefs(id,PL,W-PR)}${yL}${bars}${line}${dots}</svg>`;
+  // ── Colors ──
+  // Series colors are CSS variables (see style.css, "GRAPH SHEET"): income, expense, balance/net, savings-rate.
+  // Categories: the 8 biggest spend categories (all-time) get palette slots 1-8; everything else is neutral gray.
+  let CAT_MAP={order:[],color:{}};
+  function refreshCatMap(){
+    const tot={};
+    (window.transactions||[]).forEach(t=>{ if(t.amount<0&&t.category&&t.category!=='Other') tot[t.category]=(tot[t.category]||0)+Math.abs(t.amount); });
+    const order=Object.keys(tot).sort((a,b)=>tot[b]-tot[a]).slice(0,8);
+    const color={}; order.forEach((c,i)=>{ color[c]='var(--gs-c'+(i+1)+')'; });
+    CAT_MAP={order,color};
+  }
+  function catColor(c){ return CAT_MAP.color[c]||'var(--gs-other)'; }
+
+  // ── Helpers ──
+  function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function T(key,fb){ try{ const l=window._finhubLang||'en'; const s=window.finhubI18n&&window.finhubI18n.strings&&window.finhubI18n.strings[l]; return (s&&s[key])||fb; }catch(e){ return fb; } }
+  // Surface-colored halo so value labels stay readable where they touch a bar
+  const HALO=' stroke="var(--gs-surface)" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke"';
+  function r1(x){ return String(Math.round(x*10)/10); }
+  function fmtK(v){ const a=Math.abs(v), s=v<0?'-':''; if(a>=1e7) return s+'₹'+r1(a/1e7)+'Cr'; if(a>=1e5) return s+'₹'+r1(a/1e5)+'L'; if(a>=1e3) return s+'₹'+r1(a/1e3)+'k'; return s+'₹'+Math.round(a); }
+  function fmtSigned(v){ return (v<0?'-':'')+fmtCur(v); }
+  function niceScale(min,max,n){
+    if(!(max>min)) max=min+1;
+    const raw=(max-min)/n, mag=Math.pow(10,Math.floor(Math.log10(raw))), f=raw/mag;
+    const step=(f<=1?1:f<=2?2:f<=5?5:10)*mag;
+    return {lo:Math.floor(min/step+1e-9)*step, hi:Math.ceil(max/step-1e-9)*step, step};
+  }
+  function ticksOf(sc){ const out=[]; const n=Math.round((sc.hi-sc.lo)/sc.step); for(let i=0;i<=n;i++) out.push(sc.lo+sc.step*i); return out; }
+  // Bar with a 4px rounded data-end and a square baseline
+  function barPath(x,w,yTop,yBase,r){
+    const h=Math.abs(yBase-yTop); if(h<0.5) return '';
+    r=Math.min(r,w/2,h); const up=yTop<=yBase; const f=n=>n.toFixed(1);
+    if(up) return `M${f(x)} ${f(yBase)}V${f(yTop+r)}Q${f(x)} ${f(yTop)} ${f(x+r)} ${f(yTop)}H${f(x+w-r)}Q${f(x+w)} ${f(yTop)} ${f(x+w)} ${f(yTop+r)}V${f(yBase)}Z`;
+    return `M${f(x)} ${f(yBase)}V${f(yTop-r)}Q${f(x)} ${f(yTop)} ${f(x+r)} ${f(yTop)}H${f(x+w-r)}Q${f(x+w)} ${f(yTop)} ${f(x+w)} ${f(yTop-r)}V${f(yBase)}Z`;
+  }
+  function xLabelsSvg(labels,xc,H,gW){
+    const skip=gW<46;
+    return labels.map((l,i)=>{ if(skip&&(labels.length-1-i)%2) return ''; const last=i===labels.length-1;
+      return `<text x="${xc(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="11" fill="${last?'var(--charcoal)':'var(--muted)'}" font-weight="${last?700:400}" font-family="Space Mono,monospace">${esc(l)}</text>`; }).join('');
   }
 
-  function lineChart(id,labels,values,color,fill){
+  // ── Tooltip (hover + keyboard focus). Text is inserted with textContent only. ──
+  let _tip=null;
+  function tipEl(){ if(!_tip){ _tip=document.createElement('div'); _tip.className='gs-tip'; _tip.setAttribute('role','tooltip'); (document.getElementById('graphSheetPage')||document.body).appendChild(_tip); } return _tip; }
+  function hideTip(){ if(_tip) _tip.classList.remove('show'); }
+  function showTip(title,rows,x,y){
+    const t=tipEl(); t.textContent='';
+    const h=document.createElement('div'); h.className='gs-tip-h'; h.textContent=title; t.appendChild(h);
+    rows.forEach(r=>{
+      const d=document.createElement('div'); d.className='gs-tip-r';
+      const k=document.createElement('i'); k.style.background=r.color;
+      const v=document.createElement('b'); v.textContent=r.value;
+      const n=document.createElement('span'); n.textContent=r.name;
+      d.appendChild(k); d.appendChild(v); d.appendChild(n); t.appendChild(d);
+    });
+    t.classList.add('show');
+    const w=t.offsetWidth, hh=t.offsetHeight; let px=x+14, py=y-hh-10;
+    if(px+w>window.innerWidth-8) px=x-w-14; if(py<8) py=y+18;
+    t.style.left=Math.max(8,px)+'px'; t.style.top=py+'px';
+  }
+  function bindHits(wrap,datas){
+    wrap.querySelectorAll('.gs-hit').forEach(r=>{
+      const d=datas[+r.getAttribute('data-i')]; if(!d) return;
+      r.addEventListener('pointermove',e=>showTip(d.title,d.rows,e.clientX,e.clientY));
+      r.addEventListener('pointerleave',hideTip);
+      r.addEventListener('focus',()=>{ const b=r.getBoundingClientRect(); showTip(d.title,d.rows,b.left+b.width/2,b.top+b.height/3); });
+      r.addEventListener('blur',hideTip);
+    });
+  }
+  function hitRect(i,x,y,w,h,label){ return `<rect class="gs-hit" data-i="${i}" tabindex="0" role="img" aria-label="${esc(label)}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="6"/>`; }
+
+  // ── Grouped columns: one group per period, one bar per series (supports negative values) ──
+  function groupedBars(id,labels,series){
     const wrap=document.getElementById(id); if(!wrap) return;
-    const W=Math.max(wrap.clientWidth,500),H=150,PL=50,PR=28,PT=14,PB=26;
+    const W=Math.max(wrap.clientWidth,480),H=250,PL=58,PR=14,PT=26,PB=32;
+    const n=labels.length,k=series.length,gap=2;
+    const all=series.flatMap(s=>s.values);
+    const sc=niceScale(Math.min(0,...all),Math.max(0,...all),4);
+    const pH=H-PT-PB,gW=(W-PL-PR)/n;
+    const bw=Math.max(6,Math.min(24,(gW*0.72-(k-1)*gap)/k)), total=k*bw+(k-1)*gap;
+    const y=v=>PT+pH-((v-sc.lo)/(sc.hi-sc.lo))*pH, y0=y(0), xc=i=>PL+gW*i+gW/2;
+    let grid='',hits='',bars='',lbls='';
+    ticksOf(sc).forEach(v=>{ const yy=y(v), z=Math.abs(v)<1e-9;
+      grid+=`<line x1="${PL}" y1="${yy.toFixed(1)}" x2="${W-PR}" y2="${yy.toFixed(1)}" stroke="${z?'var(--gs-axis)':'var(--gs-grid)'}" stroke-width="1"/><text x="${PL-8}" y="${(yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Space Mono,monospace">${fmtK(v)}</text>`; });
+    const datas=labels.map((l,i)=>({title:l,rows:series.map(s=>({color:s.color,name:s.name,value:fmtSigned(s.values[i])}))}));
+    labels.forEach((l,i)=>{ hits+=hitRect(i,PL+gW*i,PT-8,gW,pH+8,l+': '+series.map(s=>s.name+' '+fmtSigned(s.values[i])).join(', ')); });
+    series.forEach((s,si)=>{ s.values.forEach((v,i)=>{ const p=barPath(xc(i)-total/2+si*(bw+gap),bw,y(v),y0,4); if(p) bars+=`<path d="${p}" fill="${s.color}"/>`; }); });
+    // Label only the highest bar of each series. The first series' label grows to the left, the last series' to the right
+    // (away from its neighbour); a label that would still touch another bar or label is dropped (tooltip has the value).
+    const binfo=[]; series.forEach((s,si)=>s.values.forEach((v,i)=>{ if(v>0){ const bx=xc(i)-total/2+si*(bw+gap); binfo.push({x0:bx,x1:bx+bw,top:y(v),si,i}); } }));
+    const cand=[]; series.forEach((s,si)=>{ let mi=-1,mv=0; s.values.forEach((v,i)=>{ if(v>mv){ mv=v; mi=i; } });
+      if(mi<0) return;
+      const bx=xc(mi)-total/2+si*(bw+gap), t=fmtK(mv), w=t.length*6.9+6;
+      let anchor='middle', ax=bx+bw/2, x0=ax-w/2;
+      if(k>1&&si===0){ anchor='end'; ax=bx+bw; x0=ax-w; }
+      else if(k>1&&si===k-1){ anchor='start'; ax=bx; x0=ax; }
+      cand.push({v:mv,t,anchor,ax,x0,x1:x0+w,y:y(mv)-7,si,i:mi}); });
+    cand.sort((a,b)=>b.v-a.v); const kept=[];
+    cand.forEach(c=>{ const clash=kept.some(o=>c.x0<o.x1+4&&c.x1>o.x0-4) || binfo.some(bb=>!(bb.si===c.si&&bb.i===c.i)&&bb.x0<c.x1&&bb.x1>c.x0&&bb.top<c.y+1) || c.x0<PL-4 || c.x1>W-2; if(!clash) kept.push(c); });
+    kept.forEach(c=>{ lbls+=`<text x="${c.ax.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.anchor}" font-size="11" font-weight="700" fill="var(--charcoal)"${HALO} font-family="Space Mono,monospace">${c.t}</text>`; });
+    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${grid}<g>${hits}</g><g pointer-events="none">${bars}${lbls}${xLabelsSvg(labels,xc,H,gW)}</g></svg>`;
+    bindHits(wrap,datas);
+  }
+
+  // ── Line + soft area, ring markers, end-value label ──
+  function lineChart(id,labels,values,o){
+    const wrap=document.getElementById(id); if(!wrap) return;
     const n=labels.length; if(!n) return;
-    const mn=Math.min(0,...values),mx=Math.max(1,...values),r=(mx-mn)||1;
-    const pH=H-PT-PB; const yL=v=>PT+pH-((v-mn)/r)*pH; const xL=i=>PL+((W-PL-PR)/(n-1||1))*i;
-    let yLabels='';
-    for(let i=0;i<=4;i++){ const v=mn+(r/4)*i; const y=yL(v); yLabels+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${v.toFixed(0)}${fill?'%':''}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    const pts=values.map((v,i)=>[xL(i),yL(v)]);
-    const lp=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-    const zl=mn<0?`<line x1="${PL}" y1="${yL(0)}" x2="${W-PR}" y2="${yL(0)}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3"/>`:''; let areaPath=''; { const by=yL(0); areaPath=`<path d="M${pts[0][0]} ${by} ${pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')} L${pts[pts.length-1][0]} ${by} Z" fill="url(#${id}-ar)"/>`; }
-    const xlbls=labels.map((l,i)=>`<text x="${xL(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${l}</text>`).join('');
-    const ddots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="${values[i]>=0?'var(--sage)':'var(--rust)'}" stroke="var(--cream)" stroke-width="2"><title>${labels[i]}: ${fill?values[i].toFixed(1)+'%':(values[i]<0?'-':'')+fmtCur(values[i])}</title></circle>`).join('');
-    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${gDefs(id,PL,W-PR)}${yLabels}${zl}${areaPath}<path d="${lp}" fill="none" stroke="url(#${id}-ln)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${ddots}${xlbls}</svg>`;
+    const W=Math.max(wrap.clientWidth,480),H=o.h||220,PL=58,PR=24,PT=28,PB=32;
+    let mn=Math.min(...values),mx=Math.max(...values);
+    if(o.zero){ mn=Math.min(0,mn); mx=Math.max(0,mx); }
+    else { const pad=(mx-mn)*0.14||Math.abs(mx)*0.1||1; mn-=pad; mx+=pad; if(Math.min(...values)>=0&&mn<0) mn=0; }
+    const sc=niceScale(mn,mx,4);
+    const pH=H-PT-PB,gW=(W-PL-PR)/n;
+    const y=v=>PT+pH-((v-sc.lo)/(sc.hi-sc.lo))*pH, xc=i=>PL+gW*i+gW/2;
+    const pts=values.map((v,i)=>[xc(i),y(v)]);
+    const f=a=>a.toFixed(1);
+    let grid='';
+    ticksOf(sc).forEach(v=>{ const yy=y(v), z=Math.abs(v)<1e-9;
+      grid+=`<line x1="${PL}" y1="${f(yy)}" x2="${W-PR}" y2="${f(yy)}" stroke="${z?'var(--gs-axis)':'var(--gs-grid)'}" stroke-width="1"/><text x="${PL-8}" y="${f(yy+4)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Space Mono,monospace">${esc(o.tick(v))}</text>`; });
+    const baseY=(sc.lo<=0&&sc.hi>=0)?y(0):PT+pH;
+    const area=`<path d="M${f(pts[0][0])} ${f(baseY)}${pts.map(p=>'L'+f(p[0])+' '+f(p[1])).join('')}L${f(pts[n-1][0])} ${f(baseY)}Z" fill="${o.color}" fill-opacity="0.10"/>`;
+    const line=`<path d="${pts.map((p,i)=>(i?'L':'M')+f(p[0])+' '+f(p[1])).join('')}" fill="none" stroke="${o.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const dots=pts.map((p,i)=>`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${i===n-1?5.5:4.5}" fill="${o.color}" stroke="var(--gs-surface)" stroke-width="2"/>`).join('');
+    const lp=pts[n-1];
+    const endLbl=`<text x="${f(lp[0]+8)}" y="${f(lp[1]-12)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--charcoal)"${HALO} font-family="Space Mono,monospace">${esc(o.fmt(values[n-1]))}</text>`;
+    let hits=''; const datas=labels.map((l,i)=>({title:l,rows:[{color:o.color,name:o.name,value:o.fmt(values[i])}]}));
+    labels.forEach((l,i)=>{ hits+=hitRect(i,PL+gW*i,PT-8,gW,pH+8,l+': '+o.name+' '+o.fmt(values[i])); });
+    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${grid}<g>${hits}</g><g pointer-events="none">${area}${line}${dots}${endLbl}${xLabelsSvg(labels,xc,H,gW)}</g></svg>`;
+    bindHits(wrap,datas);
   }
 
+  // ── Category cards: biggest first, colored accent + share of total ──
   function catCards(id,txList){
     const wrap=document.getElementById(id); if(!wrap) return;
     const totals={}; CATS.forEach(c=>totals[c]=0);
     txList.filter(t=>t.amount<0).forEach(t=>{ totals[t.category]=(totals[t.category]||0)+Math.abs(t.amount); });
-    const max=Math.max(1,...Object.values(totals));
-    wrap.innerHTML=CATS.filter(c=>totals[c]>0).map(c=>`<div class="gs-cat-card" style="--cc:${catColor(c)}"><div class="gs-cat-name">${c}</div><div class="gs-cat-val">${fmtCur(totals[c])}</div><div class="gs-cat-bar-track"><div class="gs-cat-bar-fill" style="width:${(totals[c]/max*100).toFixed(1)}%;background:${catColor(c)};"></div></div></div>`).join('')||'<div style="color:var(--muted);font-size:13px;">No expenses yet.</div>';
+    const list=CATS.filter(c=>totals[c]>0).sort((a,b)=>totals[b]-totals[a]);
+    const sum=list.reduce((s,c)=>s+totals[c],0)||1, max=Math.max(1,...list.map(c=>totals[c]));
+    wrap.innerHTML=list.map(c=>`<div class="gs-cat-card" style="--cc:${catColor(c)};"><div class="gs-cat-top"><span class="gs-cat-dot"></span><span class="gs-cat-name">${esc(fhCatLabel(c))}</span><span class="gs-cat-pct">${Math.round(totals[c]/sum*100)}%</span></div><div class="gs-cat-val">${fmtCur(totals[c])}</div><div class="gs-cat-bar-track"><div class="gs-cat-bar-fill" style="width:${(totals[c]/max*100).toFixed(1)}%;"></div></div></div>`).join('')||'<div style="color:var(--muted);font-size:13px;">No expenses yet.</div>';
   }
 
   function updateSummary(txList){
@@ -468,56 +605,81 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     const net=inc-sp; const rate=inc>0?((net/inc)*100):null;
     document.getElementById('gsSumIncome').textContent=inc?fmtCur(inc):'—';
     document.getElementById('gsSumSpent').textContent=sp?fmtCur(sp):'—';
-    const ne=document.getElementById('gsSumNet'); ne.textContent=inc||sp?fmtCur(net):'—'; ne.className='gs-sum-val '+(net>=0?'pos':'neg');
+    const ne=document.getElementById('gsSumNet'); ne.textContent=inc||sp?fmtSigned(net):'—'; ne.className='gs-sum-val '+(net>=0?'pos':'neg');
     const re=document.getElementById('gsSumRate'); re.textContent=rate!==null?rate.toFixed(1)+'%':'—'; re.className='gs-sum-val '+(rate===null?'':rate>=20?'pos':rate>=0?'neutral':'neg');
   }
 
+  const C_INC='var(--gs-income)', C_EXP='var(--gs-expense)', C_BAL='var(--gs-balance)', C_RATE='var(--gs-rate)';
+
   function renderWeekly(){
-    if(!window.transactions) return;
+    if(!window.transactions) return; refreshCatMap(); hideTip();
     const now=new Date(); const weeks=[];
     for(let i=11;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i*7); const [y,w]=getISOWeek(d); const key=y+'-W'+(w<10?'0':'')+w; if(!weeks.find(x=>x.key===key)) weeks.push({key,label:weekLabel(key)}); }
     const wd=weeks.map(({key,label})=>{ const tx=window.transactions.filter(t=>weekKey(t.date)===key); return {key,label,income:tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0),expense:tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0),tx}; });
     const all=[...window.transactions].sort((a,b)=>a.date.localeCompare(b.date)); let run=0,idx=0;
     const bals=wd.map(w=>{ while(idx<all.length&&weekKey(all[idx].date)<=w.key){run+=all[idx].amount;idx++;} return run; });
-    barPairChart('gsWeeklyBarWrap',wd.map(d=>d.label),wd.map(d=>d.income),wd.map(d=>d.expense),false,null);
-    lineChart('gsWeeklyBalWrap',wd.map(d=>d.label),bals,'var(--brass)',false);
+    const labels=wd.map(d=>d.label);
+    groupedBars('gsWeeklyBarWrap',labels,[{name:T('charts_income_lbl','Income'),color:C_INC,values:wd.map(d=>d.income)},{name:T('charts_expense_lbl','Expense'),color:C_EXP,values:wd.map(d=>d.expense)}]);
+    lineChart('gsWeeklyBalWrap',labels,bals,{color:C_BAL,name:T('charts_balance_lbl','Balance'),fmt:fmtSigned,tick:fmtK});
     const twk=weekKey(now.toISOString().slice(0,10)); catCards('gsWeeklyCatGrid',window.transactions.filter(t=>weekKey(t.date)===twk));
     updateSummary(wd.flatMap(d=>d.tx));
   }
 
   function renderMonthly(){
-    if(!window.transactions) return;
+    if(!window.transactions) return; refreshCatMap(); hideTip();
     const now=new Date(); const months=[];
     for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.toISOString().slice(0,7)); }
-    const md=months.map(m=>{ const tx=window.transactions.filter(t=>t.date.slice(0,7)===m); const d=new Date(m+'-01T00:00:00'); return {m,label:d.toLocaleString(_gsLoc(),{month:'short'}),income:tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0),expense:tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0),tx}; });
+    const md=months.map(m=>{ const tx=window.transactions.filter(t=>t.date.slice(0,7)===m); const d=new Date(m+'-01T00:00:00'); return {m,label:d.toLocaleString(_gsLoc(),{month:'short'})+" '"+m.slice(2,4),income:tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0),expense:tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0),tx}; });
     const all=[...window.transactions].sort((a,b)=>a.date.localeCompare(b.date)); let run=0,idx=0;
     const bals=md.map(m=>{ while(idx<all.length&&all[idx].date.slice(0,7)<=m.m){run+=all[idx].amount;idx++;} return run; });
-    barPairChart('gsMonthlyBarWrap',md.map(d=>d.label),md.map(d=>d.income),md.map(d=>d.expense),true,bals);
-    lineChart('gsMonthlySavingsWrap',md.map(d=>d.label),md.map(d=>d.income>0?((d.income-d.expense)/d.income*100):0),'var(--brass)',true);
+    const labels=md.map(d=>d.label);
+    groupedBars('gsMonthlyBarWrap',labels,[{name:T('charts_income_lbl','Income'),color:C_INC,values:md.map(d=>d.income)},{name:T('charts_expense_lbl','Expense'),color:C_EXP,values:md.map(d=>d.expense)}]);
+    lineChart('gsMonthlyBalWrap',labels,bals,{color:C_BAL,name:T('charts_balance_lbl','Balance'),fmt:fmtSigned,tick:fmtK});
+    lineChart('gsMonthlySavingsWrap',labels,md.map(d=>d.income>0?((d.income-d.expense)/d.income*100):0),{color:C_RATE,name:T('gs_savrate_lbl','Savings Rate %'),zero:true,fmt:v=>v.toFixed(1)+'%',tick:v=>Math.round(v)+'%'});
     catCards('gsMonthlyCatGrid',window.transactions.filter(t=>t.date.slice(0,7)===now.toISOString().slice(0,7)));
     updateSummary(md.flatMap(d=>d.tx));
   }
 
   function renderYearly(){
-    if(!window.transactions) return;
-    const now=new Date(); const years=[]; for(let y=2023;y<=now.getFullYear();y++) years.push(y);
+    if(!window.transactions) return; refreshCatMap(); hideTip();
+    const now=new Date(); const years=[]; for(let i=4;i>=0;i--) years.push(now.getFullYear()-i);
     const yd=years.map(yr=>{ const tx=window.transactions.filter(t=>parseInt(t.date.slice(0,4))===yr); const inc=tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0); const exp=tx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0); return {yr,label:String(yr),income:inc,expense:exp,net:inc-exp,tx}; });
-    const wrap=document.getElementById('gsYearlyBarWrap'); if(!wrap) return;
-    const W=Math.max(wrap.clientWidth,400),H=200,PL=50,PR=14,PT=14,PB=26;
-    const n=yd.length; const maxV=Math.max(1,...yd.map(d=>Math.max(d.income,d.expense)));
-    const gW=(W-PL-PR)/n; const bw=Math.min(26,gW*0.2); const pH=H-PT-PB; const yB=v=>PT+pH-(v/maxV)*pH;
-    let yL='',bars='';
-    for(let i=0;i<=4;i++){ const v=(maxV/4)*i; const y=yB(v); yL+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${fmtCur(v)}</text><line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    yd.forEach((d,i)=>{ const cx=PL+gW*i+gW/2; bars+=`<rect x="${cx-bw*1.5-2}" y="${yB(d.income)}" width="${bw}" height="${Math.max(1,(d.income/maxV)*pH)}" fill="url(#gsYB-inc)" rx="3"><title>${d.label}: ${fmtCur(d.income)}</title></rect><rect x="${cx-bw/2}" y="${yB(d.expense)}" width="${bw}" height="${Math.max(1,(d.expense/maxV)*pH)}" fill="url(#gsYB-exp)" rx="3"><title>${d.label}: ${fmtCur(d.expense)}</title></rect><rect x="${cx+bw/2+2}" y="${d.net>=0?yB(d.net):yB(0)}" width="${bw}" height="${Math.max(1,Math.abs(d.net)/maxV*pH)}" fill="url(#gsYB-net)" rx="3"><title>${d.label}: ${fmtCur(d.net)}</title></rect><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Space Mono,monospace">${d.label}</text>`; });
-    wrap.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${gDefs('gsYB',0,1)}${yL}${bars}</svg>`;
+    const labels=yd.map(d=>d.label);
+    groupedBars('gsYearlyBarWrap',labels,[{name:T('charts_income_lbl','Income'),color:C_INC,values:yd.map(d=>d.income)},{name:T('charts_expense_lbl','Expense'),color:C_EXP,values:yd.map(d=>d.expense)},{name:T('charts_net_lbl','Net'),color:C_BAL,values:yd.map(d=>d.net)}]);
+
+    // Spend by category: one stacked column per year — top 8 categories + gray "Other"
     const cw=document.getElementById('gsYearlyCatWrap'); if(!cw) return;
-    const CW=Math.max(cw.clientWidth,400),CH=180; const catTotals={}; CATS.forEach(c=>{ catTotals[c]=yd.map(d=>d.tx.filter(t=>t.amount<0&&t.category===c).reduce((s,t)=>s+Math.abs(t.amount),0)); });
-    const maxC=Math.max(1,...CATS.flatMap(c=>catTotals[c])); const cgW=(CW-PL-PR)/n; const cbw=Math.min(10,cgW*0.18); const cpH=CH-PT-PB; const cyB=v=>PT+cpH-(v/maxC)*cpH;
-    let cyL='',cbars='';
-    for(let i=0;i<=4;i++){ const v=(maxC/4)*i; const y=cyB(v); cyL+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)" font-family="Space Mono,monospace">${fmtCur(v)}</text><line x1="${PL}" y1="${y}" x2="${CW-PR}" y2="${y}" stroke="var(--paper-line)" stroke-width="0.5"/>`; }
-    yd.forEach((d,i)=>{ const cx=PL+cgW*i+cgW/2; const off=-((CATS.length/2)*cbw+CATS.length-1); CATS.forEach((c,ci)=>{ const v=catTotals[c][i]; if(!v) return; cbars+=`<rect x="${cx+off+ci*(cbw+1)}" y="${cyB(v)}" width="${cbw}" height="${Math.max(1,(v/maxC)*cpH)}" fill="${catColor(c)}" rx="1"/>`; }); cbars+=`<text x="${cx}" y="${CH-8}" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Space Mono,monospace">${d.label}</text>`; });
-    cw.innerHTML=`<svg width="100%" height="${CH}" viewBox="0 0 ${CW} ${CH}" xmlns="http://www.w3.org/2000/svg">${cyL}${cbars}</svg>`;
-    const leg=document.getElementById('gsYearlyCatLegend'); if(leg) leg.innerHTML=CATS.map(c=>`<span><span class="swatch" style="background:${catColor(c)};"></span>${fhCatLabel(c)}</span>`).join('');
+    const order=CAT_MAP.order.slice();
+    const segsOf=d=>{ const bycat={}; d.tx.filter(t=>t.amount<0).forEach(t=>{ bycat[t.category]=(bycat[t.category]||0)+Math.abs(t.amount); });
+      const segs=order.map(c=>({name:fhCatLabel(c),color:catColor(c),v:bycat[c]||0}));
+      const rest=Object.keys(bycat).filter(c=>order.indexOf(c)<0).reduce((s,c)=>s+bycat[c],0);
+      segs.push({name:fhCatLabel('Other'),color:'var(--gs-other)',v:rest}); return segs; };
+    const stacks=yd.map(segsOf); const totals=stacks.map(s=>s.reduce((a,x)=>a+x.v,0));
+    if(!totals.some(t=>t>0)){ cw.innerHTML='<div style="color:var(--muted);font-size:13px;padding:14px;">No expenses yet.</div>'; }
+    else {
+      const W=Math.max(cw.clientWidth,480),H=270,PL=58,PR=14,PT=28,PB=32,n=yd.length;
+      const sc=niceScale(0,Math.max(...totals),4), pH=H-PT-PB, gW=(W-PL-PR)/n, bw=Math.min(36,gW*0.5);
+      const y=v=>PT+pH-((v-sc.lo)/(sc.hi-sc.lo))*pH, xc=i=>PL+gW*i+gW/2;
+      let grid='',hits='',bars='',lbls='';
+      ticksOf(sc).forEach(v=>{ const yy=y(v), z=Math.abs(v)<1e-9; grid+=`<line x1="${PL}" y1="${yy.toFixed(1)}" x2="${W-PR}" y2="${yy.toFixed(1)}" stroke="${z?'var(--gs-axis)':'var(--gs-grid)'}" stroke-width="1"/><text x="${PL-8}" y="${(yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Space Mono,monospace">${fmtK(v)}</text>`; });
+      const datas=[];
+      stacks.forEach((segs,i)=>{
+        const x=xc(i)-bw/2; let c=0; const vis=segs.filter(s=>s.v>0);
+        vis.forEach((s,j)=>{ const yTop=y(c+s.v), yBot=y(c)-(j===0?0:2), top=(j===vis.length-1);
+          if(top){ const p=barPath(x,bw,yTop,yBot,4); if(p) bars+=`<path d="${p}" fill="${s.color}"/>`; }
+          else if(yBot-yTop>=0.5) bars+=`<rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${(yBot-yTop).toFixed(1)}" fill="${s.color}"/>`;
+          c+=s.v; });
+        if(totals[i]>0) lbls+=`<text x="${xc(i).toFixed(1)}" y="${(y(totals[i])-7).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--charcoal)"${HALO} font-family="Space Mono,monospace">${fmtK(totals[i])}</text>`;
+        const rows=vis.slice().sort((a,b)=>b.v-a.v).map(s=>({color:s.color,name:s.name,value:fmtCur(s.v)}));
+        datas.push({title:yd[i].label+' · '+fmtCur(totals[i]),rows});
+        hits+=hitRect(i,PL+gW*i,PT-8,gW,pH+8,yd[i].label+': '+fmtCur(totals[i]));
+      });
+      cw.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${grid}<g>${hits}</g><g pointer-events="none">${bars}${lbls}${xLabelsSvg(labels,xc,H,gW)}</g></svg>`;
+      bindHits(cw,datas);
+    }
+    const leg=document.getElementById('gsYearlyCatLegend');
+    if(leg){ const items=order.map(c=>({n:fhCatLabel(c),c:catColor(c)})); items.push({n:fhCatLabel('Other'),c:'var(--gs-other)'});
+      leg.innerHTML=items.map(it=>`<span><span class="swatch" style="background:${it.c};"></span>${esc(it.n)}</span>`).join(''); }
     updateSummary(yd.flatMap(d=>d.tx));
   }
 
@@ -541,6 +703,7 @@ function _gsLoc(){ const L={hi:'hi-IN',ta:'ta-IN',te:'te-IN',ml:'ml-IN',kn:'kn-I
     setTimeout(renderActiveTab,60);
   }
   function closeGraphSheet(){
+    hideTip();
     document.getElementById('graphSheetPage').classList.remove('visible');
     document.getElementById('appShell').classList.remove('hidden');
   }
@@ -640,51 +803,14 @@ async function loadData(){
   transactions = localTx;
   console.log('FinHub: Loaded', transactions.length, 'transactions from localStorage 📱');
 }
-// ── Sample data 2023 → today. Open the app with ?demo=1 to load it; it is never saved to storage or cloud. ──
-function _demoTx(today){
-  today=today||new Date().toISOString().slice(0,10);
-  let s=2023; const r=()=>(s=(s*1664525+1013904223)%4294967296)/4294967296;
-  const R=(a,b)=>Math.round(a+r()*(b-a)); const out=[]; let n=0;
-  for(let y=2023;y<=2026;y++){ const k=y-2023, inf=Math.pow(1.05,k);
-    for(let m=1;m<=12;m++){
-      const mm=String(m).padStart(2,'0'), D=d=>`${y}-${mm}-${String(d).padStart(2,'0')}`;
-      const add=(d,desc,cat,amt)=>out.push({id:'demo-'+(++n),date:D(d),desc,category:cat,note:'',amount:amt});
-      const x=(d,desc,cat,a)=>add(d,desc,cat,-Math.round(a*inf));
-      add(1,'Salary','Income',Math.round(68000*Math.pow(1.07,k)/100)*100);
-      if(m%3===0) add(20,'Freelance project','Income',R(6000,15000));
-      if(m===3||m===10) add(25,'Bonus','Income',R(15000,30000));
-      x(2,'House rent','Housing',14000); add(7,'Home loan EMI','EMI / Loan',-8500);
-      x(6,'Electricity bill','Utilities',R(1600,2800)); x(8,'Internet','Utilities',700);
-      for(let w=0;w<4;w++) x(3+w*7,'Weekly groceries','Groceries',R(2200,3400));
-      for(let i=0;i<6;i++) x(R(1,28),'Meals & snacks','Food',R(120,520));
-      for(let i=0;i<2;i++) x(R(5,28),'Restaurant','Dining Out',R(500,1800));
-      for(let i=0;i<4;i++) x(R(1,28),'Auto / bus','Transport',R(150,450));
-      for(let i=0;i<2;i++) x(R(1,28),'Petrol','Fuel',R(900,1500));
-      x(5,'OTT plan','Subscriptions',499); x(12,'Music plan','Subscriptions',119);
-      if(m%3===1) x(15,'Insurance premium','Insurance',5500);
-      if(r()<0.35) x(R(1,28),'Doctor / pharmacy','Medical',R(300,2800));
-      x(R(8,26),'Online shopping','Shopping',R(900,4200));
-      if([1,4,9,10].includes(m)) x(R(8,26),'Clothes','Clothing',R(1500,5000));
-      x(R(8,26),'Movie / outing','Entertainment',R(400,1600));
-      x(R(8,26),'Salon / grooming','Personal Care',R(300,900));
-      if(m===6) x(10,'School fees','Education',18000);
-      if(m===5||m===12) x(R(10,22),'Family trip','Travel',R(14000,28000));
-      if(m===10||m===11||m===1) x(R(5,20),'Festival gifts','Gifts',R(2000,6000));
-      add(28,'Monthly savings','Savings',-4000);
-      if(r()<0.5) x(R(1,28),'Miscellaneous','Other',R(200,1500));
-    } }
-  return out.filter(t=>t.date<=today).sort((a,b)=>a.date.localeCompare(b.date));
-}
-function applyDemoFlag(){ try{ transactions=transactions.filter(t=>!String(t.id).startsWith('demo-')); if(new URLSearchParams(location.search).get('demo')==='1') transactions=transactions.concat(_demoTx()); }catch(e){} }
-const _noDemo=a=>a.filter(t=>!String(t.id).startsWith('demo-'));
 async function saveTransactions(){
   // Always save to localStorage first (instant, works offline)
-  try{ localStorage.setItem(userKey('transactions'), JSON.stringify(_noDemo(transactions))); }catch(e){}
+  try{ localStorage.setItem(userKey('transactions'), JSON.stringify(transactions)); }catch(e){}
   // Also sync to Supabase cloud (async, non-blocking)
   try {
     const uid = window.currentUserId;
     if (uid && window._sb && navigator.onLine) {
-      window._sb.fullSync(uid, _noDemo(transactions)).then(ok => {
+      window._sb.fullSync(uid, transactions).then(ok => {
         if (!ok) console.warn('FinHub: Supabase sync failed silently');
       });
     }
@@ -1903,7 +2029,6 @@ async function startApp(){
   }
 
   await loadData();
-  applyDemoFlag();
   window.transactions = transactions;
 
   const profile = await getUserProfile(currentUserId);
@@ -3080,12 +3205,13 @@ function homeToLogin(){
       online_msg:       '✓ Back online',
       // Graph Sheet section titles
       gs_weekly_title:        'Last 12 Weeks — Income vs Expense',
-      gs_weekly_label:        'Green = income · Red = expense · Each pair = one week',
+      gs_weekly_label:        'Income vs expense · Each pair = one week',
       gs_weekly_bal_title:    'Weekly Running Balance',
       gs_weekly_cat_title:    'This Week — Spend by Category',
       gs_monthly_title:       '12-Month Overview — Income vs Expense',
-      gs_monthly_label:       'Bar pairs per month · Line = running balance',
+      gs_monthly_label:       'Income vs expense · Each pair = one month',
       gs_monthly_savrate_title: 'Monthly Savings Rate',
+      gs_monthly_bal_title:    'Month-End Balance',
       gs_monthly_savrate_label: '% of income saved each month',
       gs_monthly_cat_title:   'This Month — Spend by Category',
       gs_yearly_title:        'Year-on-Year Overview',
@@ -3237,12 +3363,13 @@ function homeToLogin(){
       offline_msg:      '📵 ऑफ़लाइन — डेटा सुरक्षित है',
       online_msg:       '✓ वापस ऑनलाइन',
       gs_weekly_title:        'पिछले 12 सप्ताह — आय बनाम व्यय',
-      gs_weekly_label:        'हरा = आय · लाल = व्यय · प्रत्येक जोड़ी = एक सप्ताह',
+      gs_weekly_label:        'आय बनाम व्यय · प्रत्येक जोड़ी = एक सप्ताह',
       gs_weekly_bal_title:    'साप्ताहिक चालू शेष',
       gs_weekly_cat_title:    'इस सप्ताह — श्रेणी वार खर्च',
       gs_monthly_title:       '12 महीने का अवलोकन — आय बनाम व्यय',
-      gs_monthly_label:       'प्रति माह बार जोड़ी · रेखा = चालू शेष',
+      gs_monthly_label:       'आय बनाम व्यय · प्रत्येक जोड़ी = एक माह',
       gs_monthly_savrate_title: 'मासिक बचत दर',
+      gs_monthly_bal_title:    'माह-अंत शेष',
       gs_monthly_savrate_label: 'प्रत्येक माह बचाई गई आय का %',
       gs_monthly_cat_title:   'इस माह — श्रेणी वार खर्च',
       gs_yearly_title:        'वर्ष-दर-वर्ष अवलोकन',
@@ -3395,12 +3522,13 @@ function homeToLogin(){
       offline_msg:      '📵 ஆஃப்லைன் — தரவு பாதுகாப்பாக உள்ளது',
       online_msg:       '✓ மீண்டும் ஆன்லைன்',
       gs_weekly_title:        'கடந்த 12 வாரங்கள் — வருமானம் vs செலவு',
-      gs_weekly_label:        'பச்சை = வருமானம் · சிவப்பு = செலவு · ஒவ்வொரு ஜோடியும் = ஒரு வாரம்',
+      gs_weekly_label:        'வருமானம் vs செலவு · ஒவ்வொரு ஜோடியும் = ஒரு வாரம்',
       gs_weekly_bal_title:    'வாராந்திர ஓடும் இருப்பு',
       gs_weekly_cat_title:    'இந்த வாரம் — வகை வாரியாக செலவு',
       gs_monthly_title:       '12 மாத கண்ணோட்டம் — வருமானம் vs செலவு',
-      gs_monthly_label:       'மாதத்திற்கு பட்டை ஜோடிகள் · கோடு = ஓடும் இருப்பு',
+      gs_monthly_label:       'வருமானம் vs செலவு · ஒவ்வொரு ஜோடியும் = ஒரு மாதம்',
       gs_monthly_savrate_title: 'மாதாந்திர சேமிப்பு விகிதம்',
+      gs_monthly_bal_title:    'மாத இறுதி இருப்பு',
       gs_monthly_savrate_label: 'ஒவ்வொரு மாதமும் சேமிக்கப்பட்ட வருமானத்தின் %',
       gs_monthly_cat_title:   'இம்மாதம் — வகை வாரியாக செலவு',
       gs_yearly_title:        'ஆண்டு வாரியான கண்ணோட்டம்',
@@ -3551,12 +3679,13 @@ function homeToLogin(){
       offline_msg:      '📵 ఆఫ్‌లైన్ — డేటా సురక్షితం',
       online_msg:       '✓ తిరిగి ఆన్‌లైన్',
       gs_weekly_title:        'గత 12 వారాలు — ఆదాయం vs ఖర్చు',
-      gs_weekly_label:        'ఆకుపచ్చ = ఆదాయం · ఎరుపు = ఖర్చు · ప్రతి జత = ఒక వారం',
+      gs_weekly_label:        'ఆదాయం vs ఖర్చు · ప్రతి జత = ఒక వారం',
       gs_weekly_bal_title:    'వారపు నడుస్తున్న నిల్వ',
       gs_weekly_cat_title:    'ఈ వారం — వర్గం వారీగా ఖర్చు',
       gs_monthly_title:       '12 నెలల అవలోకనం — ఆదాయం vs ఖర్చు',
-      gs_monthly_label:       'నెలకు బార్ జతలు · రేఖ = నడుస్తున్న నిల్వ',
+      gs_monthly_label:       'ఆదాయం vs ఖర్చు · ప్రతి జత = ఒక నెల',
       gs_monthly_savrate_title: 'నెలవారీ పొదుపు రేటు',
+      gs_monthly_bal_title:    'నెలాఖరు నిల్వ',
       gs_monthly_savrate_label: 'ప్రతి నెల ఆదాయంలో పొదుపు చేసిన %',
       gs_monthly_cat_title:   'ఈ నెల — వర్గం వారీగా ఖర్చు',
       gs_yearly_title:        'సంవత్సరం వారీగా అవలోకనం',
@@ -3707,12 +3836,13 @@ function homeToLogin(){
       offline_msg:      '📵 ഓഫ്‌ലൈൻ — ഡേറ്റ സുരക്ഷിതം',
       online_msg:       '✓ വീണ്ടും ഓൺലൈൻ',
       gs_weekly_title:        'കഴിഞ്ഞ 12 ആഴ്ചകൾ — വരുമാനം vs ചെലവ്',
-      gs_weekly_label:        'പച്ച = വരുമാനം · ചുവപ്പ് = ചെലവ് · ഓരോ ജോഡിയും = ഒരാഴ്ച',
+      gs_weekly_label:        'വരുമാനം vs ചെലവ് · ഓരോ ജോഡിയും = ഒരാഴ്ച',
       gs_weekly_bal_title:    'ആഴ്ചതോറുമുള്ള ബാലൻസ്',
       gs_weekly_cat_title:    'ഈ ആഴ്ച — വിഭാഗം അനുസരിച്ച് ചെലവ്',
       gs_monthly_title:       '12 മാസ അവലോകനം — വരുമാനം vs ചെലവ്',
-      gs_monthly_label:       'മാസത്തിന് ബാർ ജോഡികൾ · രേഖ = നടന്നുകൊണ്ടിരിക്കുന്ന ബാലൻസ്',
+      gs_monthly_label:       'വരുമാനം vs ചെലവ് · ഓരോ ജോഡിയും = ഒരു മാസം',
       gs_monthly_savrate_title: 'മാസേനയുള്ള സേവിംഗ്സ് നിരക്ക്',
+      gs_monthly_bal_title:    'മാസാവസാന ബാലൻസ്',
       gs_monthly_savrate_label: 'എല്ലാ മാസവും ലാഭിക്കുന്ന വരുമാനത്തിന്റെ %',
       gs_monthly_cat_title:   'ഈ മാസം — വിഭാഗം അനുസരിച്ച് ചെലവ്',
       gs_yearly_title:        'വർഷം തോറുമുള്ള അവലോകനം',
@@ -3863,12 +3993,13 @@ function homeToLogin(){
       offline_msg:      '📵 ಆಫ್‌ಲೈನ್ — ಡೇಟಾ ಸುರಕ್ಷಿತ',
       online_msg:       '✓ ಮತ್ತೆ ಆನ್‌ಲೈನ್',
       gs_weekly_title:        'ಕಳೆದ 12 ವಾರಗಳು — ಆದಾಯ vs ವೆಚ್ಚ',
-      gs_weekly_label:        'ಹಸಿರು = ಆದಾಯ · ಕೆಂಪು = ವೆಚ್ಚ · ಪ್ರತಿ ಜೋಡಿ = ಒಂದು ವಾರ',
+      gs_weekly_label:        'ಆದಾಯ vs ವೆಚ್ಚ · ಪ್ರತಿ ಜೋಡಿ = ಒಂದು ವಾರ',
       gs_weekly_bal_title:    'ಸಾಪ್ತಾಹಿಕ ಚಾಲ್ತಿ ಶಿಲ್ಕು',
       gs_weekly_cat_title:    'ಈ ವಾರ — ವರ್ಗ ವಾರು ವೆಚ್ಚ',
       gs_monthly_title:       '12 ತಿಂಗಳ ಅವಲೋಕನ — ಆದಾಯ vs ವೆಚ್ಚ',
-      gs_monthly_label:       'ತಿಂಗಳಿಗೆ ಬಾರ್ ಜೋಡಿಗಳು · ರೇಖೆ = ಚಾಲ್ತಿ ಶಿಲ್ಕು',
+      gs_monthly_label:       'ಆದಾಯ vs ವೆಚ್ಚ · ಪ್ರತಿ ಜೋಡಿ = ಒಂದು ತಿಂಗಳು',
       gs_monthly_savrate_title: 'ಮಾಸಿಕ ಉಳಿತಾಯ ದರ',
+      gs_monthly_bal_title:    'ತಿಂಗಳ ಕೊನೆಯ ಶಿಲ್ಕು',
       gs_monthly_savrate_label: 'ಪ್ರತಿ ತಿಂಗಳು ಉಳಿತಾಯ ಮಾಡಿದ ಆದಾಯದ %',
       gs_monthly_cat_title:   'ಈ ತಿಂಗಳು — ವರ್ಗ ವಾರು ವೆಚ್ಚ',
       gs_yearly_title:        'ವರ್ಷ ವರ್ಷದ ಅವಲೋಕನ',
