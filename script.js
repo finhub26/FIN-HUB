@@ -1741,6 +1741,11 @@ async function startApp(){
   if(dashBtn) dashBtn.classList.add('active');
 
   renderAll();
+  // Explicitly call after a microtask so populateMonthFilter's DOM write is flushed
+  setTimeout(() => {
+    if(typeof updateHeaderInsight === 'function') updateHeaderInsight();
+    if(typeof updateHeaderPills === 'function') updateHeaderPills();
+  }, 0);
   showToast('Welcome back' + (displayName ? ', ' + displayName : '') + ' 👋', 'success');
   setTimeout(() => updateHeaderGreeting(), 50);
   // Deferred re-render: only fires if the same user is still logged in
@@ -1847,6 +1852,13 @@ $('menuLogoutBtn').addEventListener('click', ()=>{
 
 // ── Sparkline + Insight Panel ──
 function updateHeaderInsight(){
+  // If transactions haven't loaded yet, retry shortly
+  const _txCheck = window.transactions || transactions || [];
+  if (!_currentUserId || _txCheck.length === 0) {
+    // Still retry in case data loads async
+    setTimeout(() => { if(_currentUserId && (window.transactions||[]).length > 0) updateHeaderInsight(); }, 300);
+    return;
+  }
   try {
     const now = new Date();
     // Use the selected month; if not set or 'all', fall back to most recent month with data
@@ -1934,6 +1946,8 @@ $('themeToggle').addEventListener('click',toggleTheme);
 
 // ── Header Month Strip ──
 function updateHeaderPills(){
+  // If no user logged in yet, skip
+  if (!_currentUserId) return;
   const now = new Date();
   const nowMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
@@ -1969,14 +1983,19 @@ function updateHeaderPills(){
   const _elapsed = _s2['header_month_elapsed'] || 'of month elapsed';
   if(lblEl) lblEl.textContent = daysLeft === 0 ? 'last day of month' : _elapsed;
 
-  // Set bar width — disable transition first so shimmer animation doesn't fight it
+  // Apply bar width: kill transition, force a reflow, set value, re-enable transition
   if(fill){
     fill.style.transition = 'none';
+    void fill.offsetWidth; // force reflow so 'none' takes effect immediately
     fill.style.width = pct + '%';
-    // Re-enable transition after paint for future updates
-    requestAnimationFrame(() => { fill.style.transition = ''; });
+    setTimeout(() => { fill.style.transition = ''; }, 50);
   }
-  if(glow) glow.style.right = (100 - pct) + '%';
+  if(glow){
+    glow.style.transition = 'none';
+    void glow.offsetWidth;
+    glow.style.right = (100 - pct) + '%';
+    setTimeout(() => { glow.style.transition = ''; }, 50);
+  }
 }
 
 // ── Navigate to login ──
