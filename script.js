@@ -2250,7 +2250,7 @@ $('pdfOverlay').addEventListener('click', e=>{
     // Auto-collapse sidebar for ledger + budgets fullscreen, restore for others
     const sidebar = document.getElementById('sidebar');
     if(sidebar) {
-      if(viewName === 'ledger' || viewName === 'budgets') {
+      if(viewName === 'dashboard' || viewName === 'ledger' || viewName === 'budgets') {
         sidebar.classList.add('collapsed');
         sidebar._autoCollapsed = true;
       } else if(sidebar._autoCollapsed) {

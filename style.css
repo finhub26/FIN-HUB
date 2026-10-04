@@ -4860,3 +4860,19 @@ html[data-theme="light"] .sb-section-label {
   font-weight: 700 !important;
   letter-spacing: 0.1em !important;
 }
+
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD FULLSCREEN (desktop) — fill the whole content area
+   (the 1120px cap is removed; sidebar auto-collapses like the Ledger)
+═══════════════════════════════════════════════════════ */
+@media (min-width: 901px) {
+  #view-dashboard {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 24px 28px 60px !important;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr) !important;
+  }
+}
