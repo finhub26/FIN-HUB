@@ -350,14 +350,43 @@ document.addEventListener('DOMContentLoaded', function() {
     if(window.showToast) window.showToast('Profile saved ✓','success'); else alert('Saved!');
   });
 
-  const deleteBtn=$id('ppDeleteBtn'), modal=$id('ppDeleteModal'), cancelBtn=$id('ppModalCancel'), confirmBtn=$id('ppModalConfirm'), modalInput=$id('ppModalInput');
-  if(deleteBtn) deleteBtn.addEventListener('click',()=>{ modal.classList.remove('hidden'); if(modalInput){modalInput.value='';modalInput.focus();} if(confirmBtn) confirmBtn.disabled=true; });
+  const deleteBtn=$id('ppDeleteBtn'), modal=$id('ppDeleteModal'), cancelBtn=$id('ppModalCancel'), confirmBtn=$id('ppModalConfirm'), modalInput=$id('ppModalInput'), modalPass=$id('ppModalPass'), modalErr=$id('ppModalErr');
+  const isGuestUser=()=>((window.currentUserId||'')==='guest');
+  const refreshConfirm=()=>{
+    if(!confirmBtn) return;
+    const userOk = !!modalInput && modalInput.value.trim()===(window.currentUserId||'');
+    const passOk = isGuestUser() || (!!modalPass && modalPass.value.length>0);
+    confirmBtn.disabled = !(userOk && passOk);
+    if(modalErr) modalErr.textContent='';
+  };
+  if(deleteBtn) deleteBtn.addEventListener('click',()=>{
+    modal.classList.remove('hidden');
+    if(modalPass){ modalPass.value=''; modalPass.style.display = isGuestUser() ? 'none' : ''; }
+    if(modalErr) modalErr.textContent='';
+    if(modalInput){ modalInput.value=''; modalInput.focus(); }
+    if(confirmBtn) confirmBtn.disabled=true;
+  });
   if(cancelBtn) cancelBtn.addEventListener('click',()=>modal.classList.add('hidden'));
   if(modal) modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.add('hidden'); });
-  if(modalInput) modalInput.addEventListener('input',()=>{ if(confirmBtn) confirmBtn.disabled=modalInput.value.trim()!==(window.currentUserId||''); });
-  if(confirmBtn) confirmBtn.addEventListener('click',()=>{
+  if(modalInput) modalInput.addEventListener('input',refreshConfirm);
+  if(modalPass) modalPass.addEventListener('input',refreshConfirm);
+  if(confirmBtn) confirmBtn.addEventListener('click',async ()=>{
     const uid = (typeof currentUserId !== 'undefined' && currentUserId) || window.currentUserId;
     if(!uid) return;
+    if(uid!=='guest'){
+      confirmBtn.disabled=true;
+      let ok=false;
+      try{
+        const entered=await sha256Hex(modalPass ? modalPass.value : '');
+        const stored=await getStoredHash(uid);
+        ok = !!stored && entered===stored;
+      }catch(e){ ok=false; }
+      if(!ok){
+        if(modalErr) modalErr.textContent='Incorrect password.';
+        if(modalPass){ modalPass.value=''; modalPass.focus(); }
+        return;
+      }
+    }
     const keys=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(`tally:user:${uid}:`)) keys.push(k); }
     keys.forEach(k=>localStorage.removeItem(k));
     try{ const lr=localStorage.getItem('tally:users'); const l=lr?JSON.parse(lr):[]; localStorage.setItem('tally:users',JSON.stringify(l.filter(u=>u!==uid))); }catch(e){}
