@@ -1224,10 +1224,15 @@ function renderBreakdownBudget(){
   CATEGORIES.forEach((c,i)=>{
     const spent=totals[c]||0; const limit=budgets[c]||0;
     const y=padT+i*rowH; const barY=y+rowH*0.18; const barH=rowH*0.58;
-    const barW=(spent/maxVal)*plotW; const over=limit>0&&spent>limit;
+    const barW=(spent/maxVal)*plotW;
     const color=categoryColor(c);
     rows+=`<text x="${padL-8}" y="${y+rowH*0.65}" font-size="12" style="fill:var(--bb-label)" font-family="Source Sans 3,sans-serif" text-anchor="end">${fhCatLabel(c)}</text>`;
-    if(spent>0){ rows+=`<rect x="${padL}" y="${barY}" width="${Math.max(1,barW)}" height="${barH}" fill="${color}" ${over?'stroke="var(--rust)" stroke-width="2"':''}></rect>`; }
+    if(spent>0){ rows+=`<rect x="${padL}" y="${barY}" width="${Math.max(1,barW)}" height="${barH}" fill="${color}"></rect>`; }
+    // Budget limit marker: dashed vertical line at the limit, taller than the bar so it stays visible over it
+    if(limit>0){
+      const lx=padL+(limit/maxVal)*plotW;
+      rows+=`<line x1="${lx}" y1="${y+1}" x2="${lx}" y2="${y+rowH-1}" stroke="var(--rust)" stroke-width="2" stroke-dasharray="3 2"></line>`;
+    }
 
     rows+=`<text x="${padL+plotW+8}" y="${y+rowH*0.65}" font-size="11" style="fill:var(--bb-value)" font-family="Space Mono,monospace">${fmt(-spent)}</text>`;
   });
