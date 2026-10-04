@@ -801,22 +801,124 @@ function renderQuickStats(){
     const daysInMonth = new Date(yr, mo + 1, 0).getDate();
     const passedDays = (todayMonthKey === effectiveMonth) ? today.getDate() : daysInMonth;
     const totalSpent = monthTx.reduce((s,t)=>s+Math.abs(t.amount),0);
-    $('qsAvg').textContent = passedDays > 0 ? fmt(totalSpent/passedDays)+'/day' : '—';
+    $('qsAvg').textContent = passedDays > 0 ? fmt(totalSpent/passedDays)+'/'+pdTr('day') : '—';
   } else {
     $('qsAvg').textContent = '—';
   }
 
-  // ── Days to Payday (last day of selected month) ──
-  if (todayMonthKey === effectiveMonth) {
-    const yr = parseInt(effectiveMonth.slice(0,4));
-    const mo = parseInt(effectiveMonth.slice(5)) - 1; // 0-based month
-    const lastDay = new Date(yr, mo + 1, 0).getDate(); // last day of month
-    const daysLeft = lastDay - today.getDate();
-    $('qsDays').textContent = daysLeft > 0 ? daysLeft + ' days' : 'Last day';
-  } else {
-    $('qsDays').textContent = '—';
+  // ── Days to Payday (day of month set by the user; defaults to month end) ──
+  {
+    const _pd = getPayday() || 31; // 31 is clamped to each month's last day
+    const _d = calcDaysToPayday(today, _pd);
+    $('qsDays').textContent = _d === 0 ? pdTr('today') : _d + ' ' + pdTr(_d === 1 ? 'day' : 'days');
+    const _it = $('qsDays').closest('.qs-item');
+    if (_it) _it.title = pdTr('hint');
   }
 }
+
+// ── Payday setting (day of month, per user, stored on this device) ──
+const FH_PD_T = {
+  title:    {en:'Set Payday', hi:'वेतन दिन सेट करें', ta:'சம்பள நாளை அமைக்கவும்', te:'జీతం రోజును సెట్ చేయండి', ml:'ശമ്പള ദിവസം സജ്ജമാക്കുക', kn:'ಸಂಬಳ ದಿನವನ್ನು ಹೊಂದಿಸಿ'},
+  label:    {en:'Day of month (1–31)', hi:'माह का दिन (1–31)', ta:'மாதத்தின் நாள் (1–31)', te:'నెలలో రోజు (1–31)', ml:'മാസത്തിലെ ദിവസം (1–31)', kn:'ತಿಂಗಳ ದಿನ (1–31)'},
+  monthEnd: {en:'Use month end', hi:'माह के अंत का उपयोग करें', ta:'மாத இறுதியைப் பயன்படுத்து', te:'నెలాఖరును ఉపయోగించండి', ml:'മാസാവസാനം ഉപയോഗിക്കുക', kn:'ತಿಂಗಳ ಕೊನೆಯನ್ನು ಬಳಸಿ'},
+  cancel:   {en:'Cancel', hi:'रद्द करें', ta:'ரத்து செய்', te:'రద్దు', ml:'റദ്ദാക്കുക', kn:'ರದ್ದು'},
+  save:     {en:'Save', hi:'सहेजें', ta:'சேமி', te:'సేవ్', ml:'സേവ്', kn:'ಉಳಿಸಿ'},
+  err:      {en:'Enter a day from 1 to 31', hi:'1 से 31 के बीच दिन दर्ज करें', ta:'1 முதல் 31 வரை ஒரு நாளை உள்ளிடவும்', te:'1 నుండి 31 వరకు రోజును నమోదు చేయండి', ml:'1 മുതൽ 31 വരെയുള്ള ദിവസം നൽകുക', kn:'1 ರಿಂದ 31 ರವರೆಗಿನ ದಿನವನ್ನು ನಮೂದಿಸಿ'},
+  saved:    {en:'Payday saved', hi:'वेतन दिन सहेजा गया', ta:'சம்பள நாள் சேமிக்கப்பட்டது', te:'జీతం రోజు సేవ్ అయింది', ml:'ശമ്പള ദിവസം സേവ് ചെയ്തു', kn:'ಸಂಬಳ ದಿನ ಉಳಿಸಲಾಗಿದೆ'},
+  reset:    {en:'Payday reset to month end', hi:'वेतन दिन माह के अंत पर रीसेट', ta:'சம்பள நாள் மாத இறுதிக்கு மாற்றப்பட்டது', te:'జీతం రోజు నెలాఖరుకు రీసెట్ అయింది', ml:'ശമ്പള ദിവസം മാസാവസാനത്തിലേക്ക് മാറ്റി', kn:'ಸಂಬಳ ದಿನವನ್ನು ತಿಂಗಳ ಕೊನೆಗೆ ಮರುಹೊಂದಿಸಲಾಗಿದೆ'},
+  today:    {en:'Payday today', hi:'आज वेतन दिन', ta:'இன்று சம்பள நாள்', te:'ఈరోజు జీతం రోజు', ml:'ഇന്ന് ശമ്പള ദിവസം', kn:'ಇಂದು ಸಂಬಳ ದಿನ'},
+  day:      {en:'day', hi:'दिन', ta:'நாள்', te:'రోజు', ml:'ദിവസം', kn:'ದಿನ'},
+  days:     {en:'days', hi:'दिन', ta:'நாட்கள்', te:'రోజులు', ml:'ദിവസങ്ങൾ', kn:'ದಿನಗಳು'},
+  hint:     {en:'Tap to set payday', hi:'वेतन दिन सेट करने के लिए टैप करें', ta:'சம்பள நாளை அமைக்கத் தட்டவும்', te:'జీతం రోజును సెట్ చేయడానికి నొక్కండి', ml:'ശമ്പള ദിവസം സജ്ജമാക്കാൻ ടാപ്പ് ചെയ്യുക', kn:'ಸಂಬಳ ದಿನವನ್ನು ಹೊಂದಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ'}
+};
+function pdTr(key){
+  let l = window._finhubLang;
+  if(!l){ try{ l = localStorage.getItem('finhub_lang'); }catch(e){} }
+  const e = FH_PD_T[key]; if(!e) return key;
+  return e[l || 'en'] || e.en;
+}
+function getPayday(){
+  try{
+    const v = parseInt(localStorage.getItem(userKey('payday')), 10);
+    return (v>=1 && v<=31) ? v : null;
+  }catch(e){ return null; }
+}
+function savePayday(n){
+  try{
+    if(n) localStorage.setItem(userKey('payday'), String(n));
+    else  localStorage.removeItem(userKey('payday'));
+  }catch(e){}
+}
+// Days from today until the next payday (0 = today). Payday days past a month's end (e.g. 31 in April) fall on its last day.
+function calcDaysToPayday(today, pd){
+  const y = today.getFullYear(), m = today.getMonth();
+  const clampDay = (yy, mm) => Math.min(pd, new Date(yy, mm+1, 0).getDate());
+  const t0 = new Date(y, m, today.getDate());
+  let target = new Date(y, m, clampDay(y, m));
+  if(target < t0){
+    const ny = (m === 11) ? y+1 : y, nm = (m+1) % 12;
+    target = new Date(ny, nm, clampDay(ny, nm));
+  }
+  return Math.round((target - t0) / 86400000);
+}
+function ensurePaydayModal(){
+  let m = $('paydayModal'); if(m) return m;
+  m = document.createElement('div');
+  m.className = 'modal-overlay'; m.id = 'paydayModal';
+  m.innerHTML =
+    '<div class="modal-box">'
+    + '<h3 id="paydayTitle"></h3>'
+    + '<label id="paydayLabel" for="paydayInput"></label>'
+    + '<input type="number" id="paydayInput" min="1" max="31" step="1" inputmode="numeric">'
+    + '<div id="paydayErr" style="color:var(--rust);font-size:12px;min-height:16px;margin-top:6px;"></div>'
+    + '<div style="margin:6px 0 2px;"><button class="btn btn-cancel" id="paydayResetBtn" type="button" style="font-size:12px;padding:4px 10px;"></button></div>'
+    + '<div class="modal-actions">'
+    +   '<button class="btn btn-cancel" id="paydayCancelBtn" type="button"></button>'
+    +   '<button class="btn" id="paydaySaveBtn" type="button"></button>'
+    + '</div></div>';
+  document.body.appendChild(m);
+  const close = () => m.classList.remove('open');
+  $('paydayCancelBtn').addEventListener('click', close);
+  m.addEventListener('click', e => { if(e.target === m) close(); });
+  $('paydayInput').addEventListener('input', () => { $('paydayErr').textContent = ''; });
+  $('paydayInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); $('paydaySaveBtn').click(); }
+    if(e.key === 'Escape') close();
+  });
+  $('paydaySaveBtn').addEventListener('click', () => {
+    const n = parseInt($('paydayInput').value, 10);
+    if(!(n >= 1 && n <= 31)){ $('paydayErr').textContent = pdTr('err'); return; }
+    savePayday(n); close(); renderQuickStats(); showToast(pdTr('saved'));
+  });
+  $('paydayResetBtn').addEventListener('click', () => {
+    savePayday(null); close(); renderQuickStats(); showToast(pdTr('reset'));
+  });
+  return m;
+}
+function openPaydayModal(){
+  const m = ensurePaydayModal();
+  $('paydayTitle').textContent = pdTr('title');
+  $('paydayLabel').textContent = pdTr('label');
+  $('paydayResetBtn').textContent = pdTr('monthEnd');
+  $('paydayCancelBtn').textContent = pdTr('cancel');
+  $('paydaySaveBtn').textContent = pdTr('save');
+  $('paydayErr').textContent = '';
+  $('paydayInput').value = getPayday() || '';
+  m.classList.add('open');
+  setTimeout(() => $('paydayInput').focus(), 50);
+}
+(function wirePaydayCard(){
+  const val = $('qsDays'); const item = val && val.closest('.qs-item'); if(!item) return;
+  item.style.position = 'relative'; item.style.cursor = 'pointer';
+  item.setAttribute('role', 'button'); item.setAttribute('tabindex', '0');
+  item.title = pdTr('hint');
+  const pen = document.createElement('span');
+  pen.textContent = '✎'; pen.setAttribute('aria-hidden', 'true');
+  pen.style.cssText = 'position:absolute;top:8px;right:12px;font-size:13px;opacity:.55;pointer-events:none;';
+  item.appendChild(pen);
+  item.addEventListener('click', openPaydayModal);
+  item.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openPaydayModal(); } });
+})();
 
 // ── Top strip ──
 function renderTopStrip(){
@@ -1928,7 +2030,8 @@ function updateHeaderInsight(){
         const _ep = txCount === 1
           ? (strings['header_entry_month'] || 'entry this month')
           : (strings['header_entries_month'] || 'entries this month');
-        subEl.textContent = txCount > 0 ? `${txCount} ${_ep}` : _np;
+        const _t = x => (window.__fhTr ? window.__fhTr(x) : x);
+        subEl.textContent = txCount > 0 ? `${txCount} ${_t(_ep)}` : _t(_np);
       }
     }
   } catch(e){}
@@ -4066,6 +4169,8 @@ function homeToLogin(){
 
   function refreshGreeting() {
     if (typeof updateHeaderGreeting === 'function') { try { updateHeaderGreeting(); } catch (e) {} }
+    if (typeof updateHeaderInsight === 'function') { try { updateHeaderInsight(); } catch (e) {} }
+    if (typeof renderQuickStats === 'function') { try { renderQuickStats(); } catch (e) {} }
   }
 
   // Wrap public apply() so changing language re-runs everything
