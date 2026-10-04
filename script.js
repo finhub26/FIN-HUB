@@ -392,6 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try{ const lr=localStorage.getItem('tally:users'); const l=lr?JSON.parse(lr):[]; localStorage.setItem('tally:users',JSON.stringify(l.filter(u=>u!==uid))); }catch(e){}
     modal.classList.add('hidden');
     window.currentUserId=null; currentUserId=null;
+    try{ transactions=[]; window.transactions=[]; if(typeof resetHeaderInsight==='function') resetHeaderInsight(); }catch(e){}
     $id('profilePage').classList.remove('visible');
     if(window.showToast) window.showToast('Account deleted. Goodbye 👋','success');
     setTimeout(()=>{ $id('appShell').classList.add('hidden'); const a=document.getElementById('authScreen')||document.getElementById('loginScreen'); if(a) a.classList.remove('hidden'); else location.reload(); },1200);
@@ -1992,10 +1993,33 @@ $('menuLogoutBtn').addEventListener('click', ()=>{
 });
 
 // ── Sparkline + Insight Panel ──
+// Reset the header "7-day flow" + "Net this month" panel to its empty state
+function resetHeaderInsight(){
+  try {
+    const line=$('headerSparklineLine'), fill=$('headerSparklineFill');
+    const W=90, H=36, pad=4;
+    const flat=[0,1,2,3,4,5,6].map(i=>`${((i/6)*(W-pad*2)+pad).toFixed(1)},${H/2}`).join(' ');
+    if(line){ line.setAttribute('points', flat); line.setAttribute('stroke','#e879f9'); }
+    if(fill){ fill.setAttribute('points', flat+` ${W-pad},${H} ${pad},${H}`); }
+    const grad=document.getElementById('sparkGrad');
+    if(grad) grad.querySelectorAll('stop').forEach(s=>s.setAttribute('stop-color','#e879f9'));
+    const netEl=$('headerInsightNet'), subEl=$('headerInsightSub');
+    if(netEl){ netEl.textContent='₹0'; netEl.className='header-insight-kpi-val'; }
+    if(subEl){
+      const lang=window._finhubLang||'en';
+      const strings=(window.finhubI18n&&window.finhubI18n.strings&&window.finhubI18n.strings[lang])||{};
+      const np=strings['header_no_entries']||'no entries yet';
+      subEl.textContent=window.__fhTr?window.__fhTr(np):np;
+    }
+  } catch(e){}
+}
+
 function updateHeaderInsight(){
   // If transactions haven't loaded yet, retry shortly
   const _txCheck = window.transactions || transactions || [];
   if (!_currentUserId || _txCheck.length === 0) {
+    // No data (new/empty account, logged out): clear any stale values from a previous session
+    resetHeaderInsight();
     // Still retry in case data loads async
     setTimeout(() => { if(_currentUserId && (window.transactions||[]).length > 0) updateHeaderInsight(); }, 300);
     return;
