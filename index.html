@@ -22,7 +22,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Source+Sans+3:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 
 <body>
 
@@ -40,6 +40,7 @@
     <!-- Art Deco animated logo card -->
     <div class="ad-card splash-ad-card ad-animate" style="margin-bottom:14px;" role="img" aria-label="FinHub logo">
       <div class="ad-glow-center"></div>
+      <svg class="ad-watermark" viewBox="0 0 200 154" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><path class="ad-wd" d="M24 114L56 94L82 104L118 68L148 78L178 40" fill="none" stroke="#c9941f" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".45" stroke-dasharray="5 4"/><path class="ad-wd" d="M168 39H179V50" fill="none" stroke="#c9941f" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".45"/></svg>
       <svg class="ad-card-border-svg" viewBox="0 0 200 154">
         <rect class="ad-border-rect" x="8" y="8" width="184" height="138" rx="5"/>
         <rect class="ad-border-rect-inner" x="13" y="13" width="174" height="128" rx="3"/>
@@ -75,8 +76,8 @@
     </div>
 
     <div class="splash-brand-name">Fin Hub</div>
-    <div class="splash-brand-subtitle">The Household Ledger</div>
-    <div class="splash-tagline">Every Rupee &bull; Every Story &bull; Every Day</div>
+    <div class="splash-brand-subtitle">Two Incomes. One Goal.</div>
+    <div class="splash-tagline">Together &bull; Trackable &bull; True</div>
 
     <div class="splash-divider-section">
       <div class="splash-divider-line"></div>
@@ -84,7 +85,7 @@
         <div class="splash-bar-fill" id="splashBarFill"></div>
       </div>
       <div class="splash-loading-text" id="splashLoadingText">Opening the Ledger…</div>
-      <div class="splash-intention">Where numbers meet intention.</div>
+      <div class="splash-intention">One home, one ledger, one goal.</div>
       <div class="splash-lb-dot">◆</div>
       <div class="splash-divider-line"></div>
     </div>
@@ -107,6 +108,7 @@
       <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:20px 0;">
         <div class="ad-card login-ad-card ad-animate" role="img" aria-label="FinHub logo">
           <div class="ad-glow-center"></div>
+          <svg class="ad-watermark" viewBox="0 0 200 154" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><path class="ad-wd" d="M24 114L56 94L82 104L118 68L148 78L178 40" fill="none" stroke="#c9941f" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".45" stroke-dasharray="5 4"/><path class="ad-wd" d="M168 39H179V50" fill="none" stroke="#c9941f" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".45"/></svg>
           <svg class="ad-card-border-svg" viewBox="0 0 200 154">
             <rect class="ad-border-rect" x="8" y="8" width="184" height="138" rx="5"/>
             <rect class="ad-border-rect-inner" x="13" y="13" width="174" height="128" rx="3"/>
@@ -175,9 +177,9 @@
         <div class="lb-stat-row">
           <div class="lb-stat">
             <span class="lb-stat-icon">◈</span>
-            <span class="lb-stat-label">HOUSEHOLD</span>
+            <span class="lb-stat-label">TOGETHER</span>
             <span class="lb-stat-sep">·</span>
-            <span class="lb-stat-label">LEDGER</span>
+            <span class="lb-stat-label">ONE GOAL</span>
           </div>
         </div>
 
@@ -186,15 +188,15 @@
           <div class="lb-pq-bar"></div>
           <div class="lb-pq-inner">
             <div class="lb-pq-open">"</div>
-            <p class="lb-pq-text">Keep the books<br><em>before the books keep you.</em></p>
+            <p class="lb-pq-text">One home,<br><em>one ledger, one goal.</em></p>
           </div>
         </div>
 
         <!-- Bottom mono tag -->
         <div class="lb-mono-tag">
-          <span>₹ EVERY RUPEE</span>
+          <span>TOGETHER</span>
           <span class="lb-mono-sep">✦</span>
-          <span>ACCOUNTED FOR</span>
+          <span>ONE GOAL</span>
         </div>
       </div>
     </div>
@@ -204,6 +206,16 @@
       <div class="login-col-rule" aria-hidden="true"></div>
       <div class="login-corner-fold" aria-hidden="true"></div>
       <div class="login-auth-inner">
+
+        <!-- Grows as you type: a rising line that fills in as the form is completed -->
+        <div class="login-grow">
+          <svg viewBox="0 0 300 70" aria-hidden="true" focusable="false">
+            <path class="login-grow-bg" d="M6 60L60 44L110 52L170 24L220 32L284 8"/>
+            <path class="login-grow-fg" id="loginGrowPath" d="M6 60L60 44L110 52L170 24L220 32L284 8"/>
+            <circle id="loginGrowDot" r="5" cx="6" cy="60"/>
+          </svg>
+          <div class="login-grow-cap" id="loginGrowText" role="status" aria-live="polite">Your ledger is 0% ready</div>
+        </div>
 
         <div class="login-eyebrow">Open your ledger</div>
         <h1 class="login-heading" id="loginHeading">Welcome back.</h1>

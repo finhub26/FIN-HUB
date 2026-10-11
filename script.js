@@ -2827,7 +2827,8 @@ self.addEventListener('fetch', e => {
 });
 `;
 
-  if ('serviceWorker' in navigator) {
+  // Service workers only work on http(s) pages (not when opened via file://)
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     const blob = new Blob([swCode], { type: 'application/javascript' });
     const swUrl = URL.createObjectURL(blob);
     navigator.serviceWorker.register(swUrl, { scope: './' })
@@ -4521,4 +4522,36 @@ function homeToLogin(){
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
+})();
+
+
+// ── Login form: "Grows as you type" — the rising line fills as fields are completed ──
+(function loginGrow(){
+  const path = document.getElementById('loginGrowPath');
+  const dot  = document.getElementById('loginGrowDot');
+  const txt  = document.getElementById('loginGrowText');
+  const overlay = document.getElementById('loginOverlay');
+  if (!path || !dot || !txt || !overlay) return;
+  function update(){
+    const L = path.getTotalLength();
+    if (!L) return;                                   // overlay hidden: nothing to measure
+    const panel = overlay.querySelector('.login-panel-active') || overlay.querySelector('.login-panel:not([hidden])');
+    if (!panel) return;
+    const inputs = Array.from(panel.querySelectorAll('.login-input'));
+    const filled = inputs.filter(i => i.value.trim()).length;
+    const p = inputs.length ? filled / inputs.length : 0;
+    path.style.strokeDasharray = L;
+    path.style.strokeDashoffset = L * (1 - p);
+    const pt = path.getPointAtLength(L * p);
+    dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
+    dot.style.cx = pt.x + 'px'; dot.style.cy = pt.y + 'px';
+    txt.textContent = p >= 1 ? 'Ready. Open your ledger' : 'Your ledger is ' + Math.round(p * 100) + '% ready';
+    overlay.querySelectorAll('.login-btn').forEach(b => b.classList.toggle('login-btn-ready', p >= 1 && panel.contains(b)));
+  }
+  overlay.addEventListener('input', update);
+  overlay.addEventListener('click', () => setTimeout(update, 0));      // tab switches
+  overlay.addEventListener('reset', () => setTimeout(update, 0));
+  new MutationObserver(update).observe(overlay, { attributes: true, attributeFilter: ['class', 'hidden'], subtree: true });
+  setInterval(() => { if (!overlay.classList.contains('hidden')) update(); }, 600);   // catches programmatic form resets
+  update();
 })();
