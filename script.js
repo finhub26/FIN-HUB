@@ -1598,7 +1598,23 @@ $('editSaveBtn').addEventListener('click', async ()=>{
 });
 
 // ── Savings Goals ──
-async function loadGoals(){ try{ const g=localStorage.getItem(userKey('goals')); goals=g?JSON.parse(g):[]; }catch(e){ goals=[]; } }
+// Accepts both the app's own format and the exported JSON format (dueDate etc.)
+function normGoal(g){
+  const o=Object.assign({},g);
+  o.name=String(g.name==null?'':g.name);
+  o.target=parseFloat(g.target)||0;
+  o.saved=parseFloat(g.saved)||0;
+  o.marychide=String(g.marychide||g.dueDate||g.due||'');
+  delete o.dueDate; delete o.due;
+  return o;
+}
+async function loadGoals(){
+  try{
+    const g=localStorage.getItem(userKey('goals')); const raw=g?JSON.parse(g):[];
+    goals=Array.isArray(raw)?raw.map(normGoal):[];
+    if(JSON.stringify(goals)!==JSON.stringify(raw)) await saveGoals();
+  }catch(e){ goals=[]; }
+}
 async function saveGoals(){ try{ localStorage.setItem(userKey('goals'),JSON.stringify(goals)); }catch(e){} }
 
 function renderGoals(){
@@ -1675,7 +1691,24 @@ function renderGoals(){
 }
 
 // ── Recurring Transactions ──
-async function loadRecurring(){ try{ const r=localStorage.getItem(userKey('recurring')); recurringItems=r?JSON.parse(r):[]; }catch(e){ recurringItems=[]; } }
+function normRecur(r){
+  const o=Object.assign({},r);
+  o.name=String(r.name==null?'':r.name);
+  o.amount=parseFloat(r.amount)||0;
+  o.category=String(r.category||'Other');
+  o.freq=String(r.freq||r.frequency||'monthly').toLowerCase();
+  o.type=String(r.type||'expense').toLowerCase()==='income'?'income':'expense';
+  o.marychide=String(r.marychide||r.dueDate||r.due||'');
+  delete o.frequency; delete o.dueDate; delete o.due;
+  return o;
+}
+async function loadRecurring(){
+  try{
+    const r=localStorage.getItem(userKey('recurring')); const raw=r?JSON.parse(r):[];
+    recurringItems=Array.isArray(raw)?raw.map(normRecur):[];
+    if(JSON.stringify(recurringItems)!==JSON.stringify(raw)) await saveRecurring();
+  }catch(e){ recurringItems=[]; }
+}
 async function saveRecurring(){ try{ localStorage.setItem(userKey('recurring'),JSON.stringify(recurringItems)); }catch(e){} }
 
 function renderRecurring(){
@@ -1699,13 +1732,13 @@ function renderRecurring(){
     tbody.innerHTML=`<tr><td colspan="7" style="font-size:12px;color:var(--muted);padding:14px 12px;">${_TR.recur_no_items||'No recurring items yet — add one below.'}</td></tr>`;
   } else {
     recurringItems.forEach((r,i)=>{
-      const freqLabel={monthly:_TR.recur_freq_monthly||'Monthly',weekly:_TR.recur_freq_weekly||'Weekly',yearly:_TR.recur_freq_yearly||'Yearly'}[r.freq]||r.freq;
+      const freqLabel={monthly:_TR.recur_freq_monthly||'Monthly',weekly:_TR.recur_freq_weekly||'Weekly',yearly:_TR.recur_freq_yearly||'Yearly'}[r.freq]||(r.freq?r.freq.charAt(0).toUpperCase()+r.freq.slice(1):'—');
       const tr=document.createElement('tr');
       tr.innerHTML=`
         <td class="rt-name">${r.name}</td>
         <td><span class="cat-pill">${r.category}</span></td>
-        <td style="font-size:12px;font-family:var(--font-mono);color:var(--muted);">${freqLabel}</td>
-        <td><span style="font-size:11px;font-weight:600;color:${r.type==='income'?'var(--sage)':'var(--rust)'};">${r.type==='income'?(_TR.recur_type_income||'Income'):(_TR.recur_type_expense||'Expense')}</span></td>
+        <td class="rt-freqcell">${freqLabel}</td>
+        <td><span class="rt-type ${r.type==='income'?'income':'expense'}">${r.type==='income'?(_TR.recur_type_income||'Income'):(_TR.recur_type_expense||'Expense')}</span></td>
         <td class="col-marychide">${r.marychide||'—'}</td>
         <td class="num rt-amt ${r.type}">${r.type==='expense'?'− ':'+ '}${fmt(r.amount)}</td>
         <td><div class="rt-actions">
@@ -1764,6 +1797,39 @@ function renderRecurring(){
     showToast('Recurring item added ✓', 'success');
   });
 }
+
+// ── Import goals & recurring from a FinHub JSON export ──
+(function(){
+  const src=$('exportCsvBtn'); if(!src||!src.parentNode) return;
+  const btn=src.cloneNode(false); btn.id='importJsonBtn'; btn.removeAttribute('data-i18n');
+  btn.textContent='📤 Import goals & recurring (JSON)';
+  src.parentNode.insertBefore(btn, src.nextSibling);
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.style.display='none';
+  document.body.appendChild(inp);
+  const clean=v=>String(v==null?'':v).replace(/[<>]/g,'').trim();
+  btn.addEventListener('click',()=>{ closeMenu(); inp.value=''; inp.click(); });
+  inp.addEventListener('change', async ()=>{
+    const f=inp.files&&inp.files[0]; if(!f) return;
+    try{
+      const data=JSON.parse(await f.text());
+      let addedG=0, addedR=0;
+      (Array.isArray(data.goals)?data.goals:[]).forEach(g=>{
+        const n=normGoal(g); n.name=clean(n.name); n.marychide=clean(n.marychide);
+        if(!n.name||!(n.target>0)) return;
+        if(goals.some(x=>String(x.name).toLowerCase()===n.name.toLowerCase())) return;
+        goals.push({name:n.name,target:n.target,saved:n.saved,marychide:n.marychide}); addedG++;
+      });
+      (Array.isArray(data.recurring)?data.recurring:[]).forEach(r=>{
+        const n=normRecur(r); n.name=clean(n.name); n.category=clean(n.category); n.marychide=clean(n.marychide);
+        if(!n.name||!(n.amount>0)) return;
+        if(recurringItems.some(x=>String(x.name).toLowerCase()===n.name.toLowerCase())) return;
+        recurringItems.push({name:n.name,amount:n.amount,category:n.category,freq:n.freq,type:n.type,marychide:n.marychide}); addedR++;
+      });
+      await saveGoals(); await saveRecurring(); renderGoals(); renderRecurring();
+      showToast(`Imported ${addedG} goals, ${addedR} recurring ✓`, 'success');
+    }catch(e){ showToast('Could not read this JSON file', 'error'); }
+  });
+})();
 
 // ── Search ──
 if($('searchInput')) $('searchInput').addEventListener('input', renderLedger);

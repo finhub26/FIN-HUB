@@ -3930,9 +3930,10 @@ tbody tr:hover .del-btn { color: var(--muted); }
 .goals-table tbody tr { border-bottom: 1px solid var(--paper-line); transition: background 0.1s; }
 .goals-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.012); }
 .goals-table tbody tr:hover { background: var(--hover); }
-.goals-table tbody td { padding: 10px 12px; vertical-align: middle; }
-.goals-table tbody td.num { text-align: right; font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
-.goals-table .col-marychide { font-size: 12px; color: var(--muted); font-style: italic; max-width: 160px; }
+.goals-table tbody td { padding: 7px 12px; vertical-align: middle; font-family: var(--font-body); font-size: 13px; }
+.goals-table tbody td strong { font-family: var(--font-body); font-size: 13px; font-weight: 400; color: var(--charcoal); }
+.goals-table tbody td.num { text-align: right; font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+.goals-table tbody td.col-marychide { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-style: normal; max-width: 160px; }
 .goals-table .col-progress { min-width: 100px; }
 .goals-table .gt-track { height: 8px; background: var(--paper); border-radius: 4px; overflow: hidden; border: 1px solid var(--paper-line); }
 .goals-table .gt-fill { height: 100%; background: var(--sage); border-radius: 4px; transition: width .4s ease; }
@@ -3968,14 +3969,18 @@ html[data-theme="dark"] .goals-table tfoot .tfoot-add-btn:hover { background: li
 .recur-table tbody tr { border-bottom: 1px solid var(--paper-line); transition: background 0.1s; }
 .recur-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.012); }
 .recur-table tbody tr:hover { background: var(--hover); }
-.recur-table tbody td { padding: 10px 12px; vertical-align: middle; }
-.recur-table tbody td.num { text-align: right; font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
-.recur-table .col-marychide { font-size: 12px; color: var(--muted); font-style: italic; max-width: 160px; }
-.recur-table .rt-name { font-size: 13px; font-weight: 600; color: var(--charcoal); }
+.recur-table tbody td { padding: 7px 12px; vertical-align: middle; font-family: var(--font-body); font-size: 13px; }
+.recur-table tbody td.num { text-align: right; font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+.recur-table tbody td.col-marychide { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-style: normal; max-width: 160px; }
+.recur-table tbody td.rt-name { font-family: var(--font-body); font-size: 13px; font-weight: 400; color: var(--charcoal); }
+.recur-table tbody td.rt-freqcell { font-family: var(--font-body); font-size: 13px; color: var(--charcoal); }
 .recur-table .rt-freq { font-size: 10px; font-family: var(--font-mono); color: var(--muted); margin-top: 2px; }
-.recur-table .rt-amt { font-family: var(--font-mono); font-weight: 700; font-size: 13px; }
+.recur-table tbody td.rt-amt { font-family: var(--font-mono); font-weight: 700; font-size: 13px; }
 .recur-table .rt-amt.expense { color: var(--rust); }
 .recur-table .rt-amt.income  { color: var(--sage); }
+.recur-table .rt-type { font-family: var(--font-body); font-size: 13px; font-weight: 600; }
+.recur-table .rt-type.expense { color: var(--rust); }
+.recur-table .rt-type.income  { color: var(--sage); }
 .recur-table .rt-actions { display: flex; gap: 5px; align-items: center; }
 .recur-table .rt-post-btn { padding: 5px 10px; font-size: 11px; font-weight: 600; background: var(--brass); color: var(--on-dark); border: none; border-radius: 2px; cursor: pointer; white-space: nowrap; }
 .recur-table .rt-post-btn:hover { opacity: .85; }
