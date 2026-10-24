@@ -1798,39 +1798,6 @@ function renderRecurring(){
   });
 }
 
-// ── Import goals & recurring from a FinHub JSON export ──
-(function(){
-  const src=$('exportCsvBtn'); if(!src||!src.parentNode) return;
-  const btn=src.cloneNode(false); btn.id='importJsonBtn'; btn.removeAttribute('data-i18n');
-  btn.textContent='📤 Import goals & recurring (JSON)';
-  src.parentNode.insertBefore(btn, src.nextSibling);
-  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.style.display='none';
-  document.body.appendChild(inp);
-  const clean=v=>String(v==null?'':v).replace(/[<>]/g,'').trim();
-  btn.addEventListener('click',()=>{ closeMenu(); inp.value=''; inp.click(); });
-  inp.addEventListener('change', async ()=>{
-    const f=inp.files&&inp.files[0]; if(!f) return;
-    try{
-      const data=JSON.parse(await f.text());
-      let addedG=0, addedR=0;
-      (Array.isArray(data.goals)?data.goals:[]).forEach(g=>{
-        const n=normGoal(g); n.name=clean(n.name); n.marychide=clean(n.marychide);
-        if(!n.name||!(n.target>0)) return;
-        if(goals.some(x=>String(x.name).toLowerCase()===n.name.toLowerCase())) return;
-        goals.push({name:n.name,target:n.target,saved:n.saved,marychide:n.marychide}); addedG++;
-      });
-      (Array.isArray(data.recurring)?data.recurring:[]).forEach(r=>{
-        const n=normRecur(r); n.name=clean(n.name); n.category=clean(n.category); n.marychide=clean(n.marychide);
-        if(!n.name||!(n.amount>0)) return;
-        if(recurringItems.some(x=>String(x.name).toLowerCase()===n.name.toLowerCase())) return;
-        recurringItems.push({name:n.name,amount:n.amount,category:n.category,freq:n.freq,type:n.type,marychide:n.marychide}); addedR++;
-      });
-      await saveGoals(); await saveRecurring(); renderGoals(); renderRecurring();
-      showToast(`Imported ${addedG} goals, ${addedR} recurring ✓`, 'success');
-    }catch(e){ showToast('Could not read this JSON file', 'error'); }
-  });
-})();
-
 // ── Search ──
 if($('searchInput')) $('searchInput').addEventListener('input', renderLedger);
 if($('searchInputLedger')) $('searchInputLedger').addEventListener('input', renderLedgerFull);
