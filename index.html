@@ -22,7 +22,19 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Source+Sans+3:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
+<style id="finhub-ledger-look">
+/* FinHub: Recurring & Goals tables use the same fonts/sizes as the Ledger */
+.recur-table tbody td, .goals-table tbody td { padding: 7px 12px; font-family: var(--font-body); font-size: 13px; font-weight: 400; font-style: normal; }
+.recur-table tbody td:first-child, .goals-table tbody td:first-child { font-family: var(--font-body); font-size: 13px; font-weight: 400; color: var(--charcoal); white-space: normal; }
+.goals-table tbody td strong { font-family: var(--font-body); font-size: 13px; font-weight: 400; color: var(--charcoal); }
+.recur-table tbody td:nth-child(3), .recur-table tbody td:nth-child(4) span { font-family: var(--font-body) !important; font-size: 13px !important; }
+.recur-table tbody td.col-marychide, .goals-table tbody td.col-marychide { font-family: var(--font-mono); font-size: 11px; font-style: normal; color: var(--muted); }
+.recur-table tbody td.num, .goals-table tbody td.num { font-family: var(--font-mono); font-size: 13px; }
+.recur-table tbody td.rt-amt { font-weight: 700; }
+.recur-table .rt-type.expense { color: var(--rust); }
+.recur-table .rt-type.income { color: var(--sage); }
+</style>
 
 <body>
 
@@ -1006,6 +1018,6 @@
 <div id="pwaOfflineToast">📵 Offline — all data still saved locally</div>
 <div id="pwaOnlineToast">✓ Back online</div>
 
-<script src="script.js"></script>
+<script src="script.js?v=3"></script>
 </body>
 </html>

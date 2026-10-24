@@ -5129,3 +5129,6 @@ html[data-theme] .recur-table tfoot .tfoot-add-btn:active { transform: translate
    LOGIN — bottom strip completely hidden
 ═══════════════════════════════════════════════════════ */
 .login-footer-strip { display: none !important; }
+
+/* FinHub: keep Frequency/Type cells in Ledger font even for older saved markup */
+.recur-table tbody td:nth-child(3), .recur-table tbody td:nth-child(4) span { font-family: var(--font-body) !important; font-size: 13px !important; }
